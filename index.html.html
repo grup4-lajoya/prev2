@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Página Demo — Tu Proyecto</title>
+  <meta name="description" content="Página web demo responsive con hero, características y formulario de contacto (sin backend).">
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8; --glass: rgba(255,255,255,0.04);
+      --radius:14px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#071025 0%,#041026 100%);color:#e6eef6;line-height:1.5}
+    .container{max-width:1100px;margin:36px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
+    nav a{color:var(--muted);text-decoration:none;margin-left:14px;font-size:0.95rem}
+    .hero{display:grid;grid-template-columns:1fr;gap:20px;align-items:center;margin-top:28px}
+    .card{background:var(--card);padding:22px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    h1{font-size:1.8rem;margin:0 0 8px}
+    p.lead{color:var(--muted);margin:0 0 16px}
+    .cta{display:inline-block;background:var(--accent);color:#022; padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+    .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+    .feature{background:var(--glass);padding:14px;border-radius:12px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    .gallery{display:flex;flex-wrap:wrap;gap:8px}
+    .gallery img{width:calc(50% - 4px);border-radius:8px}
+    form label{display:block;font-size:0.85rem;margin-bottom:6px;color:var(--muted)}
+    input[type="text"],input[type="email"],textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    button{margin-top:10px;padding:10px 12px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#7c3aed);font-weight:600}
+    footer{margin-top:28px;color:var(--muted);font-size:0.9rem;text-align:center}
+
+    /* responsive */
+    @media(min-width:900px){
+      .hero{grid-template-columns:1fr 420px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">TW</div>
+        <div>
+          <div style="font-weight:700">TuWeb</div>
+          <div style="font-size:0.85rem;color:var(--muted)">Diseño moderno • Responsive</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#features">Características</a>
+        <a href="#galeria">Galería</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="card">
+        <h1>Landing simple para tu proyecto</h1>
+        <p class="lead">Página demostrativa responsive, lista para personalizar. Incluye hero, secciones de características, galería y formulario de contacto (envío simulado con JavaScript).</p>
+        <a class="cta" href="#contacto">Empieza ahora</a>
+
+        <div class="features" id="features" style="margin-top:16px">
+          <div class="feature">
+            <strong>Rápida</strong>
+            <div style="color:var(--muted);font-size:0.95rem">Carga ligera y estructura clara para adaptar a tus necesidades.</div>
+          </div>
+          <div class="feature">
+            <strong>Responsive</strong>
+            <div style="color:var(--muted);font-size:0.95rem">Se adapta a móviles, tablets y escritorios automáticamente.</div>
+          </div>
+          <div class="feature">
+            <strong>Fácil de editar</strong>
+            <div style="color:var(--muted);font-size:0.95rem">HTML/CSS/JS en un solo archivo — ideal para probar rápidamente.</div>
+          </div>
+          <div class="feature">
+            <strong>Formularios</strong>
+            <div style="color:var(--muted);font-size:0.95rem">Ejemplo de envío con validación básica (sin servidor).</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card">
+        <h3 style="margin-top:0">Resumen rápido</h3>
+        <ul style="color:var(--muted);padding-left:18px;margin:6px 0 0">
+          <li>Single-file (HTML/CSS/JS)</li>
+          <li>Secciones: Hero, Características, Galería, Contacto</li>
+          <li>Hostable en GitHub Pages o servidor estático</li>
+        </ul>
+      </aside>
+    </section>
+
+    <div class="grid">
+      <div class="card">
+        <h2 id="galeria">Galería</h2>
+        <p class="lead">Imágenes de ejemplo. Reemplázalas por tus propias fotos.</p>
+        <div class="gallery">
+          <img src="https://picsum.photos/seed/a/600/400" alt="foto 1">
+          <img src="https://picsum.photos/seed/b/600/400" alt="foto 2">
+          <img src="https://picsum.photos/seed/c/600/400" alt="foto 3">
+          <img src="https://picsum.photos/seed/d/600/400" alt="foto 4">
+        </div>
+      </div>
+
+      <aside class="card" id="contacto">
+        <h2>Contacto</h2>
+        <p class="lead">Envía un mensaje (simulación — no requiere servidor).</p>
+        <form id="contactForm">
+          <label for="name">Nombre</label>
+          <input id="name" type="text" placeholder="Tu nombre" required>
+
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="tu@correo.com" required>
+
+          <label for="message">Mensaje</label>
+          <textarea id="message" rows="4" placeholder="¿En qué te puedo ayudar?" required></textarea>
+
+          <button type="submit">Enviar</button>
+          <div id="formResult" style="margin-top:10px;color:var(--muted);font-size:0.95rem"></div>
+        </form>
+
+        <script>
+          // Validación y envío simulado. Reemplaza la parte fetch() si conectas un backend.
+          document.getElementById('contactForm').addEventListener('submit', function(e){
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const result = document.getElementById('formResult');
+
+            if(!name || !email || !message){ result.textContent = 'Por favor completa todos los campos.'; return }
+            // validación muy básica de email
+            if(!/^\S+@\S+\.\S+$/.test(email)){ result.textContent = 'Introduce un email válido.'; return }
+
+            // Simular envío
+            result.textContent = 'Enviando...';
+            setTimeout(()=>{
+              result.textContent = 'Mensaje enviado. Gracias, ' + name + '! (envío simulado)';
+              document.getElementById('contactForm').reset();
+            },900);
+          });
+        </script>
+
+      </aside>
+    </div>
+
+    <footer>
+      © "TuWeb" — Página demo • Puedes clonar y personalizar este archivo para tu proyecto.
+    </footer>
+
+    <!--
+      Instrucciones para usar:
+      1. Guarda este archivo como pagina_demo.html
+      2. Ábrelo localmente en tu navegador o súbelo a un hosting estático (GitHub Pages, Netlify, Vercel, etc.)
+      3. Para integrar un backend, reemplaza la parte del script que simula el envío con una llamada fetch() al endpoint de tu servidor.
+    -->
+  </div>
+</body>
+</html>
