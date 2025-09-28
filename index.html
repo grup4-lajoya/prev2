@@ -1,79 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Página con Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Portal - FAP</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
+      background-color: #f4f6fa; /* fondo claro neutro */
+      color: #222;
     }
 
-    /* Menú horizontal */
+    /* Menú superior estilo FAP */
     nav {
-      background-color: #333;
-      overflow: hidden;
+      background-color: #002147; /* azul FAP oscuro */
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+
+    nav li {
+      margin: 0;
     }
 
     nav a {
-      float: left;
       display: block;
-      color: white;
-      text-align: center;
-      padding: 14px 20px;
+      padding: 16px 24px;
+      color: #fff;
       text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     nav a:hover {
-      background-color: #575757;
-    }
-
-    /* Contenedor */
-    #contenido {
-      padding: 20px;
-    }
-
-    iframe {
-      width: 100%;
-      height: 600px;
-      border: none;
-      display: none; /* Ocultos por defecto */
-    }
-  </style>
-</head>
-<body onload="mostrar('dashboard')"><!-- Carga inicial dashboard -->
-
-  <!-- Menú -->
-  <nav>
-    <a href="#" onclick="mostrar('dashboard')">Panorama Accidentes</a>
-    <a href="#" onclick="mostrar('form1')">Formulario 1</a>
-    <a href="#" onclick="mostrar('form2')">Formulario 2</a>
-  </nav>
-
-  <!-- Contenido dinámico -->
-  <div id="contenido">
-    <!-- Dashboard -->
-    <iframe id="dashboard" 
-      src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF"
-      frameborder="0" style="border:0" allowfullscreen 
-      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
-    </iframe>
-
-    <!-- Formularios (cuando los tengas, pega aquí los iframes de Google Forms o AppSheet) -->
-    <iframe id="form1" src=""></iframe>
-    <iframe id="form2" src=""></iframe>
-  </div>
-
-  <script>
-    function mostrar(id) {
-      // Oculta todos los iframes
-      document.querySelectorAll("#contenido iframe").forEach(el => el.style.display = "none");
-      // Muestra el que corresponde
-      document.getElementById(id).style.display = "block";
-    }
-  </script>
-
-</body>
-</html>
-
+      background-color: #003366; /* azul intermedio */
+      color: #e
