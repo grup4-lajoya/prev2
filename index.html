@@ -49,4 +49,82 @@
 
     nav a:hover {
       background-color: #003366; /* azul intermedio */
-      color: #e
+      color: #e6e6e6;
+    }
+
+    nav a.active {
+      background-color: #0056A6; /* azul contraste */
+      color: #fff;
+    }
+
+    /* Contenedor principal */
+    #contenido {
+      padding: 20px;
+    }
+
+    .titulo-seccion {
+      margin-bottom: 16px;
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #003366; /* azul intermedio para títulos */
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 90px); /* ocupa toda la pantalla menos menú + título */
+      border: none;
+      display: none; /* oculto por defecto */
+    }
+  </style>
+</head>
+<body onload="mostrar('dashboard')">
+
+  <!-- Menú -->
+  <nav>
+    <ul>
+      <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
+      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Formulario 1</a></li>
+      <li><a href="#" id="menu-form2" onclick="mostrar('form2')">Formulario 2</a></li>
+    </ul>
+  </nav>
+
+  <!-- Contenido dinámico -->
+  <div id="contenido">
+    <div class="titulo-seccion" id="titulo-contenido">Panorama Accidentes</div>
+
+    <!-- Dashboard -->
+    <iframe id="dashboard" 
+      src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
+      allowfullscreen
+      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
+    </iframe>
+
+    <!-- Formularios (pendientes de enlazar) -->
+    <iframe id="form1" src=""></iframe>
+    <iframe id="form2" src=""></iframe>
+  </div>
+
+  <script>
+    function mostrar(id) {
+      // Ocultar todos los iframes
+      document.querySelectorAll("#contenido iframe").forEach(el => el.style.display = "none");
+      // Mostrar el correspondiente
+      document.getElementById(id).style.display = "block";
+
+      // Cambiar título
+      let titulo = {
+        'dashboard': 'Panorama Accidentes',
+        'form1': 'Formulario 1',
+        'form2': 'Formulario 2'
+      };
+      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
+
+      // Marcar menú activo
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      document.getElementById('menu-' + id).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
+
