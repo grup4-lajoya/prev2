@@ -62,16 +62,9 @@
       padding: 20px;
     }
 
-    .titulo-seccion {
-      margin-bottom: 16px;
-      font-size: 1.4em;
-      font-weight: bold;
-      color: #003366; /* azul intermedio para títulos */
-    }
-
     iframe {
       width: 100%;
-      height: calc(100vh - 90px); /* ocupa toda la pantalla menos menú + título */
+      height: calc(100vh - 90px); /* ocupa toda la pantalla menos menú */
       border: none;
       display: none; /* oculto por defecto */
     }
@@ -83,7 +76,7 @@
   <nav>
     <ul>
       <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
-      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Formulario 1</a></li>
+      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
       <li><a href="#" id="menu-form2" onclick="mostrar('form2')">Formulario 2</a></li>
     </ul>
   </nav>
@@ -97,8 +90,13 @@
       sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
     </iframe>
 
-    <!-- Formularios (pendientes de enlazar) -->
-    <iframe id="form1" src=""></iframe>
+    <!-- Formulario 1: Registro Accidentes / Incidentes -->
+    <iframe id="form1" 
+      src="https://www.appsheet.com/start/f7c09983-c872-4a72-aefa-e1403b722c68?platform=desktop#appName=Prevac-339788388&view=Datos"
+      allowfullscreen>
+    </iframe>
+
+    <!-- Formulario 2 -->
     <iframe id="form2" src=""></iframe>
   </div>
 
@@ -109,14 +107,6 @@
       // Mostrar el correspondiente
       document.getElementById(id).style.display = "block";
 
-      // Cambiar título
-      let titulo = {
-        'dashboard': 'Panorama Accidentes',
-        'form1': 'Formulario 1',
-        'form2': 'Formulario 2'
-      };
-      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
-
       // Marcar menú activo
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       document.getElementById('menu-' + id).classList.add('active');
@@ -125,4 +115,5 @@
 
 </body>
 </html>
+
 
