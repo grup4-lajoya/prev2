@@ -3,174 +3,230 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema de Accidentes - FAP</title>
+  <title>Registro Accidentes / Incidentes</title>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; background-color: #f4f6fa; color: #222; }
-    nav { background-color: #002147; color: #fff; display: flex; justify-content: center; }
-    nav ul { list-style: none; margin: 0; padding: 0; display: flex; }
-    nav a { display: block; padding: 16px 24px; color: #fff; text-decoration: none; }
-    nav a:hover { background: #003366; }
-    nav a.active { background: #0056A6; }
-    #contenido { padding: 20px; }
-    iframe { width: 100%; height: calc(100vh - 90px); border: none; display: none; }
-    form { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; }
-    form input { width: 100%; padding: 8px; margin: 6px 0 16px; }
-    form button { background: #0056A6; color: #fff; padding: 12px; border: none; width: 100%; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #0056A6; color: white; }
-    button.action { padding: 4px 8px; margin: 2px; cursor: pointer; }
-    #mensaje { margin-top: 10px; text-align: center; font-weight: bold; }
-    #filtros { margin: 15px 0; }
-    #filtros input { padding: 6px; margin-right: 10px; }
-    #exportar { background: green; color: white; padding: 8px 16px; border: none; cursor: pointer; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f6fa;
+      color: #222;
+    }
+
+    nav {
+      background-color: #002147;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+    }
+
+    nav li {
+      margin: 0;
+    }
+
+    nav a {
+      display: block;
+      padding: 16px 24px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: #003366;
+      color: #e6e6e6;
+    }
+
+    nav a.active {
+      background-color: #0056A6;
+      color: #fff;
+    }
+
+    #contenido {
+      padding: 20px;
+    }
+
+    .titulo-seccion {
+      margin-bottom: 16px;
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #003366;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 90px);
+      border: none;
+      display: none;
+    }
+
+    form {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    form label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    form button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #0056A6;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background: #003366;
+    }
   </style>
 </head>
 <body onload="mostrar('dashboard')">
 
   <nav>
     <ul>
-      <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">📊 Panorama</a></li>
-      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">📝 Registrar</a></li>
-      <li><a href="#" id="menu-tabla" onclick="mostrar('tabla')">📂 Consultar</a></li>
+      <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
+      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
     </ul>
   </nav>
 
   <div id="contenido">
-    <!-- Dashboard -->
+    <h2 id="titulo-contenido" class="titulo-seccion">Panorama Accidentes</h2>
+
     <iframe id="dashboard" 
-      src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal">
+      src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
+      allowfullscreen
+      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
     </iframe>
 
     <!-- Formulario -->
     <div id="form1" style="display:none;">
-      <h2>Registro Accidentes / Incidentes</h2>
-      <form id="formAccidente">
-        <input type="hidden" name="row">
-        <label>País:</label><input type="text" name="pais" required>
-        <label>Región:</label><input type="text" name="region">
-        <label>Fecha:</label><input type="date" name="fecha" required>
-        <label>Año:</label><input type="number" name="anio">
-        <label>Tipo:</label><input type="text" name="tipo">
-        <label>Cant. Tipo:</label><input type="number" name="cant_tipo">
-        <label>Cant. Fall:</label><input type="number" name="cant_fall">
-        <label>Factor:</label><input type="text" name="factor">
-        <label>Tipo Ocurrencia:</label><input type="text" name="tipo_ocurrencia">
-        <label>Tipo Aeronave:</label><input type="text" name="tipo_aeronave">
-        <label>Nacionalidad:</label><input type="text" name="nacionalidad">
-        <label>Matrícula:</label><input type="text" name="matricula">
-        <label>Tipo Operación:</label><input type="text" name="tipo_operacion">
-        <label>Fase:</label><input type="text" name="fase">
-        <label>Daño:</label><input type="text" name="danio">
-        <label>Lesión:</label><input type="text" name="lesion">
-        <label>Unidad:</label><input type="text" name="unidad">
-        <label>Prueba:</label><input type="text" name="prueba">
+      <form id="accidenteForm">
+        <label>PAIS</label>
+        <input type="text" name="PAIS" required>
+        
+        <label>REGION</label>
+        <input type="text" name="REGION">
+
+        <label>FECHA</label>
+        <input type="date" name="FECHA">
+
+        <label>AÑO</label>
+        <input type="number" name="AÑO">
+
+        <label>TIPO</label>
+        <input type="text" name="TIPO">
+
+        <label>CANT. TIPO</label>
+        <input type="number" name="CANT_TIPO">
+
+        <label>CANT. FALL</label>
+        <input type="number" name="CANT_FALL">
+
+        <label>FACTOR</label>
+        <input type="text" name="FACTOR">
+
+        <label>TIPO OCURRENCIA</label>
+        <input type="text" name="TIPO_OCURRENCIA">
+
+        <label>TIPO AERONAVE</label>
+        <input type="text" name="TIPO_AERONAVE">
+
+        <label>NACIONALIDAD</label>
+        <input type="text" name="NACIONALIDAD">
+
+        <label>MATRICULA</label>
+        <input type="text" name="MATRICULA">
+
+        <label>TIPO OPERACIÓN</label>
+        <input type="text" name="TIPO_OPERACION">
+
+        <label>FASE</label>
+        <input type="text" name="FASE">
+
+        <label>DAÑO</label>
+        <input type="text" name="DAÑO">
+
+        <label>LESIÓN</label>
+        <input type="text" name="LESION">
+
+        <label>UNIDAD</label>
+        <input type="text" name="UNIDAD">
+
+        <label>PRUEBA</label>
+        <input type="text" name="PRUEBA">
+
         <button type="submit">Guardar</button>
       </form>
-      <p id="mensaje"></p>
-    </div>
-
-    <!-- Tabla -->
-    <div id="tabla" style="display:none;">
-      <h2>Consulta Accidentes</h2>
-      <div id="filtros">
-        <label>Filtrar por País:</label>
-        <input type="text" id="filtroPais" onkeyup="filtrar()">
-        <label>Filtrar por Año:</label>
-        <input type="text" id="filtroAnio" onkeyup="filtrar()">
-        <button id="exportar" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      </div>
-      <table id="tablaDatos">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
     </div>
   </div>
 
-<script>
-const URL = "https://script.google.com/macros/s/AKfycbw4CymPHjYlhWwSx29g-Z9hNU5dRg9yYP6S0NCAGf2y-o87L5mdyzWzjQM8m4NWudQY/exec";
+  <script>
+    function mostrar(id) {
+      document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
+      document.getElementById(id).style.display = "block";
 
-function mostrar(id) {
-  document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
-  document.getElementById(id).style.display = "block";
-  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-  document.getElementById('menu-' + id).classList.add('active');
-  if(id==="tabla"){ cargarDatos(); }
-}
+      let titulo = {
+        'dashboard': 'Panorama Accidentes',
+        'form1': 'Registro Accidentes / Incidentes'
+      };
+      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
 
-document.getElementById("formAccidente").addEventListener("submit", function(e){
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(this).entries());
-  data.action = data.row ? "update" : "insert";
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      document.getElementById('menu-' + id).classList.add('active');
+    }
 
-  fetch(URL, {method:"POST", body:JSON.stringify(data)})
-  .then(r=>r.json()).then(res=>{
-    document.getElementById("mensaje").innerText = res.result==="ok" ? "✅ Guardado con éxito" : "❌ Error";
-    this.reset(); this.row.value="";
-    cargarDatos();
-  });
-});
+    document.getElementById("accidenteForm").addEventListener("submit", function(e){
+      e.preventDefault();
 
-function cargarDatos(){
-  fetch(URL).then(r=>r.json()).then(rows=>{
-    let thead = document.querySelector("#tablaDatos thead");
-    let tbody = document.querySelector("#tablaDatos tbody");
-    thead.innerHTML=""; tbody.innerHTML="";
-    if(rows.length===0) return;
-    // encabezados
-    let headers = Object.keys(rows[0]);
-    thead.innerHTML = "<tr><th>#</th>"+headers.map(h=>"<th>"+h+"</th>").join("")+"<th>Acciones</th></tr>";
-    // filas
-    rows.forEach((r,i)=>{
-      let tr="<tr><td>"+(i+2)+"</td>";
-      headers.forEach(h=> tr+="<td>"+(r[h]||"")+"</td>");
-      tr+=`<td>
-        <button class="action" onclick='editar(${i+2},${JSON.stringify(r)})'>✏️</button>
-        <button class="action" onclick='eliminar(${i+2})'>🗑️</button>
-      </td></tr>`;
-      tbody.innerHTML+=tr;
+      let formData = new FormData(this);
+
+      fetch("https://script.google.com/macros/s/AKfycbw4CymPHjYlhWwSx29g-Z9hNU5dRg9yYP6S0NCAGf2y-o87L5mdyzWzjQM8m4NWudQY/exec", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(data => {
+        alert("Datos guardados correctamente ✅");
+        document.getElementById("accidenteForm").reset();
+      })
+      .catch(err => {
+        alert("Error al guardar ❌ " + err);
+      });
     });
-  });
-}
-
-function editar(row,data){
-  mostrar('form1');
-  let f=document.getElementById("formAccidente");
-  for(let k in data){ if(f[k]) f[k].value=data[k]; }
-  f.row.value=row;
-}
-
-function eliminar(row){
-  if(!confirm("¿Eliminar registro?")) return;
-  fetch(URL,{method:"POST",body:JSON.stringify({action:"delete",row:row})})
-  .then(r=>r.json()).then(()=>cargarDatos());
-}
-
-function filtrar(){
-  let pais=document.getElementById("filtroPais").value.toLowerCase();
-  let anio=document.getElementById("filtroAnio").value.toLowerCase();
-  document.querySelectorAll("#tablaDatos tbody tr").forEach(tr=>{
-    let c=tr.cells;
-    let match=(!pais||c[1].innerText.toLowerCase().includes(pais)) &&
-              (!anio||c[4].innerText.toLowerCase().includes(anio));
-    tr.style.display=match?"":"none";
-  });
-}
-
-// Exportar a CSV
-function exportarCSV(){
-  let filas=[...document.querySelectorAll("#tablaDatos tr")];
-  let csv=filas.map(tr=>{
-    let cols=[...tr.querySelectorAll("th,td")].map(td=>`"${td.innerText}"`);
-    return cols.join(",");
-  }).join("\n");
-  let blob=new Blob([csv],{type:"text/csv"});
-  let link=document.createElement("a");
-  link.href=URL.createObjectURL(blob);
-  link.download="accidentes.csv";
-  link.click();
-}
-</script>
+  </script>
 </body>
 </html>
 
