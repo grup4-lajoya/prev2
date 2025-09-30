@@ -5,111 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Registro Accidentes / Incidentes</title>
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f4f6fa;
-    color: #222;
-  }
-
-  nav {
-    background-color: #002147;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  }
-
-  nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-  }
-
-  nav li { margin: 0; }
-
-  nav a {
-    display: block;
-    padding: 16px 24px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  nav a:hover { background-color: #003366; color: #e6e6e6; }
-  nav a.active { background-color: #0056A6; color: #fff; }
-
-  #contenido { padding: 20px; }
-
-  .titulo-seccion {
-    margin-bottom: 16px;
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #003366;
-  }
-
-  iframe {
-    width: 100%;
-    height: calc(100vh - 90px);
-    border: none;
-    display: none;
-  }
-
-  form {
-    max-width: 900px;
-    margin: 0 auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-
-  form label {
-    font-weight: bold;
-    display: block;
-    margin-top: 10px;
-  }
-
-  form input, form select {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-
-  form button {
-    margin-top: 15px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    background: #0056A6;
-    color: #fff;
-    font-size: 1em;
-    cursor: pointer;
-  }
-  form button:hover { background: #003366; }
-
-  #logoutButton {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    background: #0056A6;
-    color: #fff;
-    cursor: pointer;
-  }
-  #logoutButton:hover { background: #003366; }
+  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; }
+  nav { background-color:#002147; color:#fff; display:flex; justify-content:center; align-items:center; position:sticky; top:0; width:100%; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+  nav ul { list-style:none; margin:0; padding:0; display:flex; }
+  nav li { margin:0; }
+  nav a { display:block; padding:16px 24px; color:#fff; text-decoration:none; font-weight:600; letter-spacing:0.5px; transition: background-color 0.3s,color 0.3s; }
+  nav a:hover { background-color:#003366; color:#e6e6e6; }
+  nav a.active { background-color:#0056A6; color:#fff; }
+  #contenido { padding:20px; }
+  .titulo-seccion { margin-bottom:16px; font-size:1.4em; font-weight:bold; color:#003366; }
+  iframe { width:100%; height:calc(100vh - 90px); border:none; display:none; }
+  form { max-width:900px; margin:0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  form label { font-weight:bold; display:block; margin-top:10px; }
+  form input, form select { width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:4px; }
+  form button { margin-top:15px; padding:10px 20px; border:none; border-radius:6px; background:#0056A6; color:#fff; font-size:1em; cursor:pointer; }
+  form button:hover { background:#003366; }
+  #logoutButton { position:absolute; right:20px; top:15px; padding:8px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer; }
+  #logoutButton:hover { background:#003366; }
 </style>
 </head>
 <body onload="mostrar('dashboard')">
@@ -127,13 +39,10 @@
 
   // Bloquear botón Atrás mientras haya sesión activa
   if(localStorage.getItem("usuario")){
-    // Reemplaza el estado actual para eliminar el login del historial
-    history.replaceState(null, null, location.href);
-
-    // Cada vez que se detecte un intento de retroceso
-    window.addEventListener('popstate', function(event) {
+    history.replaceState(null,null,location.href);
+    window.addEventListener('popstate', function(event){
       if(localStorage.getItem("usuario")){
-        history.go(1); // Si hay sesión, volvemos al mismo dashboard
+        history.go(1);
       }
     });
   }
@@ -181,39 +90,32 @@
 
 <script>
   function mostrar(id) {
-    document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
-    document.getElementById(id).style.display = "block";
-
-    let titulo = {
-      'dashboard': 'Panorama Accidentes',
-      'form1': 'Registro Accidentes / Incidentes'
-    };
+    document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display="none");
+    document.getElementById(id).style.display="block";
+    let titulo = { 'dashboard':'Panorama Accidentes', 'form1':'Registro Accidentes / Incidentes' };
     document.getElementById('titulo-contenido').innerText = titulo[id] || '';
-
-    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-    document.getElementById('menu-' + id).classList.add('active');
+    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+    document.getElementById('menu-'+id).classList.add('active');
   }
 
   document.getElementById("accidenteForm").addEventListener("submit", function(e){
     e.preventDefault();
     let formData = new FormData(this);
-
     fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
       method: "POST",
       body: formData
     })
-    .then(res => res.text())
-    .then(data => {
+    .then(res=>res.text())
+    .then(data=>{
       alert("Datos guardados correctamente ✅");
       document.getElementById("accidenteForm").reset();
     })
-    .catch(err => {
-      alert("Error al guardar ❌ " + err);
+    .catch(err=>{
+      alert("Error al guardar ❌ "+err);
     });
   });
 </script>
 
 </body>
 </html>
-
 
