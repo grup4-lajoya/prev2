@@ -14,12 +14,8 @@
   nav a.active { background-color:#0056A6; color:#fff; }
   #contenido { padding:20px; }
   .titulo-seccion { margin-bottom:16px; font-size:1.4em; font-weight:bold; color:#003366; }
-  iframe { width:100%; height:calc(100vh - 90px); border:none; display:none; }
-  form { max-width:900px; margin:0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-  form label { font-weight:bold; display:block; margin-top:10px; }
-  form input, form select { width:100%; padding:8px; margin-top:5px; border:1px solid #ccc; border-radius:4px; }
-  form button { margin-top:15px; padding:10px 20px; border:none; border-radius:6px; background:#0056A6; color:#fff; font-size:1em; cursor:pointer; }
-  form button:hover { background:#003366; }
+  iframe { width:100%; height:calc(100vh - 90px); border:none; display:block; }
+  #form1 { max-width:900px; margin:0 auto; display:none; }
   #logoutButton { position:absolute; right:20px; top:15px; padding:8px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer; }
   #logoutButton:hover { background:#003366; }
 </style>
@@ -46,6 +42,33 @@
       }
     });
   }
+
+  // Función para mostrar dashboard o formularios
+  function mostrar(id) {
+    document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display="none");
+
+    if(id === "form1"){
+      const contenedor = document.getElementById("form1");
+      // Cargar el formulario desde archivo externo
+      fetch("form1.html")
+        .then(res => res.text())
+        .then(html => {
+          contenedor.innerHTML = html;
+          contenedor.style.display = "block";
+        })
+        .catch(err => alert("Error al cargar el formulario: " + err));
+    } else {
+      document.getElementById(id).style.display="block";
+    }
+
+    let titulo = { 'dashboard':'Panorama Accidentes', 'form1':'Registro Accidentes / Incidentes' };
+    // Opcional: si quieres mostrar el título dinámico
+    if(document.getElementById('titulo-contenido')){
+      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
+    }
+    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+    document.getElementById('menu-'+id).classList.add('active');
+  }
 </script>
 
 <nav>
@@ -63,58 +86,9 @@
     sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
   </iframe>
 
-  <div id="form1" style="display:none;">
-    <form id="accidenteForm">
-      <label>PAIS</label><input type="text" name="PAIS" required>
-      <label>REGION</label><input type="text" name="REGION">
-      <label>FECHA</label><input type="date" name="FECHA">
-      <label>AÑO</label><input type="number" name="AÑO">
-      <label>TIPO</label><input type="text" name="TIPO">
-      <label>CANT. TIPO</label><input type="number" name="CANT_TIPO">
-      <label>CANT. FALL</label><input type="number" name="CANT_FALL">
-      <label>FACTOR</label><input type="text" name="FACTOR">
-      <label>TIPO OCURRENCIA</label><input type="text" name="TIPO_OCURRENCIA">
-      <label>TIPO AERONAVE</label><input type="text" name="TIPO_AERONAVE">
-      <label>NACIONALIDAD</label><input type="text" name="NACIONALIDAD">
-      <label>MATRICULA</label><input type="text" name="MATRICULA">
-      <label>TIPO OPERACIÓN</label><input type="text" name="TIPO_OPERACION">
-      <label>FASE</label><input type="text" name="FASE">
-      <label>DAÑO</label><input type="text" name="DAÑO">
-      <label>LESIÓN</label><input type="text" name="LESION">
-      <label>UNIDAD</label><input type="text" name="UNIDAD">
-      <label>PRUEBA</label><input type="text" name="PRUEBA">
-      <button type="submit">Guardar</button>
-    </form>
-  </div>
+  <!-- Contenedor para el formulario externo -->
+  <div id="form1"></div>
 </div>
-
-<script>
-  function mostrar(id) {
-    document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display="none");
-    document.getElementById(id).style.display="block";
-    let titulo = { 'dashboard':'Panorama Accidentes', 'form1':'Registro Accidentes / Incidentes' };
-    document.getElementById('titulo-contenido').innerText = titulo[id] || '';
-    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-    document.getElementById('menu-'+id).classList.add('active');
-  }
-
-  document.getElementById("accidenteForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    let formData = new FormData(this);
-    fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
-      method: "POST",
-      body: formData
-    })
-    .then(res=>res.text())
-    .then(data=>{
-      alert("Datos guardados correctamente ✅");
-      document.getElementById("accidenteForm").reset();
-    })
-    .catch(err=>{
-      alert("Error al guardar ❌ "+err);
-    });
-  });
-</script>
 
 </body>
 </html>
