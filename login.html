@@ -91,8 +91,8 @@
       const clave = document.getElementById("clave").value;
       const hash = await hashPassword(clave);
 
-      // Llama a tu App Script para verificar usuario + hash
-      fetch("https://script.google.com/macros/s/AKfycbzqJDf6SPZCeIbDMOu1AxVSTTOth_KTg8WlnxdDMO1yJLwKopE8PqbIebANH022aGh1/exec", {
+      // ✅ Aquí va tu nueva URL de Apps Script
+      fetch("https://script.google.com/macros/s/AKfycbx9mWpwdl58FwgcvvM5jfZ_Hvybqd2pXG9NOKBOgn5OI3abQIoe16e7Y8EqH1cFXelO/exec", {
         method: "POST",
         body: new URLSearchParams({
           accion: "login",
@@ -103,12 +103,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // ✅ Guardar sesión en localStorage
-          localStorage.setItem("usuario", usuario);
-          localStorage.setItem("rol", data.rol || "");
-          localStorage.setItem("correo", data.correo || "");
-
-          // Redirigir al dashboard principal
+          // ✅ Login correcto → redirige a tu index.html
           window.location.href = "index.html";
         } else {
           document.getElementById("error").innerText = "Usuario o clave incorrectos";
