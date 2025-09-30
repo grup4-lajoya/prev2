@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Seguro</title>
 <style>
-  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; margin: 0; transition: all 0.3s; }
-  body.loading { overflow: hidden; }
-
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; margin: 0; }
+  
   /* Formulario */
   #loginForm {
     background: white;
@@ -15,44 +14,11 @@
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     width: 300px;
-    position: relative;
-    z-index: 1;
-    transition: filter 0.3s;
   }
-  #loginForm.blur { filter: blur(2px); }
   h2 { text-align: center; margin-bottom: 20px; }
   input { display: block; width: 100%; margin: 10px 0; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
   button { width: 100%; padding: 10px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; }
   button:hover { background: #004494; }
-
-  /* Overlay con spinner */
-  #loadingOverlay {
-    display: none;           /* oculto por defecto */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.8);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-  }
-
-  /* Spinner */
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #0056b3;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
-  }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-  #loadingOverlay div { color: #0056b3; text-align: center; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -64,62 +30,37 @@
   <button type="submit">Ingresar</button>
 </form>
 
-<!-- Overlay con spinner -->
-<div id="loadingOverlay">
-  <div class="spinner"></div>
-  <div>Actualizando página, por favor espere...</div>
-</div>
-
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  const loginForm = document.getElementById("loginForm");
-  const loadingOverlay = document.getElementById("loadingOverlay");
+document.getElementById("loginForm").addEventListener("submit", async function(e){
+  e.preventDefault();
 
-  loginForm.addEventListener("submit", async function(e){
-    e.preventDefault();
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
 
-    const usuario = document.getElementById("usuario").value.trim();
-    const clave = document.getElementById("clave").value.trim();
+  const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
 
-    // Mostrar overlay y difuminar formulario
-    loadingOverlay.style.display = "flex";
-    loginForm.classList.add("blur");
-    document.body.classList.add("loading");
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
+    });
 
-    const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
+    const result = await response.json();
 
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
-      });
+    if(result.success){
+      localStorage.setItem("usuario", usuario);
+      localStorage.setItem("rol", result.rol);
+      localStorage.setItem("correo", result.correo);
 
-      const result = await response.json();
-
-      if(result.success){
-        localStorage.setItem("usuario", usuario);
-        localStorage.setItem("rol", result.rol);
-        localStorage.setItem("correo", result.correo);
-
-        // Redirigir al dashboard
-        setTimeout(() => {
-          window.location.href = "https://msilva-ux.github.io/prev2/#";
-        }, 500);
-      } else {
-        // Ocultar overlay y quitar blur si error
-        loadingOverlay.style.display = "none";
-        loginForm.classList.remove("blur");
-        document.body.classList.remove("loading");
-        alert("Usuario o clave incorrectos");
-      }
-    } catch(err){
-      loadingOverlay.style.display = "none";
-      loginForm.classList.remove("blur");
-      document.body.classList.remove("loading");
-      console.error(err);
-      alert("Error de conexión. Intente nuevamente.");
+      // Redirigir al dashboard
+      window.location.href = "https://msilva-ux.github.io/prev2/#";
+    } else {
+      alert("Usuario o clave incorrectos");
     }
-  });
+  } catch(err){
+    console.error(err);
+    alert("Error de conexión. Intente nuevamente.");
+  }
 });
 </script>
 
