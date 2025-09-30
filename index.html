@@ -1,232 +1,206 @@
 <!DOCTYPE html> 
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registro Accidentes / Incidentes</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f6fa;
-      color: #222;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Registro Accidentes / Incidentes</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f6fa;
+    color: #222;
+  }
 
-    nav {
-      background-color: #002147;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      width: 100%;
-      z-index: 1000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
+  nav {
+    background-color: #002147;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
 
-    nav ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-    }
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
 
-    nav li {
-      margin: 0;
-    }
+  nav li { margin: 0; }
 
-    nav a {
-      display: block;
-      padding: 16px 24px;
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
+  nav a {
+    display: block;
+    padding: 16px 24px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 
-    nav a:hover {
-      background-color: #003366;
-      color: #e6e6e6;
-    }
+  nav a:hover { background-color: #003366; color: #e6e6e6; }
+  nav a.active { background-color: #0056A6; color: #fff; }
 
-    nav a.active {
-      background-color: #0056A6;
-      color: #fff;
-    }
+  #contenido { padding: 20px; }
 
-    #contenido {
-      padding: 20px;
-    }
+  .titulo-seccion {
+    margin-bottom: 16px;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #003366;
+  }
 
-    .titulo-seccion {
-      margin-bottom: 16px;
-      font-size: 1.4em;
-      font-weight: bold;
-      color: #003366;
-    }
+  iframe {
+    width: 100%;
+    height: calc(100vh - 90px);
+    border: none;
+    display: none;
+  }
 
-    iframe {
-      width: 100%;
-      height: calc(100vh - 90px);
-      border: none;
-      display: none;
-    }
+  form {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
 
-    form {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+  form label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+  }
 
-    form label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
+  form input, form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
 
-    form input, form select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
+  form button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #0056A6;
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  form button:hover { background: #003366; }
 
-    form button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      background: #0056A6;
-      color: #fff;
-      font-size: 1em;
-      cursor: pointer;
-    }
-
-    form button:hover {
-      background: #003366;
-    }
-  </style>
+  #logoutButton {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #0056A6;
+    color: #fff;
+    cursor: pointer;
+  }
+  #logoutButton:hover { background: #003366; }
+</style>
 </head>
 <body onload="mostrar('dashboard')">
 
-  <nav>
-    <ul>
-      <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
-      <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
-    </ul>
-  </nav>
+<script>
+  // Verificar sesión al cargar
+  if(!localStorage.getItem("usuario")) {
+    window.location.replace("login.html");
+  }
 
-  <div id="contenido">
-    <h2 id="titulo-contenido" class="titulo-seccion">Panorama Accidentes</h2>
+  function cerrarSesion() {
+    localStorage.clear();
+    window.location.replace("login.html");
+  }
+</script>
 
-    <!-- Dashboard -->
-    <iframe id="dashboard" 
-      src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
-      allowfullscreen
-      sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
-    </iframe>
+<nav>
+  <ul>
+    <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
+    <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
+  </ul>
+  <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
+</nav>
 
-    <!-- Formulario -->
-    <div id="form1" style="display:none;">
-      <form id="accidenteForm">
-        <label>PAIS</label>
-        <input type="text" name="PAIS" required>
-        
-        <label>REGION</label>
-        <input type="text" name="REGION">
+<div id="contenido">
+  <h2 id="titulo-contenido" class="titulo-seccion">Panorama Accidentes</h2>
 
-        <label>FECHA</label>
-        <input type="date" name="FECHA">
+  <iframe id="dashboard" 
+    src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
+    allowfullscreen
+    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
+  </iframe>
 
-        <label>AÑO</label>
-        <input type="number" name="AÑO">
-
-        <label>TIPO</label>
-        <input type="text" name="TIPO">
-
-        <label>CANT. TIPO</label>
-        <input type="number" name="CANT_TIPO">
-
-        <label>CANT. FALL</label>
-        <input type="number" name="CANT_FALL">
-
-        <label>FACTOR</label>
-        <input type="text" name="FACTOR">
-
-        <label>TIPO OCURRENCIA</label>
-        <input type="text" name="TIPO_OCURRENCIA">
-
-        <label>TIPO AERONAVE</label>
-        <input type="text" name="TIPO_AERONAVE">
-
-        <label>NACIONALIDAD</label>
-        <input type="text" name="NACIONALIDAD">
-
-        <label>MATRICULA</label>
-        <input type="text" name="MATRICULA">
-
-        <label>TIPO OPERACIÓN</label>
-        <input type="text" name="TIPO_OPERACION">
-
-        <label>FASE</label>
-        <input type="text" name="FASE">
-
-        <label>DAÑO</label>
-        <input type="text" name="DAÑO">
-
-        <label>LESIÓN</label>
-        <input type="text" name="LESION">
-
-        <label>UNIDAD</label>
-        <input type="text" name="UNIDAD">
-
-        <label>PRUEBA</label>
-        <input type="text" name="PRUEBA">
-
-        <button type="submit">Guardar</button>
-      </form>
-    </div>
+  <div id="form1" style="display:none;">
+    <form id="accidenteForm">
+      <label>PAIS</label><input type="text" name="PAIS" required>
+      <label>REGION</label><input type="text" name="REGION">
+      <label>FECHA</label><input type="date" name="FECHA">
+      <label>AÑO</label><input type="number" name="AÑO">
+      <label>TIPO</label><input type="text" name="TIPO">
+      <label>CANT. TIPO</label><input type="number" name="CANT_TIPO">
+      <label>CANT. FALL</label><input type="number" name="CANT_FALL">
+      <label>FACTOR</label><input type="text" name="FACTOR">
+      <label>TIPO OCURRENCIA</label><input type="text" name="TIPO_OCURRENCIA">
+      <label>TIPO AERONAVE</label><input type="text" name="TIPO_AERONAVE">
+      <label>NACIONALIDAD</label><input type="text" name="NACIONALIDAD">
+      <label>MATRICULA</label><input type="text" name="MATRICULA">
+      <label>TIPO OPERACIÓN</label><input type="text" name="TIPO_OPERACION">
+      <label>FASE</label><input type="text" name="FASE">
+      <label>DAÑO</label><input type="text" name="DAÑO">
+      <label>LESIÓN</label><input type="text" name="LESION">
+      <label>UNIDAD</label><input type="text" name="UNIDAD">
+      <label>PRUEBA</label><input type="text" name="PRUEBA">
+      <button type="submit">Guardar</button>
+    </form>
   </div>
+</div>
 
-  <script>
-    function mostrar(id) {
-      document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
-      document.getElementById(id).style.display = "block";
+<script>
+  function mostrar(id) {
+    document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
+    document.getElementById(id).style.display = "block";
 
-      let titulo = {
-        'dashboard': 'Panorama Accidentes',
-        'form1': 'Registro Accidentes / Incidentes'
-      };
-      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
+    let titulo = {
+      'dashboard': 'Panorama Accidentes',
+      'form1': 'Registro Accidentes / Incidentes'
+    };
+    document.getElementById('titulo-contenido').innerText = titulo[id] || '';
 
-      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      document.getElementById('menu-' + id).classList.add('active');
-    }
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('menu-' + id).classList.add('active');
+  }
 
-    document.getElementById("accidenteForm").addEventListener("submit", function(e){
-      e.preventDefault();
+  document.getElementById("accidenteForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    let formData = new FormData(this);
 
-      let formData = new FormData(this);
-
-      fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.text())
-      .then(data => {
-        alert("Datos guardados correctamente ✅");
-        document.getElementById("accidenteForm").reset();
-      })
-      .catch(err => {
-        alert("Error al guardar ❌ " + err);
-      });
+    fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.text())
+    .then(data => {
+      alert("Datos guardados correctamente ✅");
+      document.getElementById("accidenteForm").reset();
+    })
+    .catch(err => {
+      alert("Error al guardar ❌ " + err);
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>
