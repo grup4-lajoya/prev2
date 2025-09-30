@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Seguro</title>
 <style>
-  /* Fondo azul estilo Fuerza Aérea del Perú */
   body {
     font-family: 'Arial', sans-serif;
     background: linear-gradient(135deg, #003366, #004080);
@@ -16,14 +15,13 @@
     margin: 0;
   }
 
-  /* Tarjeta del login */
   #loginForm {
     background: #fff;
     padding: 25px 30px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     width: 100%;
-    max-width: 320px; /* limita ancho en pantallas grandes */
+    max-width: 320px;
     text-align: center;
     transition: transform 0.2s, box-shadow 0.2s;
   }
@@ -38,7 +36,6 @@
     color: #004080;
   }
 
-  /* Inputs y botón alineados */
   input, button {
     width: 100%;
     border-radius: 6px;
@@ -72,7 +69,6 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
-  /* Mensaje procesando animado */
   #mensajeProcesando {
     display: none;
     margin-top: 10px;
@@ -91,16 +87,12 @@
     10%, 30%, 60%, 90% { opacity: 1; }
   }
 
-  /* Responsive */
   @media (max-width: 400px) {
     #loginForm {
       padding: 20px;
       width: 90%;
     }
-    input, button {
-      font-size: 14px;
-      padding: 8px;
-    }
+    input, button { font-size: 14px; padding: 8px; }
     h2 { font-size: 20px; }
   }
 </style>
@@ -116,44 +108,48 @@
 </form>
 
 <script>
-document.getElementById("loginForm").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const usuario = document.getElementById("usuario").value.trim();
-  const clave = document.getElementById("clave").value.trim();
-  const mensaje = document.getElementById("mensajeProcesando");
-
-  // Mostrar mensaje animado
-  mensaje.style.display = "block";
-
-  const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
-    });
-
-    const result = await response.json();
-
-    if(result.success){
-      localStorage.setItem("usuario", usuario);
-      localStorage.setItem("rol", result.rol);
-      localStorage.setItem("correo", result.correo);
-
-      window.location.href = "https://msilva-ux.github.io/prev2/#";
-    } else {
-      mensaje.style.display = "none";
-      alert("Usuario o clave incorrectos");
-    }
-  } catch(err){
-    mensaje.style.display = "none";
-    console.error(err);
-    alert("Error de conexión. Intente nuevamente.");
+  // Si ya hay sesión activa, redirige al dashboard
+  if(localStorage.getItem("usuario")) {
+    window.location.replace("index.html");
   }
-});
+
+  document.getElementById("loginForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+
+    const usuario = document.getElementById("usuario").value.trim();
+    const clave = document.getElementById("clave").value.trim();
+    const mensaje = document.getElementById("mensajeProcesando");
+
+    mensaje.style.display = "block";
+
+    const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
+      });
+
+      const result = await response.json();
+
+      if(result.success){
+        localStorage.setItem("usuario", usuario);
+        localStorage.setItem("rol", result.rol);
+        localStorage.setItem("correo", result.correo);
+
+        // Redirige al dashboard reemplazando historial
+        window.location.replace("index.html");
+      } else {
+        mensaje.style.display = "none";
+        alert("Usuario o clave incorrectos");
+      }
+    } catch(err){
+      mensaje.style.display = "none";
+      console.error(err);
+      alert("Error de conexión. Intente nuevamente.");
+    }
+  });
 </script>
 
 </body>
 </html>
-
