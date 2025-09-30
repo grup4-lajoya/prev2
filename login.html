@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>Login (Debug)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -26,43 +26,17 @@
       margin-bottom: 20px;
       color: #002147;
     }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 20px;
-      border: none;
-      border-radius: 6px;
-      background: #0056A6;
-      color: white;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #003366;
-    }
-    .error {
-      color: red;
-      font-size: 0.9em;
-      margin-top: 10px;
-      text-align: center;
-    }
+    label { font-weight: bold; display: block; margin-top: 10px; }
+    input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 10px; margin-top: 20px; border: none; border-radius: 6px; background: #0056A6; color: white; cursor: pointer; }
+    button:hover { background: #003366; }
+    .error { color: red; font-size: 0.9em; margin-top: 10px; text-align: center; }
+    .debug { font-size: 0.8em; margin-top: 10px; background: #eef; padding: 5px; border-radius: 4px; word-wrap: break-word; }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <h2>Iniciar Sesión</h2>
+    <h2>Iniciar Sesión (Debug)</h2>
     <form id="loginForm">
       <label for="usuario">Usuario</label>
       <input type="text" id="usuario" name="usuario" required>
@@ -72,11 +46,11 @@
 
       <button type="submit">Entrar</button>
       <div id="error" class="error"></div>
+      <div id="debug" class="debug"></div>
     </form>
   </div>
 
   <script>
-    // Convierte una contraseña en SHA-256 HEX
     async function hashPassword(password) {
       const msgBuffer = new TextEncoder().encode(password);
       const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
@@ -91,7 +65,8 @@
       const clave = document.getElementById("clave").value;
       const hash = await hashPassword(clave);
 
-      // ✅ Aquí va tu nueva URL de Apps Script
+      document.getElementById("debug").innerText = `Usuario: ${usuario}\nHash enviado: ${hash}`;
+
       fetch("https://script.google.com/macros/s/AKfycbx9mWpwdl58FwgcvvM5jfZ_Hvybqd2pXG9NOKBOgn5OI3abQIoe16e7Y8EqH1cFXelO/exec", {
         method: "POST",
         body: new URLSearchParams({
@@ -102,8 +77,8 @@
       })
       .then(res => res.json())
       .then(data => {
+        document.getElementById("debug").innerText += `\nRespuesta: ${JSON.stringify(data)}`;
         if (data.success) {
-          // ✅ Login correcto → redirige a tu index.html
           window.location.href = "index.html";
         } else {
           document.getElementById("error").innerText = "Usuario o clave incorrectos";
@@ -111,9 +86,11 @@
       })
       .catch(err => {
         document.getElementById("error").innerText = "Error en el servidor";
+        document.getElementById("debug").innerText += `\nError: ${err}`;
         console.error(err);
       });
     });
   </script>
 </body>
 </html>
+
