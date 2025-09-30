@@ -1,82 +1,32 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6fa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      width: 300px;
-    }
-    .login-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #002147;
-    }
-    label { font-weight: bold; display: block; margin-top: 10px; }
-    input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 10px; margin-top: 20px; border: none; border-radius: 6px; background: #0056A6; color: white; cursor: pointer; }
-    button:hover { background: #003366; }
-    .error { color: red; font-size: 0.9em; margin-top: 10px; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <h2>Iniciar Sesión</h2>
-    <form id="loginForm">
-      <label for="usuario">Usuario</label>
-      <input type="text" id="usuario" name="usuario" required>
+<form id="loginForm">
+  <input type="text" id="usuario" placeholder="Usuario" required>
+  <input type="password" id="clave" placeholder="Clave" required>
+  <button type="submit">Ingresar</button>
+</form>
 
-      <label for="clave">Clave</label>
-      <input type="password" id="clave" name="clave" required>
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function(e){
+  e.preventDefault();
 
-      <button type="submit">Entrar</button>
-      <div id="error" class="error"></div>
-    </form>
-  </div>
+  const usuario = document.getElementById("usuario").value;
+  const clave = document.getElementById("clave").value;
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+  const url = "https://script.google.com/macros/s/AKfycbyjzmZ-jpBz46-RnsOzLvmfOigbJn9z_qElr-SrtAAG4lfT0VhTOyvGcD55peERwtBa/exec"; // reemplaza con tu URL de Apps Script
 
-      const usuario = document.getElementById("usuario").value.trim();
-      const clave = document.getElementById("clave").value; // texto plano
+  const response = await fetch(url, {
+    method: "POST",
+    body: new URLSearchParams({usuario, clave})
+  });
+  
+  const result = await response.json();
 
-      fetch("https://script.google.com/macros/s/AKfycby-rV0ByAA5TQKLLsLwL7I0jIQd5nP3EITs8KTjq69bEZr2n7jJuKYSZJPAwQwzbP-L/exec", { // reemplaza con tu URL de Apps Script
-        method: "POST",
-        body: new URLSearchParams({
-          accion: "login",
-          usuario: usuario,
-          clave: clave
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          window.location.href = "https://msilva-ux.github.io/prev2/index.html"; // redirección al login exitoso
-        } else {
-          document.getElementById("error").innerText = "Usuario o clave incorrectos";
-        }
-      })
-      .catch(err => {
-        document.getElementById("error").innerText = "Error en el servidor";
-        console.error(err);
-      });
-    });
-  </script>
-</body>
-</html>
+  if(result.success){
+    // Login correcto → redirecciona
+    window.location.href = "https://msilva-ux.github.io/prev2/#";
+  } else {
+    alert("Usuario o clave incorrectos");
+  }
+});
+</script>
+
 
