@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
+<title>Login Seguro</title>
 <style>
   body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
   #loginForm { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 300px; }
@@ -29,23 +29,21 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
 
-  // URL de tu Web App de Apps Script
   const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
+
   try {
     const response = await fetch(url, {
       method: "POST",
-      body: new URLSearchParams({usuario, clave})
+      body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
     });
 
     const result = await response.json();
 
     if(result.success){
-      // Guardar info del usuario para usar en dashboard
       localStorage.setItem("usuario", usuario);
       localStorage.setItem("rol", result.rol);
       localStorage.setItem("correo", result.correo);
 
-      // Redireccionar al dashboard
       window.location.href = "https://msilva-ux.github.io/prev2/#";
     } else {
       alert("Usuario o clave incorrectos");
@@ -59,5 +57,3 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
 </body>
 </html>
-
-
