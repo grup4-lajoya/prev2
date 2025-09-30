@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Registro Accidentes</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 300px;
+      text-align: center;
+    }
+    .login-box h2 {
+      margin-bottom: 20px;
+      color: #003366;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 10px;
+      background: #0056A6;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .login-box button:hover {
+      background: #003366;
+    }
+    .error {
+      margin-top: 10px;
+      color: red;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Iniciar Sesión</h2>
+    <input type="text" id="usuario" placeholder="Usuario" required>
+    <input type="password" id="clave" placeholder="Contraseña" required>
+    <button onclick="login()">Entrar</button>
+    <div id="mensaje" class="error"></div>
+  </div>
+
+  <script>
+    async function hashClave(clave) {
+      const msgBuffer = new TextEncoder().encode(clave);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function login() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const clave = document.getElementById("clave").value;
+      const hash = await hashClave(clave);
+
+      fetch("TU_URL_APPS_SCRIPT", {
+        method: "POST",
+        body: JSON.stringify({ usuario: usuario, clave: hash }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Guarda sesión en localStorage (para index.html)
+          localStorage.setItem("usuario", usuario);
+          localStorage.setItem("rol", data.rol);
+
+          // Redirige a la página principal
+          window.location.href = "index.html";
+        } else {
+          document.getElementById("mensaje").innerText = "Credenciales inválidas.";
+        }
+      })
+      .catch(err => {
+        document.getElementById("mensaje").innerText = "Error: " + err;
+      });
+    }
+  </script>
+</body>
+</html>
