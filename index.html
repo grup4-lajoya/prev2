@@ -49,7 +49,7 @@
     if(id === "form1"){
       const contenedor = document.getElementById("form1");
       // Cargar el formulario desde archivo externo
-      fetch("formulario1.html")
+      fetch("form1.html") // <-- CORREGIDO al nombre real del archivo
         .then(res => res.text())
         .then(html => {
           contenedor.innerHTML = html;
