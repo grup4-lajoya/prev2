@@ -30,68 +30,23 @@
     box-shadow: 0 12px 25px rgba(0,0,0,0.25);
   }
 
-  h2 {
-    margin-bottom: 20px;
-    font-size: 22px;
-    color: #004080;
-  }
+  h2 { margin-bottom: 20px; font-size: 22px; color: #004080; }
 
-  input, button {
-    width: 100%;
-    border-radius: 6px;
-    font-size: 15px;
-    box-sizing: border-box;
-  }
+  input, button { width: 100%; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+  input { padding: 9px; margin: 8px 0; border: 1px solid #ccc; transition: border-color 0.2s, box-shadow 0.2s; }
+  input:focus { border-color: #0056b3; outline: none; box-shadow: 0 0 5px rgba(0,86,179,0.5); }
 
-  input {
-    padding: 9px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  input:focus { 
-    border-color: #0056b3; 
-    outline: none;
-    box-shadow: 0 0 5px rgba(0,86,179,0.5);
-  }
+  button { padding: 9px; margin-top: 10px; border: none; background: #0056b3; color: #fff; cursor: pointer; transition: background 0.2s, box-shadow 0.2s; }
+  button:hover { background: #003366; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-  button {
-    padding: 9px;
-    margin-top: 10px;
-    border: none;
-    background: #0056b3;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-  button:hover { 
-    background: #003366;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-
-  #mensajeProcesando {
-    display: none;
-    margin-top: 10px;
-    font-weight: bold;
-    font-size: 14px;
-    color: #0056b3;
-  }
-  #mensajeProcesando span {
-    display: inline-block;
-    animation: blink 1s infinite;
-  }
+  #mensajeProcesando { display: none; margin-top: 10px; font-weight: bold; font-size: 14px; color: #0056b3; }
+  #mensajeProcesando span { display: inline-block; animation: blink 1s infinite; }
   #mensajeProcesando span:nth-child(2) { animation-delay: 0.2s; }
   #mensajeProcesando span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink {
-    0%, 20%, 50%, 80%, 100% { opacity: 0; }
-    10%, 30%, 60%, 90% { opacity: 1; }
-  }
+  @keyframes blink { 0%,20%,50%,80%,100%{opacity:0;}10%,30%,60%,90%{opacity:1;} }
 
   @media (max-width: 400px) {
-    #loginForm {
-      padding: 20px;
-      width: 90%;
-    }
+    #loginForm { padding: 20px; width: 90%; }
     input, button { font-size: 14px; padding: 8px; }
     h2 { font-size: 20px; }
   }
@@ -108,7 +63,7 @@
 </form>
 
 <script>
-  // Si ya hay sesión activa, redirige al dashboard
+  // Si ya hay sesión activa, redirige al dashboard reemplazando historial
   if(localStorage.getItem("usuario")) {
     window.location.replace("index.html");
   }
@@ -119,17 +74,15 @@
     const usuario = document.getElementById("usuario").value.trim();
     const clave = document.getElementById("clave").value.trim();
     const mensaje = document.getElementById("mensajeProcesando");
-
     mensaje.style.display = "block";
 
-    const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
+    const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6Iut/exec";
 
     try {
       const response = await fetch(url, {
         method: "POST",
         body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
       });
-
       const result = await response.json();
 
       if(result.success){
@@ -137,7 +90,7 @@
         localStorage.setItem("rol", result.rol);
         localStorage.setItem("correo", result.correo);
 
-        // Redirige al dashboard reemplazando historial
+        // Reemplaza historial y redirige
         window.location.replace("index.html");
       } else {
         mensaje.style.display = "none";
@@ -153,3 +106,4 @@
 
 </body>
 </html>
+
