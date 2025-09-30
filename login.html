@@ -3,100 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Registro Accidentes</title>
+  <title>Login</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f6fa;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
-    .login-box {
-      background: #fff;
+    .login-container {
+      background: white;
       padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       width: 300px;
+    }
+    .login-container h2 {
       text-align: center;
-    }
-    .login-box h2 {
       margin-bottom: 20px;
-      color: #003366;
+      color: #002147;
     }
-    .login-box input {
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    input {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 8px;
+      margin-top: 5px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 4px;
     }
-    .login-box button {
+    button {
       width: 100%;
       padding: 10px;
-      background: #0056A6;
+      margin-top: 20px;
       border: none;
       border-radius: 6px;
-      color: #fff;
+      background: #0056A6;
+      color: white;
       font-size: 1em;
       cursor: pointer;
     }
-    .login-box button:hover {
+    button:hover {
       background: #003366;
     }
     .error {
-      margin-top: 10px;
       color: red;
       font-size: 0.9em;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
+  <div class="login-container">
     <h2>Iniciar Sesión</h2>
-    <input type="text" id="usuario" placeholder="Usuario" required>
-    <input type="password" id="clave" placeholder="Contraseña" required>
-    <button onclick="login()">Entrar</button>
-    <div id="mensaje" class="error"></div>
+    <form id="loginForm">
+      <label for="usuario">Usuario</label>
+      <input type="text" id="usuario" name="usuario" required>
+
+      <label for="clave">Clave</label>
+      <input type="password" id="clave" name="clave" required>
+
+      <button type="submit">Entrar</button>
+      <div id="error" class="error"></div>
+    </form>
   </div>
 
   <script>
-    async function hashClave(clave) {
-      const msgBuffer = new TextEncoder().encode(clave);
+    // Convierte una contraseña en SHA-256 HEX
+    async function hashPassword(password) {
+      const msgBuffer = new TextEncoder().encode(password);
       const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
     }
 
-    async function login() {
-      const usuario = document.getElementById("usuario").value.trim();
-      const clave = document.getElementById("clave").value;
-      const hash = await hashClave(clave);
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
 
-      fetch("TU_URL_APPS_SCRIPT", {
+      const usuario = document.getElementById("usuario").value;
+      const clave = document.getElementById("clave").value;
+      const hash = await hashPassword(clave);
+
+      // Llama a tu App Script para verificar usuario + hash
+      fetch("https://script.google.com/macros/s/AKfycbzqJDf6SPZCeIbDMOu1AxVSTTOth_KTg8WlnxdDMO1yJLwKopE8PqbIebANH022aGh1/exec", {
         method: "POST",
-        body: JSON.stringify({ usuario: usuario, clave: hash }),
-        headers: { "Content-Type": "application/json" }
+        body: new URLSearchParams({
+          accion: "login",
+          usuario: usuario,
+          clave: hash
+        })
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // Guarda sesión en localStorage (para index.html)
+          // ✅ Guardar sesión en localStorage
           localStorage.setItem("usuario", usuario);
-          localStorage.setItem("rol", data.rol);
+          localStorage.setItem("rol", data.rol || "");
+          localStorage.setItem("correo", data.correo || "");
 
-          // Redirige a la página principal
+          // Redirigir al dashboard principal
           window.location.href = "index.html";
         } else {
-          document.getElementById("mensaje").innerText = "Credenciales inválidas.";
+          document.getElementById("error").innerText = "Usuario o clave incorrectos";
         }
       })
       .catch(err => {
-        document.getElementById("mensaje").innerText = "Error: " + err;
+        document.getElementById("error").innerText = "Error en el servidor";
+        console.error(err);
       });
-    }
+    });
   </script>
 </body>
 </html>
