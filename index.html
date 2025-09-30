@@ -124,6 +124,16 @@
     localStorage.clear();
     window.location.replace("login.html");
   }
+
+  // Bloquear botón Atrás mientras haya sesión activa
+  history.pushState(null, null, location.href);
+  window.onpopstate = function () {
+    if(localStorage.getItem("usuario")) {
+      history.go(1); // Avanza siempre al mismo estado
+    } else {
+      window.location.replace("login.html");
+    }
+  };
 </script>
 
 <nav>
@@ -135,8 +145,6 @@
 </nav>
 
 <div id="contenido">
-  <h2 id="titulo-contenido" class="titulo-seccion">Panorama Accidentes</h2>
-
   <iframe id="dashboard" 
     src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
     allowfullscreen
@@ -204,3 +212,4 @@
 
 </body>
 </html>
+
