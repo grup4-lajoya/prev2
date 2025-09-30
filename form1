@@ -1,0 +1,41 @@
+<!-- form1.html -->
+<form id="accidenteForm">
+  <label>PAIS</label><input type="text" name="PAIS" required>
+  <label>REGION</label><input type="text" name="REGION">
+  <label>FECHA</label><input type="date" name="FECHA">
+  <label>AÑO</label><input type="number" name="AÑO">
+  <label>TIPO</label><input type="text" name="TIPO">
+  <label>CANT. TIPO</label><input type="number" name="CANT_TIPO">
+  <label>CANT. FALL</label><input type="number" name="CANT_FALL">
+  <label>FACTOR</label><input type="text" name="FACTOR">
+  <label>TIPO OCURRENCIA</label><input type="text" name="TIPO_OCURRENCIA">
+  <label>TIPO AERONAVE</label><input type="text" name="TIPO_AERONAVE">
+  <label>NACIONALIDAD</label><input type="text" name="NACIONALIDAD">
+  <label>MATRICULA</label><input type="text" name="MATRICULA">
+  <label>TIPO OPERACIÓN</label><input type="text" name="TIPO_OPERACION">
+  <label>FASE</label><input type="text" name="FASE">
+  <label>DAÑO</label><input type="text" name="DAÑO">
+  <label>LESIÓN</label><input type="text" name="LESION">
+  <label>UNIDAD</label><input type="text" name="UNIDAD">
+  <label>PRUEBA</label><input type="text" name="PRUEBA">
+  <button type="submit">Guardar</button>
+</form>
+
+<script>
+document.getElementById("accidenteForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  let formData = new FormData(this);
+  fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
+    method: "POST",
+    body: formData
+  })
+  .then(res=>res.text())
+  .then(data=>{
+    alert("Datos guardados correctamente ✅");
+    this.reset();
+  })
+  .catch(err=>{
+    alert("Error al guardar ❌ "+err);
+  });
+});
+</script>
