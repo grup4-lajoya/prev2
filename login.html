@@ -26,8 +26,8 @@
 document.getElementById("loginForm").addEventListener("submit", async function(e){
   e.preventDefault();
 
-  const usuario = document.getElementById("usuario").value;
-  const clave = document.getElementById("clave").value;
+  const usuario = document.getElementById("usuario").value.trim();
+  const clave = document.getElementById("clave").value.trim();
 
   // URL de tu Web App de Apps Script
   const url = "https://script.google.com/macros/s/AKfycbyjzmZ-jpBz46-RnsOzLvmfOigbJn9z_qElr-SrtAAG4lfT0VhTOyvGcD55peERwtBa/exec";
