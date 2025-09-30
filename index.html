@@ -118,6 +118,7 @@
   <nav>
     <ul>
       <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
+      <li><a href="#" id="menu-dashboard2" onclick="mostrar('dashboard2')">Dashboard 2</a></li>
       <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
     </ul>
   </nav>
@@ -125,11 +126,25 @@
   <div id="contenido">
     <h2 id="titulo-contenido" class="titulo-seccion">Panorama Accidentes</h2>
 
+    <!-- Dashboard 1 -->
     <iframe id="dashboard" 
       src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
       allowfullscreen
       sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
     </iframe>
+
+    <!-- Dashboard 2 -->
+    <div id="dashboard2" style="display:none;">
+      <h2>Dashboard 2 - Accidentes</h2>
+      
+      <div style="max-width: 900px; margin:auto;">
+        <canvas id="graficoAnual"></canvas>
+      </div>
+      
+      <div style="max-width: 900px; margin:auto; margin-top:40px;">
+        <canvas id="graficoTipo"></canvas>
+      </div>
+    </div>
 
     <!-- Formulario -->
     <div id="form1" style="display:none;">
@@ -193,6 +208,9 @@
     </div>
   </div>
 
+  <!-- Librería Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
     function mostrar(id) {
       document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display = "none");
@@ -200,14 +218,20 @@
 
       let titulo = {
         'dashboard': 'Panorama Accidentes',
+        'dashboard2': 'Dashboard 2',
         'form1': 'Registro Accidentes / Incidentes'
       };
       document.getElementById('titulo-contenido').innerText = titulo[id] || '';
 
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       document.getElementById('menu-' + id).classList.add('active');
+
+      if (id === "dashboard2") {
+        cargarDashboard2();
+      }
     }
 
+    // Formulario: guardar en Google Sheets
     document.getElementById("accidenteForm").addEventListener("submit", function(e){
       e.preventDefault();
 
@@ -226,6 +250,58 @@
         alert("Error al guardar ❌ " + err);
       });
     });
+
+    // Dashboard dinámico con Chart.js
+    function cargarDashboard2() {
+      fetch("https://script.google.com/macros/s/AKfycbz4BLrAoy_zudeyQKGQCIoxc5kIo-oL3xc4YeDNjU4ajU4r2E_yS0uznnunvbpnokpE/exec")
+        .then(res => res.json())
+        .then(datos => {
+          // ====== Gráfico 1: Accidentes por Año ======
+          let porAnio = {};
+          datos.forEach(d => {
+            if (!porAnio[d.AÑO]) porAnio[d.AÑO] = 0;
+            porAnio[d.AÑO] += 1;
+          });
+
+          new Chart(document.getElementById("graficoAnual"), {
+            type: 'bar',
+            data: {
+              labels: Object.keys(porAnio),
+              datasets: [{
+                label: "Accidentes por Año",
+                data: Object.values(porAnio),
+                backgroundColor: 'rgba(0,86,166,0.7)'
+              }]
+            },
+            options: { responsive: true }
+          });
+
+          // ====== Gráfico 2: Accidentes por Tipo ======
+          let porTipo = {};
+          datos.forEach(d => {
+            if (!porTipo[d.TIPO]) porTipo[d.TIPO] = 0;
+            porTipo[d.TIPO] += 1;
+          });
+
+          new Chart(document.getElementById("graficoTipo"), {
+            type: 'pie',
+            data: {
+              labels: Object.keys(porTipo),
+              datasets: [{
+                label: "Accidentes por Tipo",
+                data: Object.values(porTipo),
+                backgroundColor: [
+                  "#003366", "#0056A6", "#0074D9", "#39CCCC", "#FF851B", "#FF4136"
+                ]
+              }]
+            },
+            options: { responsive: true }
+          });
+        })
+        .catch(err => {
+          console.error("Error cargando datos:", err);
+        });
+    }
   </script>
 </body>
 </html>
