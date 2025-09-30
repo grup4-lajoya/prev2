@@ -49,32 +49,24 @@
   </div>
 
   <script>
-    async function hashPassword(password) {
-      const msgBuffer = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-
     document.getElementById("loginForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 
       const usuario = document.getElementById("usuario").value.trim();
-      const clave = document.getElementById("clave").value;
-      const hash = await hashPassword(clave);
+      const clave = document.getElementById("clave").value; // texto plano
 
-      fetch("https://script.google.com/macros/s/AKfycbxmKVg1zMWYAI5b06XSLrsa1rCk5ZzOYOfeF9krDr3kL4VaEhOGLhMQ4mLy7JBusR3F/exec", {
+      fetch("https://script.google.com/macros/s/AKfycby-rV0ByAA5TQKLLsLwL7I0jIQd5nP3EITs8KTjq69bEZr2n7jJuKYSZJPAwQwzbP-L/exec", { // reemplaza con tu URL de Apps Script
         method: "POST",
         body: new URLSearchParams({
           accion: "login",
           usuario: usuario,
-          clave: hash
+          clave: clave
         })
       })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          window.location.href = "index.html";
+          window.location.href = "index.html"; // redirección al login exitoso
         } else {
           document.getElementById("error").innerText = "Usuario o clave incorrectos";
         }
@@ -87,3 +79,4 @@
   </script>
 </body>
 </html>
+
