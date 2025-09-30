@@ -27,18 +27,17 @@
 
   /* Overlay con spinner */
   #loadingOverlay {
-    display: none;               /* oculto al inicio */
-    position: fixed;            
+    display: none;           /* oculto por defecto */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255,255,255,0.8); 
-    display: flex;
+    background: rgba(255,255,255,0.8);
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;           
+    z-index: 10;
   }
 
   /* Spinner */
@@ -72,58 +71,60 @@
 </div>
 
 <script>
-document.getElementById("loginForm").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const usuario = document.getElementById("usuario").value.trim();
-  const clave = document.getElementById("clave").value.trim();
-  const loadingOverlay = document.getElementById("loadingOverlay");
+document.addEventListener("DOMContentLoaded", function() {
   const loginForm = document.getElementById("loginForm");
+  const loadingOverlay = document.getElementById("loadingOverlay");
 
-  // Mostrar overlay y difuminar formulario
-  loadingOverlay.style.display = "flex";
-  loginForm.classList.add("blur");
-  document.body.classList.add("loading");
+  loginForm.addEventListener("submit", async function(e){
+    e.preventDefault();
 
-  const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
+    const usuario = document.getElementById("usuario").value.trim();
+    const clave = document.getElementById("clave").value.trim();
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
-    });
+    // Mostrar overlay y difuminar formulario
+    loadingOverlay.style.display = "flex";
+    loginForm.classList.add("blur");
+    document.body.classList.add("loading");
 
-    const result = await response.json();
+    const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
 
-    if(result.success){
-      localStorage.setItem("usuario", usuario);
-      localStorage.setItem("rol", result.rol);
-      localStorage.setItem("correo", result.correo);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
+      });
 
-      // Redirigir al dashboard
-      setTimeout(() => {
-        window.location.href = "https://msilva-ux.github.io/prev2/#";
-      }, 500);
-    } else {
-      // Ocultar overlay y quitar blur si error
+      const result = await response.json();
+
+      if(result.success){
+        localStorage.setItem("usuario", usuario);
+        localStorage.setItem("rol", result.rol);
+        localStorage.setItem("correo", result.correo);
+
+        // Redirigir al dashboard
+        setTimeout(() => {
+          window.location.href = "https://msilva-ux.github.io/prev2/#";
+        }, 500);
+      } else {
+        // Ocultar overlay y quitar blur si error
+        loadingOverlay.style.display = "none";
+        loginForm.classList.remove("blur");
+        document.body.classList.remove("loading");
+        alert("Usuario o clave incorrectos");
+      }
+    } catch(err){
       loadingOverlay.style.display = "none";
       loginForm.classList.remove("blur");
       document.body.classList.remove("loading");
-      alert("Usuario o clave incorrectos");
+      console.error(err);
+      alert("Error de conexión. Intente nuevamente.");
     }
-  } catch(err){
-    loadingOverlay.style.display = "none";
-    loginForm.classList.remove("blur");
-    document.body.classList.remove("loading");
-    console.error(err);
-    alert("Error de conexión. Intente nuevamente.");
-  }
+  });
 });
 </script>
 
 </body>
 </html>
-
 
 
   
