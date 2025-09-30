@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Seguro</title>
 <style>
-  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; margin: 0; }
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; margin: 0; transition: all 0.3s; }
+  body.loading { overflow: hidden; }
 
   /* Formulario */
   #loginForm {
@@ -16,7 +17,9 @@
     width: 300px;
     position: relative;
     z-index: 1;
+    transition: filter 0.3s;
   }
+  #loginForm.blur { filter: blur(2px); }
   h2 { text-align: center; margin-bottom: 20px; }
   input { display: block; width: 100%; margin: 10px 0; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
   button { width: 100%; padding: 10px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -24,18 +27,18 @@
 
   /* Overlay con spinner */
   #loadingOverlay {
-    display: none;
-    position: fixed;       /* cubrir toda la pantalla */
+    display: none;               /* oculto al inicio */
+    position: fixed;            
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255,255,255,0.8); /* semitransparente */
+    background: rgba(255,255,255,0.8); 
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;           /* encima del formulario */
+    z-index: 10;           
   }
 
   /* Spinner */
@@ -75,9 +78,12 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
   const usuario = document.getElementById("usuario").value.trim();
   const clave = document.getElementById("clave").value.trim();
   const loadingOverlay = document.getElementById("loadingOverlay");
+  const loginForm = document.getElementById("loginForm");
 
-  // Mostrar overlay encima del formulario
+  // Mostrar overlay y difuminar formulario
   loadingOverlay.style.display = "flex";
+  loginForm.classList.add("blur");
+  document.body.classList.add("loading");
 
   const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
 
@@ -94,16 +100,21 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
       localStorage.setItem("rol", result.rol);
       localStorage.setItem("correo", result.correo);
 
-      // Redirigir con pequeño delay para que el usuario vea el spinner
+      // Redirigir al dashboard
       setTimeout(() => {
         window.location.href = "https://msilva-ux.github.io/prev2/#";
       }, 500);
     } else {
-      loadingOverlay.style.display = "none"; // ocultar overlay si error
+      // Ocultar overlay y quitar blur si error
+      loadingOverlay.style.display = "none";
+      loginForm.classList.remove("blur");
+      document.body.classList.remove("loading");
       alert("Usuario o clave incorrectos");
     }
   } catch(err){
     loadingOverlay.style.display = "none";
+    loginForm.classList.remove("blur");
+    document.body.classList.remove("loading");
     console.error(err);
     alert("Error de conexión. Intente nuevamente.");
   }
@@ -112,6 +123,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
 </body>
 </html>
+
 
 
   
