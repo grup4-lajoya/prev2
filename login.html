@@ -30,7 +30,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
   const clave = document.getElementById("clave").value.trim();
 
   // URL de tu Web App de Apps Script
-  const url = "https://script.google.com/macros/s/AKfycbyjzmZ-jpBz46-RnsOzLvmfOigbJn9z_qElr-SrtAAG4lfT0VhTOyvGcD55peERwtBa/exec";
+  const url = "https://script.google.com/macros/s/AKfycbxv9MA2tQmda4RigzSs-K9h0WTXjCXAfK642SzE6k6KobWInbRy0KsvAnxcw_6V-Iut/exec";
 
   try {
     const response = await fetch(url, {
@@ -41,7 +41,12 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     const result = await response.json();
 
     if(result.success){
-      // Login correcto → redirecciona
+      // Guardar info del usuario para usar en dashboard
+      localStorage.setItem("usuario", usuario);
+      localStorage.setItem("rol", result.rol);
+      localStorage.setItem("correo", result.correo);
+
+      // Redireccionar al dashboard
       window.location.href = "https://msilva-ux.github.io/prev2/#";
     } else {
       alert("Usuario o clave incorrectos");
@@ -55,4 +60,5 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
 </body>
 </html>
+
 
