@@ -55,6 +55,27 @@
         .then(html => {
           contenedor.innerHTML = html;
           contenedor.style.display = "block";
+
+          // Vincular envío del formulario dinámicamente
+          const form = document.getElementById("accidenteForm");
+          if(form){
+            form.addEventListener("submit", function(e){
+              e.preventDefault();
+              let formData = new FormData(this);
+              fetch("https://script.google.com/macros/s/AKfycbxX_-wodyl6p6ceirhZ-hD_Ksakyh124RuKVejh3DI5PMrEzB5KIkkZ5xqkjgFkXLR-/exec", {
+                method: "POST",
+                body: formData
+              })
+              .then(res=>res.text())
+              .then(data=>{
+                alert("Datos guardados correctamente ✅");
+                this.reset();
+              })
+              .catch(err=>{
+                alert("Error al guardar ❌ "+err);
+              });
+            });
+          }
         })
         .catch(err => alert("Error al cargar el formulario: " + err));
     } else {
@@ -62,7 +83,6 @@
     }
 
     let titulo = { 'dashboard':'Panorama Accidentes', 'form1':'Registro Accidentes / Incidentes' };
-    // Opcional: si quieres mostrar el título dinámico
     if(document.getElementById('titulo-contenido')){
       document.getElementById('titulo-contenido').innerText = titulo[id] || '';
     }
