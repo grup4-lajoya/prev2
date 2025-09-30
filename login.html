@@ -1,4 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<style>
+  body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+  #loginForm { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 300px; }
+  h2 { text-align: center; margin-bottom: 20px; }
+  input { display: block; width: 100%; margin: 10px 0; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+  button { width: 100%; padding: 10px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:hover { background: #004494; }
+</style>
+</head>
+<body>
+
 <form id="loginForm">
+  <h2>Iniciar Sesión</h2>
   <input type="text" id="usuario" placeholder="Usuario" required>
   <input type="password" id="clave" placeholder="Clave" required>
   <button type="submit">Ingresar</button>
@@ -11,22 +29,30 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
   const usuario = document.getElementById("usuario").value;
   const clave = document.getElementById("clave").value;
 
-  const url = "https://script.google.com/macros/s/AKfycbyjzmZ-jpBz46-RnsOzLvmfOigbJn9z_qElr-SrtAAG4lfT0VhTOyvGcD55peERwtBa/exec"; // reemplaza con tu URL de Apps Script
+  // URL de tu Web App de Apps Script
+  const url = "https://script.google.com/macros/s/AKfycbyjzmZ-jpBz46-RnsOzLvmfOigbJn9z_qElr-SrtAAG4lfT0VhTOyvGcD55peERwtBa/exec";
 
-  const response = await fetch(url, {
-    method: "POST",
-    body: new URLSearchParams({usuario, clave})
-  });
-  
-  const result = await response.json();
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams({usuario, clave})
+    });
 
-  if(result.success){
-    // Login correcto → redirecciona
-    window.location.href = "https://msilva-ux.github.io/prev2/#";
-  } else {
-    alert("Usuario o clave incorrectos");
+    const result = await response.json();
+
+    if(result.success){
+      // Login correcto → redirecciona
+      window.location.href = "https://msilva-ux.github.io/prev2/#";
+    } else {
+      alert("Usuario o clave incorrectos");
+    }
+  } catch(err){
+    console.error(err);
+    alert("Error de conexión. Intente nuevamente.");
   }
 });
 </script>
 
+</body>
+</html>
 
