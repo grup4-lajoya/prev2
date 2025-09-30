@@ -126,14 +126,17 @@
   }
 
   // Bloquear botón Atrás mientras haya sesión activa
-  history.pushState(null, null, location.href);
-  window.onpopstate = function () {
-    if(localStorage.getItem("usuario")) {
-      history.go(1); // Avanza siempre al mismo estado
-    } else {
-      window.location.replace("login.html");
-    }
-  };
+  if(localStorage.getItem("usuario")){
+    // Reemplaza el estado actual para eliminar el login del historial
+    history.replaceState(null, null, location.href);
+
+    // Cada vez que se detecte un intento de retroceso
+    window.addEventListener('popstate', function(event) {
+      if(localStorage.getItem("usuario")){
+        history.go(1); // Si hay sesión, volvemos al mismo dashboard
+      }
+    });
+  }
 </script>
 
 <nav>
@@ -212,4 +215,5 @@
 
 </body>
 </html>
+
 
