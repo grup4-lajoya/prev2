@@ -11,12 +11,14 @@
       margin: 0;
       padding: 0;
     }
+
     h2 {
       text-align: center;
       color: #002147;
       margin-bottom: 20px;
       font-size: 1.3rem;
     }
+
     .container {
       width: 100%;
       max-width: 1600px;
@@ -26,14 +28,16 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       box-sizing: border-box;
-      overflow-x: auto;
+      overflow-x: auto; /* scroll horizontal si es necesario */
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
       table-layout: fixed;
     }
+
     th {
       background-color: #003366;
       color: white;
@@ -44,6 +48,7 @@
       padding: 6px;
       white-space: nowrap;
     }
+
     td {
       border: 1px solid #ddd;
       padding: 6px 8px;
@@ -51,18 +56,32 @@
       vertical-align: top;
       text-align: center;
       word-wrap: break-word;
+      white-space: normal;
+      max-width: 200px; /* ancho máximo para columnas scroll */
     }
-    td.asunto, td.lugar, td.descripcion, td.recomendaciones, td.reporta, td.acciones {
+
+    td.asunto, td.lugar, td.reporta, td.acciones {
       text-align: left;
     }
+
+    /* Columnas scroll */
+    td.descripcion, td.recomendaciones {
+      text-align: left;
+      max-height: 100px;
+      overflow-y: auto;
+      display: block;
+    }
+
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
     .icono {
       cursor: pointer;
       color: #0056A6;
       font-weight: bold;
     }
+
     th:nth-child(1) { width: 4%; }
     th:nth-child(2) { width: 10%; }
     th:nth-child(3) { width: 8%; }
@@ -92,6 +111,24 @@
     button.accion-btn:hover {
       background-color: #003366;
     }
+
+    /* Paginación */
+    .pagination {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .pagination button {
+      padding: 5px 10px;
+      margin: 0 2px;
+      border: none;
+      border-radius: 4px;
+      background-color: #003366;
+      color: white;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background-color: #0056A6;
+    }
   </style>
 </head>
 <body>
@@ -115,47 +152,70 @@
       </thead>
       <tbody></tbody>
     </table>
+    <div class="pagination" id="pagination"></div>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi8X15CNxU10c48V1MUYbb9ZiT-2s2sxJFeSDTuuaMjkw1Qqo-mLFF6tLsh6Phplgn/exec";
+    const filasPorPagina = 5;
+    let datos = [];
+    let paginaActual = 1;
 
-    // Función para cargar datos desde Google Sheets
     async function cargarDatos() {
       try {
         const response = await fetch(SCRIPT_URL);
-        const data = await response.json();
-        const tbody = document.querySelector("#data-table tbody");
-        tbody.innerHTML = "";
-
-        data.forEach((row, index) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${row["marca temporal"] || ""}</td>
-            <td class="asunto">${row["informe"] || ""}</td>
-            <td class="lugar">${row["lugar"] || ""}</td>
-            <td class="descripcion">${row["descripcion"] || ""}</td>
-            <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
-            <td class="reporta">${row["nombre"] || ""}</td>
-            <td>${row["archivos"] ? `<span class="icono" onclick="window.open('${row["archivos"]}', '_blank')">📷 Ver</span>` : ""}</td>
-            <td>${row["estado"] || ""}</td>
-            <td class="acciones">${row["accion tomada"] || ""}</td>
-            <td>
-              <input type="text" class="accion-input" value="${row['guardar'] || ''}">
-              <button class="accion-btn" data-row="${index}">Guardar</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+        datos = await response.json();
+        mostrarPagina(1);
       } catch (error) {
         console.error("Error cargando los datos:", error);
       }
     }
 
-    // Guardar cambios en la columna "ACCIÓN"
-    document.addEventListener('click', async function(e) {
-      if(e.target && e.target.classList.contains('accion-btn')) {
+    function mostrarPagina(pagina) {
+      const tbody = document.querySelector("#data-table tbody");
+      tbody.innerHTML = "";
+      paginaActual = pagina;
+
+      const inicio = (pagina - 1) * filasPorPagina;
+      const fin = inicio + filasPorPagina;
+      const paginaDatos = datos.slice(inicio, fin);
+
+      paginaDatos.forEach((row, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${inicio + index + 1}</td>
+          <td>${row["marca temporal"] || ""}</td>
+          <td class="asunto">${row["informe"] || ""}</td>
+          <td class="lugar">${row["lugar"] || ""}</td>
+          <td class="descripcion">${row["descripcion"] || ""}</td>
+          <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
+          <td class="reporta">${row["nombre"] || ""}</td>
+          <td>${row["archivos"] ? `<span class="icono" onclick="window.open('${row["archivos"]}', '_blank')">📷 Ver</span>` : ""}</td>
+          <td>${row["estado"] || ""}</td>
+          <td class="acciones">${row["accion tomada"] || ""}</td>
+          <td>
+            <input type="text" class="accion-input" value="${row['guardar'] || ''}">
+            <button class="accion-btn" data-row="${inicio + index}">Guardar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Paginación
+      const totalPaginas = Math.ceil(datos.length / filasPorPagina);
+      const pagDiv = document.getElementById("pagination");
+      pagDiv.innerHTML = "";
+      for(let i=1; i<=totalPaginas; i++){
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.classList.toggle("active", i === pagina);
+        btn.addEventListener("click", ()=>mostrarPagina(i));
+        pagDiv.appendChild(btn);
+      }
+    }
+
+    document.addEventListener('click', async function(e){
+      if(e.target && e.target.classList.contains('accion-btn')){
         const rowIndex = e.target.dataset.row;
         const input = e.target.previousElementSibling;
         const valor = input.value;
@@ -167,13 +227,12 @@
 
           await fetch(SCRIPT_URL, { method: 'POST', body: formData });
           alert('Acción guardada correctamente ✅');
-        } catch(err) {
-          alert('Error al guardar ❌ ' + err);
+        } catch(err){
+          alert('Error al guardar ❌ '+err);
         }
       }
     });
 
-    // Cargar datos al abrir la página
     window.onload = cargarDatos;
   </script>
 </body>
