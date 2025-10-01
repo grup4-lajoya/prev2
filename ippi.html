@@ -1,12 +1,12 @@
 <!-- ippi.html -->
 <style>
   #formulario-container {
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;            /* ocupa el ancho completo */
+    margin: 0;              /* sin márgenes laterales */
+    padding: 20px;          /* espacio interno */
+    background-color: #fff; /* fondo blanco ocupa todo */
+    border-radius: 0;       /* sin bordes redondeados */
+    box-shadow: none;       /* sin sombra para ocupar plano */
     font-family: Arial, sans-serif;
   }
 
@@ -17,10 +17,10 @@
   }
 
   #tablaIPPI {
-    width: 100%;              /* ocupa todo el ancho disponible */
+    width: 100%;
     border-collapse: collapse;
     font-size: 0.95em;
-    table-layout: auto;        /* ajuste automático de columnas */
+    table-layout: fixed; /* distribuye columnas en proporción */
   }
 
   #tablaIPPI thead tr {
@@ -33,11 +33,9 @@
   #tablaIPPI th,
   #tablaIPPI td {
     border: 1px solid #ccc;
-    padding: 12px;
+    padding: 10px;
     vertical-align: middle;
-    text-align: left;
-    word-wrap: break-word;    /* partir texto largo */
-    white-space: normal;      /* saltos de línea */
+    word-wrap: break-word; /* para que no se salga el texto */
   }
 
   #tablaIPPI thead th {
@@ -63,7 +61,7 @@
 
   #tablaIPPI textarea {
     min-height: 60px;
-    resize: vertical; /* permite al usuario agrandar si lo necesita */
+    resize: vertical;
   }
 
   #tablaIPPI button {
@@ -89,17 +87,17 @@
   <table id="tablaIPPI">
     <thead>
       <tr>
-        <th>n°</th>
-        <th>fecha y hora</th>
-        <th>informe</th>
-        <th>lugar</th>
-        <th>descripción</th>
-        <th>recomendaciones</th>
-        <th>nombre</th>
-        <th>archivos</th>
-        <th>estado</th>
-        <th>acción tomada</th>
-        <th>guardar</th>
+        <th style="width:5%;">n°</th>
+        <th style="width:12%;">fecha y hora</th>
+        <th style="width:15%;">informe</th>
+        <th style="width:12%;">lugar</th>
+        <th style="width:18%;">descripción</th>
+        <th style="width:15%;">recomendaciones</th>
+        <th style="width:10%;">nombre</th>
+        <th style="width:8%;">archivos</th>
+        <th style="width:10%;">estado</th>
+        <th style="width:15%;">acción tomada</th>
+        <th style="width:8%;">guardar</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -114,7 +112,7 @@ const urlActualizar = "TU_URL_DEL_APPS_SCRIPT_PARA_ACTUALIZAR";
 function formatearFecha(fechaStr) {
   if (!fechaStr) return "";
   const fecha = new Date(fechaStr);
-  if (isNaN(fecha)) return fechaStr; // si no se puede parsear, se muestra tal cual
+  if (isNaN(fecha)) return fechaStr;
 
   const dia = String(fecha.getDate()).padStart(2, "0");
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -204,4 +202,5 @@ function renumerarFilas() {
 
 cargarIPPI();
 </script>
+
 
