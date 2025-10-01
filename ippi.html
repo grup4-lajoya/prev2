@@ -16,14 +16,11 @@
     }
 
     #formulario-container {
-      max-width: 1400px;     /* ancho máximo */
-      width: 95%;            /* ocupa el 95% de la pantalla */
-      min-height: 100vh;     /* al menos toda la altura */
-      margin: 20px auto;     /* centra el bloque */
-      padding: 20px;
+      width: 100%;           /* ocupar todo el ancho */
+      min-height: 100vh;     /* cubrir alto */
+      margin: 0 auto;
+      padding: 20px 40px;    /* padding lateral para respirar */
       background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       box-sizing: border-box;
     }
 
@@ -34,10 +31,10 @@
     }
 
     #tablaIPPI {
-      width: 100%;
+      width: 100%;              /* ancho completo */
       border-collapse: collapse;
       font-size: 0.95em;
-      table-layout: fixed;
+      table-layout: auto;       /* que las columnas se ajusten */
     }
 
     #tablaIPPI thead tr {
@@ -134,7 +131,6 @@
       const dia = String(fecha.getDate()).padStart(2, "0");
       const mes = String(fecha.getMonth() + 1).padStart(2, "0");
       const anio = fecha.getFullYear();
-
       const horas = String(fecha.getHours()).padStart(2, "0");
       const minutos = String(fecha.getMinutes()).padStart(2, "0");
 
