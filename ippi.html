@@ -65,27 +65,27 @@
   td.descripcion, td.recomendaciones {
     max-height: 100px;
     overflow-y: auto;
-    padding-right: 6px; 
+    padding-right: 6px;
   }
 
   td.imagenes-cell {
-    max-height: 80px;
-    overflow-x: auto;
-    white-space: nowrap;
+    max-height: 120px;
+    overflow-y: auto;
+    white-space: normal;
   }
 
   td.imagenes-cell .icono {
-    display: inline-block;
-    margin-right: 6px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  td.imagenes-cell .icono img {
+    width: 24px;
+    cursor: pointer;
   }
 
   tr:nth-child(even) {
     background-color: #f9f9f9;
-  }
-
-  .icono img {
-    width: 24px;
-    cursor: pointer;
   }
 
   /* Ajuste de ancho de columnas */
@@ -203,7 +203,7 @@ function mostrarPagina(pagina) {
     if(row["archivos"]){
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
       urls.forEach(url => {
-        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/709/709722.png" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
+        imagenesHTML += `<span class="icono"><img src="https://es.icons8.com/icon/7211/c%C3%A1mara?utm_source=chatgpt.com" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
       });
     }
 
@@ -239,7 +239,6 @@ function mostrarPagina(pagina) {
   }
 }
 
-// Guardar cambios
 document.addEventListener('click', async function(e){
   if(e.target && e.target.classList.contains('accion-btn')){
     const rowIndex = e.target.dataset.row;
@@ -262,4 +261,3 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
-
