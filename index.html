@@ -12,15 +12,20 @@
   nav a { display:block; padding:16px 24px; color:#fff; text-decoration:none; font-weight:600; letter-spacing:0.5px; transition: background-color 0.3s,color 0.3s; }
   nav a:hover { background-color:#003366; color:#e6e6e6; }
   nav a.active { background-color:#0056A6; color:#fff; }
-  #contenido { padding:20px; }
-  iframe { width:100%; height:calc(100vh - 90px); border:none; display:block; }
-  /* 🔥 Ajuste aquí: sin max-width, ocupa todo el ancho */
-  #form1, #ippi { 
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    display: none;
+
+  /* 🔧 Ajuste para evitar salto */
+  #contenido { padding:0; }
+  iframe, #form1, #ippi {
+    width:100%;
+    height:calc(100vh - 90px);
+    border:none;
+    display:none;
+    margin-top:10px; /* espacio uniforme debajo del menú */
   }
+
+  /* El dashboard sí necesita mostrarse inicialmente */
+  #dashboard { display:block; }
+
   #logoutButton { position:absolute; right:20px; top:15px; padding:8px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer; }
   #logoutButton:hover { background:#003366; }
 </style>
