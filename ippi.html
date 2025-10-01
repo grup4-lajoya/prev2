@@ -165,6 +165,7 @@
       }
     }
 
+    // Guardar cambios en la columna ACCIÓN
     document.addEventListener('click', async function(e){
       if(e.target && e.target.classList.contains('accion-btn')){
         const rowIndex = e.target.dataset.row;
@@ -176,11 +177,7 @@
           formData.append('row', parseInt(rowIndex) + 2); // +2 por encabezado
           formData.append('accion', valor);
 
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-          });
-          await response.text();
+          await fetch(SCRIPT_URL, { method: 'POST', body: formData });
           alert('Acción guardada correctamente ✅');
         } catch(err){
           alert('Error al guardar ❌ '+err);
@@ -192,3 +189,4 @@
   </script>
 </body>
 </html>
+
