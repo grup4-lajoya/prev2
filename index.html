@@ -72,7 +72,7 @@
   }
   #logoutButton:hover { background:#003366; }
 
-  /* Overlay de carga */
+  /* Overlay de carga solo para IPPI´s */
   #loading-overlay {
     position: fixed;
     top:0;
@@ -119,8 +119,6 @@
   }
 
   function mostrar(id) {
-    mostrarOverlay(true);
-
     // Ocultar todos los iframes
     document.querySelectorAll("#contenido iframe").forEach(el => el.style.display="none");
 
@@ -130,20 +128,22 @@
       iframe.src = "ippi.html"; 
       iframe.style.display = "block";
 
-      // Overlay para IPPI´s
+      // Mostrar overlay solo para IPPI´s
+      mostrarOverlay(true);
+
+      // Ocultar overlay al cargar o tras 10 segundos máximo
+      let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000); // 10 segundos máximo
       iframe.onload = function() {
+        clearTimeout(overlayTimeout);
         mostrarOverlay(false);
       };
 
     } else if(id === "dashboard"){
-      // Dashboard con nuevo embed de Looker Studio
+      // Dashboard con embed de Looker Studio
       iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
       iframe.style.display = "block";
 
-      // Ocultar overlay solo cuando el iframe haya cargado
-      iframe.onload = function() {
-        mostrarOverlay(false);
-      };
+      // No mostrar overlay para dashboard
     }
 
     // Activar menú
