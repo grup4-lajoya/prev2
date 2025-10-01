@@ -14,7 +14,7 @@
   nav a.active { background-color:#0056A6; color:#fff; }
   #contenido { padding:20px; }
   iframe { width:100%; height:calc(100vh - 90px); border:none; display:block; }
-  #form1 { max-width:900px; margin:0 auto; display:none; }
+  #form1, #formulario { max-width:900px; margin:0 auto; display:none; }
   #logoutButton { position:absolute; right:20px; top:15px; padding:8px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer; }
   #logoutButton:hover { background:#003366; }
 </style>
@@ -48,14 +48,12 @@
 
     if(id === "form1"){
       const contenedor = document.getElementById("form1");
-      // Cargar el formulario desde archivo externo
-      fetch("form1.html") // <-- CORREGIDO al nombre real del archivo
+      fetch("form1.html")
         .then(res => res.text())
         .then(html => {
           contenedor.innerHTML = html;
           contenedor.style.display = "block";
 
-          // Vincular envío del formulario dinámicamente
           const form = document.getElementById("accidenteForm");
           if(form){
             form.addEventListener("submit", function(e){
@@ -77,16 +75,29 @@
           }
         })
         .catch(err => alert("Error al cargar el formulario: " + err));
+    } else if(id === "formulario"){
+      const contenedor = document.getElementById("formulario");
+      fetch("formulario.html")
+        .then(res => res.text())
+        .then(html => {
+          contenedor.innerHTML = html;
+          contenedor.style.display = "block";
+        })
+        .catch(err => alert("Error al cargar el formulario IPPI´s: " + err));
     } else {
       document.getElementById(id).style.display="block";
     }
 
-    let titulo = { 'dashboard':'Panorama Accidentes', 'form1':'Registro Accidentes / Incidentes' };
+    let titulo = { 
+      'dashboard':'Panorama Accidentes', 
+      'form1':'Registro Accidentes / Incidentes',
+      'formulario':'IPPI´s'
+    };
     if(document.getElementById('titulo-contenido')){
       document.getElementById('titulo-contenido').innerText = titulo[id] || '';
     }
     document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-    document.getElementById('menu-'+id).classList.add('active');
+    if(document.getElementById('menu-'+id)) document.getElementById('menu-'+id).classList.add('active');
   }
 </script>
 
@@ -94,6 +105,7 @@
   <ul>
     <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
     <li><a href="#" id="menu-form1" onclick="mostrar('form1')">Registro Accidentes / Incidentes</a></li>
+    <li><a href="#" id="menu-formulario" onclick="mostrar('formulario')">IPPI´s</a></li>
   </ul>
   <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
 </nav>
@@ -105,10 +117,11 @@
     sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
   </iframe>
 
-  <!-- Contenedor para el formulario externo -->
   <div id="form1"></div>
+  <div id="formulario"></div>
 </div>
 
 </body>
 </html>
+
 
