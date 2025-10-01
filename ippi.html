@@ -1,4 +1,3 @@
-<!-- ippi.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,30 +10,32 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #f0f2f5;
       font-family: Arial, sans-serif;
+      background: #f0f2f5;
     }
 
+    /* Contenedor ocupa toda la pantalla */
     #formulario-container {
-      width: 100%;           /* ocupar todo el ancho */
-      min-height: 100vh;     /* cubrir alto */
-      margin: 0 auto;
-      padding: 20px 40px;    /* padding lateral para respirar */
-      background-color: #fff;
+      width: 100%;
+      min-height: 100vh;
+      background: #fff;
+      padding: 20px;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
 
     #formulario-container h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin: 0 0 20px 0;
       color: #003366;
     }
 
+    /* Tabla ajustada al 100% */
     #tablaIPPI {
-      width: 100%;              /* ancho completo */
+      width: 100%;
       border-collapse: collapse;
       font-size: 0.95em;
-      table-layout: auto;       /* que las columnas se ajusten */
     }
 
     #tablaIPPI thead tr {
@@ -44,8 +45,7 @@
       font-weight: bold;
     }
 
-    #tablaIPPI th,
-    #tablaIPPI td {
+    #tablaIPPI th, #tablaIPPI td {
       border: 1px solid #ccc;
       padding: 10px;
       vertical-align: middle;
@@ -97,12 +97,12 @@
 </head>
 <body>
   <div id="formulario-container">
-    <h1 class="titulo-seccion">IPPI´s - gestión</h1>
+    <h1>IPPI´s - gestión</h1>
 
     <table id="tablaIPPI">
       <thead>
         <tr>
-          <th style="width:5%;">n°</th>
+          <th style="width:4%;">n°</th>
           <th style="width:12%;">fecha y hora</th>
           <th style="width:15%;">informe</th>
           <th style="width:12%;">lugar</th>
