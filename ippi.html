@@ -24,8 +24,8 @@
 
     h1 {
       text-align: center;
-      font-size: 1.8rem;
-      margin-bottom: 20px;
+      font-size: 1.4rem; /* reducido */
+      margin-bottom: 15px;
       color: #003366;
       text-transform: uppercase;
     }
@@ -33,34 +33,46 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
     th, td {
       border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      vertical-align: top;
+      padding: 8px;
+      text-align: center; /* por defecto centrado */
+      vertical-align: middle;
     }
 
     th {
       background-color: #003366;
       color: white;
-      font-size: 0.9rem;
+      font-size: 0.85rem; /* más pequeño */
       text-transform: uppercase;
     }
 
     td {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+    }
+
+    /* Columnas largas alineadas a la izquierda */
+    td:nth-child(3), /* ASUNTO */
+    td:nth-child(4), /* LUGAR */
+    td:nth-child(5), /* DESCRIPCIÓN */
+    td:nth-child(6), /* RECOMENDACIONES */
+    td:nth-child(7), /* REPORTA */
+    td:nth-child(10) /* ACCIONES TOMADAS */ {
+      text-align: left;
     }
 
     /* Ajustes de ancho */
-    th:nth-child(2), td:nth-child(2) { width: 180px; } /* FECHA Y HORA */
-    th:nth-child(3), td:nth-child(3) { width: 250px; } /* ASUNTO */
-    th:nth-child(4), td:nth-child(4) { width: 300px; } /* LUGAR */
-    th:nth-child(5), td:nth-child(5) { width: 300px; } /* DESCRIPCIÓN */
-    th:nth-child(6), td:nth-child(6) { width: 250px; } /* RECOMENDACIONES */
-    th:nth-child(8), td:nth-child(8) { width: 280px; } /* ACCIONES TOMADAS */
+    th:nth-child(2), td:nth-child(2) { width: 160px; }
+    th:nth-child(3), td:nth-child(3) { width: 240px; }
+    th:nth-child(4), td:nth-child(4) { width: 280px; }
+    th:nth-child(5), td:nth-child(5) { width: 280px; }
+    th:nth-child(6), td:nth-child(6) { width: 240px; }
+    th:nth-child(7), td:nth-child(7) { width: 180px; }
+    th:nth-child(8), td:nth-child(8) { width: 120px; }
+    th:nth-child(10), td:nth-child(10) { width: 260px; }
 
     tr:nth-child(even) {
       background-color: #f9f9f9;
@@ -74,15 +86,15 @@
 
     textarea {
       width: 100%;
-      min-height: 60px;
+      min-height: 50px;
       resize: vertical;
-      padding: 8px;
-      font-size: 0.9rem;
+      padding: 6px;
+      font-size: 0.85rem;
     }
 
     select, button {
-      padding: 6px 10px;
-      font-size: 0.9rem;
+      padding: 5px 8px;
+      font-size: 0.85rem;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
@@ -125,7 +137,6 @@
   </div>
 
   <script>
-    // Simulación de datos que vienen del backend / Google Sheets
     const datos = [
       {
         fecha: "2025-09-29 10:30",
@@ -186,4 +197,5 @@
   </script>
 </body>
 </html>
+
 
