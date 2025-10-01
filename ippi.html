@@ -54,7 +54,6 @@
     padding: 6px 8px;
     font-size: 0.82rem;
     vertical-align: top;
-    text-align: center;
     word-wrap: break-word;
     white-space: normal;
     max-width: 200px;
@@ -67,7 +66,7 @@
   td.descripcion, td.recomendaciones {
     max-height: 100px;
     overflow-y: auto;
-    padding-right: 6px; /* espacio para scroll */
+    padding-right: 6px;
   }
 
   tr:nth-child(even) {
@@ -77,6 +76,7 @@
   .icono img {
     width: 24px;
     cursor: pointer;
+    margin-right: 4px;
   }
 
   th:nth-child(1) { width: 4%; }
@@ -189,6 +189,15 @@ function mostrarPagina(pagina) {
   const paginaDatos = datos.slice(inicio, fin);
 
   paginaDatos.forEach((row, index) => {
+    let imagenesHTML = "";
+    if(row["archivos"]){
+      // Separar múltiples URLs por coma o salto de línea
+      const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+      urls.forEach(url => {
+        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
+      });
+    }
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${inicio + index + 1}</td>
@@ -198,7 +207,7 @@ function mostrarPagina(pagina) {
       <td class="descripcion">${row["descripcion"] || ""}</td>
       <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
       <td class="reporta">${row["nombre"] || ""}</td>
-      <td>${row["archivos"] ? `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png" onclick="window.open('${row["archivos"]}', '_blank')" title="Ver imagen"></span>` : ""}</td>
+      <td>${imagenesHTML}</td>
       <td>${row["estado"] || ""}</td>
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
@@ -222,6 +231,7 @@ function mostrarPagina(pagina) {
   }
 }
 
+// Guardar cambios
 document.addEventListener('click', async function(e){
   if(e.target && e.target.classList.contains('accion-btn')){
     const rowIndex = e.target.dataset.row;
@@ -244,3 +254,4 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
+
