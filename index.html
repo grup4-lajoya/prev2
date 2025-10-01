@@ -118,14 +118,12 @@
   const ippi = document.getElementById("ippi");
 
   function mostrar(id){
-    // Ocultar todos los iframes
     document.querySelectorAll("#contenido iframe").forEach(f=>f.style.display="none");
 
-    // Mostrar el seleccionado
     if(id === "dashboard"){
-      overlay.style.display = "flex"; // mostrar overlay
-      dashboard.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF?rm=minimal";
-      dashboard.onload = ()=>{ overlay.style.display = "none"; }; // quitar overlay al cargar
+      overlay.style.display = "flex";
+      dashboard.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      dashboard.onload = ()=>{ overlay.style.display = "none"; };
       dashboard.style.display = "block";
     } else if(id === "ippi"){
       overlay.style.display = "flex"; 
@@ -134,13 +132,11 @@
       ippi.style.display = "block";
     }
 
-    // Activar menú
     document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
     const menu = document.getElementById('menu-'+id);
     if(menu) menu.classList.add('active');
   }
 
-  // Cargar dashboard por defecto al inicio
   window.onload = function() {
     mostrar('dashboard');
   };
@@ -164,5 +160,6 @@
 
 </body>
 </html>
+
 
 
