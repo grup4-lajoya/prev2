@@ -154,7 +154,7 @@
             <td>${row["estado"] || ""}</td>
             <td class="acciones">${row["accion tomada"] || ""}</td>
             <td>
-              <input type="text" class="accion-input" value="${row["guardar"] || ''}">
+              <input type="text" class="accion-input" value="${row['guardar'] || ''}">
               <button class="accion-btn" data-row="${index}">Guardar</button>
             </td>
           `;
@@ -179,7 +179,7 @@
           await fetch(SCRIPT_URL, { method: 'POST', body: formData });
           alert('Acción guardada correctamente ✅');
         } catch(err){
-          alert('Error al guardar ❌ ' + err);
+          alert('Error al guardar ❌ '+err);
         }
       }
     });
@@ -188,3 +188,4 @@
   </script>
 </body>
 </html>
+
