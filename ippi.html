@@ -56,7 +56,6 @@
     vertical-align: top;
     word-wrap: break-word;
     white-space: normal;
-    max-width: 200px;
   }
 
   td.asunto, td.lugar, td.reporta, td.acciones, td.descripcion, td.recomendaciones {
@@ -66,7 +65,18 @@
   td.descripcion, td.recomendaciones {
     max-height: 100px;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 6px; 
+  }
+
+  td.imagenes-cell {
+    max-height: 80px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  td.imagenes-cell .icono {
+    display: inline-block;
+    margin-right: 6px;
   }
 
   tr:nth-child(even) {
@@ -76,20 +86,20 @@
   .icono img {
     width: 24px;
     cursor: pointer;
-    margin-right: 4px;
   }
 
-  th:nth-child(1) { width: 4%; }
-  th:nth-child(2) { width: 10%; }
-  th:nth-child(3) { width: 8%; }
-  th:nth-child(4) { width: 8%; }
-  th:nth-child(5) { width: 18%; }
-  th:nth-child(6) { width: 15%; }
-  th:nth-child(7) { width: 10%; }
-  th:nth-child(8) { width: 7%; }
-  th:nth-child(9) { width: 8%; }
-  th:nth-child(10){ width: 15%; }
-  th:nth-child(11){ width: 6%; }
+  /* Ajuste de ancho de columnas */
+  th:nth-child(1) { width: 3%; }   /* N° */
+  th:nth-child(2) { width: 8%; }   /* Fecha/Hora */
+  th:nth-child(3) { width: 12%; }  /* Asunto */
+  th:nth-child(4) { width: 10%; }  /* Lugar */
+  th:nth-child(5) { width: 18%; }  /* Descripción */
+  th:nth-child(6) { width: 15%; }  /* Recomendaciones */
+  th:nth-child(7) { width: 10%; }  /* Reporta */
+  th:nth-child(8) { width: 7%; }   /* Imágenes */
+  th:nth-child(9) { width: 8%; }   /* Estado */
+  th:nth-child(10){ width: 15%; }  /* Acciones tomadas */
+  th:nth-child(11){ width: 6%; }   /* Acción */
 
   input.accion-input {
     width: 90%;
@@ -191,10 +201,9 @@ function mostrarPagina(pagina) {
   paginaDatos.forEach((row, index) => {
     let imagenesHTML = "";
     if(row["archivos"]){
-      // Separar múltiples URLs por coma o salto de línea
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
       urls.forEach(url => {
-        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
+        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/709/709722.png" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
       });
     }
 
@@ -207,7 +216,7 @@ function mostrarPagina(pagina) {
       <td class="descripcion">${row["descripcion"] || ""}</td>
       <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
       <td class="reporta">${row["nombre"] || ""}</td>
-      <td>${imagenesHTML}</td>
+      <td class="imagenes-cell">${imagenesHTML}</td>
       <td>${row["estado"] || ""}</td>
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
@@ -218,7 +227,6 @@ function mostrarPagina(pagina) {
     tbody.appendChild(tr);
   });
 
-  // Paginación
   const totalPaginas = Math.ceil(datos.length / filasPorPagina);
   const pagDiv = document.getElementById("pagination");
   pagDiv.innerHTML = "";
