@@ -12,7 +12,7 @@
     color:#222; 
     height:100vh;
     display:flex;
-    flex-direction:column;
+    flex-direction:column; 
   }
   nav { 
     background-color:#002147; 
@@ -50,13 +50,13 @@
     display:flex; 
     flex-direction:column; 
     overflow:hidden; 
-    position:relative;
+    position:relative; 
   }
   iframe { 
     width:100%; 
     height:100%; 
     border:none; 
-    display:none;
+    display:none; 
   }
 
   #logoutButton { 
@@ -74,27 +74,28 @@
 
   /* Overlay de carga */
   #loading-overlay {
-    position:absolute;
+    position: fixed;
     top:0;
     left:0;
     width:100%;
     height:100%;
-    background: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.7);
     display:flex;
     justify-content:center;
     align-items:center;
     font-size:1.2rem;
     color:#003366;
-    z-index:999;
+    z-index:9999;
     display:none;
   }
 </style>
 </head>
-<body>
+<body onload="mostrar('dashboard')">
 
-<div id="loading-overlay">Cargando panel, por favor espere...</div>
+<div id="loading-overlay">Cargando datos, por favor espere...</div>
 
 <script>
+  // Validación de sesión
   if(!localStorage.getItem("usuario")) {
     window.location.replace("inicio de sesión.html");
   }
@@ -113,33 +114,42 @@
     });
   }
 
-  const overlay = document.getElementById("loading-overlay");
-  const dashboard = document.getElementById("dashboard");
-  const ippi = document.getElementById("ippi");
-
-  function mostrar(id){
-    document.querySelectorAll("#contenido iframe").forEach(f=>f.style.display="none");
-
-    if(id === "dashboard"){
-      overlay.style.display = "flex";
-      dashboard.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
-      dashboard.onload = ()=>{ overlay.style.display = "none"; };
-      dashboard.style.display = "block";
-    } else if(id === "ippi"){
-      overlay.style.display = "flex"; 
-      ippi.src = "ippi.html";
-      ippi.onload = ()=>{ overlay.style.display = "none"; };
-      ippi.style.display = "block";
-    }
-
-    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-    const menu = document.getElementById('menu-'+id);
-    if(menu) menu.classList.add('active');
+  function mostrarOverlay(show) {
+    document.getElementById("loading-overlay").style.display = show ? "flex" : "none";
   }
 
-  window.onload = function() {
-    mostrar('dashboard');
-  };
+  function mostrar(id) {
+    mostrarOverlay(true);
+
+    // Ocultar todos los iframes
+    document.querySelectorAll("#contenido iframe").forEach(el => el.style.display="none");
+
+    const iframe = document.getElementById(id);
+
+    if(id === "ippi"){
+      iframe.src = "ippi.html"; 
+      iframe.style.display = "block";
+
+      // Overlay para IPPI´s
+      iframe.onload = function() {
+        mostrarOverlay(false);
+      };
+
+    } else if(id === "dashboard"){
+      // Dashboard con nuevo embed de Looker Studio
+      iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      iframe.style.display = "block";
+
+      // Ocultar overlay solo cuando el iframe haya cargado
+      iframe.onload = function() {
+        mostrarOverlay(false);
+      };
+    }
+
+    // Activar menú
+    document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+    if(document.getElementById('menu-'+id)) document.getElementById('menu-'+id).classList.add('active');
+  }
 </script>
 
 <nav>
@@ -160,6 +170,5 @@
 
 </body>
 </html>
-
 
 
