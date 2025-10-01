@@ -5,35 +5,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Registro Accidentes / Incidentes</title>
 <style>
-  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; }
-  nav { background-color:#002147; color:#fff; display:flex; justify-content:center; align-items:center; position:sticky; top:0; width:100%; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
-  nav ul { list-style:none; margin:0; padding:0; display:flex; }
+  body { 
+    margin:0; 
+    font-family:Arial,sans-serif; 
+    background-color:#f4f6fa; 
+    color:#222; 
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  nav { 
+    background-color:#002147; 
+    color:#fff; 
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    position:sticky; 
+    top:0; 
+    width:100%; 
+    z-index:1000; 
+    box-shadow:0 2px 6px rgba(0,0,0,0.2); 
+  }
+  nav ul { 
+    list-style:none; 
+    margin:0; 
+    padding:0; 
+    display:flex; 
+  }
   nav li { margin:0; }
-  nav a { display:block; padding:16px 24px; color:#fff; text-decoration:none; font-weight:600; letter-spacing:0.5px; transition: background-color 0.3s,color 0.3s; }
+  nav a { 
+    display:block; 
+    padding:16px 24px; 
+    color:#fff; 
+    text-decoration:none; 
+    font-weight:600; 
+    letter-spacing:0.5px; 
+    transition: background-color 0.3s,color 0.3s; 
+  }
   nav a:hover { background-color:#003366; color:#e6e6e6; }
   nav a.active { background-color:#0056A6; color:#fff; }
 
-  /* 🔧 Ajuste para evitar salto */
-  #contenido { padding:0; }
-  iframe, #form1, #ippi {
-    width:100%;
-    height:calc(100vh - 90px);
-    border:none;
-    display:none;
-    margin-top:10px; /* espacio uniforme debajo del menú */
+  #contenido { 
+    flex:1; 
+    display:flex; 
+    flex-direction:column; 
+    overflow:hidden; 
+  }
+  iframe { 
+    width:100%; 
+    height:100%; 
+    border:none; 
+    display:block; 
+  }
+  #form1, #ippi { 
+    width:100%; 
+    height:100%; 
+    margin:0; 
+    padding:0; 
+    display:none; 
+    overflow:auto;
   }
 
-  /* El dashboard sí necesita mostrarse inicialmente */
-  #dashboard { display:block; }
-
-  #logoutButton { position:absolute; right:20px; top:15px; padding:8px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer; }
+  #logoutButton { 
+    position:absolute; 
+    right:20px; 
+    top:15px; 
+    padding:8px 12px; 
+    border:none; 
+    border-radius:6px; 
+    background:#0056A6; 
+    color:#fff; 
+    cursor:pointer; 
+  }
   #logoutButton:hover { background:#003366; }
 </style>
 </head>
 <body onload="mostrar('dashboard')">
 
 <script>
-  // Verificar sesión al cargar
   if(!localStorage.getItem("usuario")) {
     window.location.replace("inicio de sesión.html");
   }
@@ -43,7 +92,6 @@
     window.location.replace("inicio de sesión.html");
   }
 
-  // Bloquear botón Atrás mientras haya sesión activa
   if(localStorage.getItem("usuario")){
     history.replaceState(null,null,location.href);
     window.addEventListener('popstate', function(event){
@@ -53,7 +101,6 @@
     });
   }
 
-  // Función para mostrar dashboard o formularios
   function mostrar(id) {
     document.querySelectorAll("#contenido iframe, #contenido > div").forEach(el => el.style.display="none");
 
@@ -64,7 +111,6 @@
         .then(html => {
           contenedor.innerHTML = html;
           contenedor.style.display = "block";
-
           const form = document.getElementById("accidenteForm");
           if(form){
             form.addEventListener("submit", function(e){
@@ -99,14 +145,6 @@
       document.getElementById(id).style.display="block";
     }
 
-    let titulo = { 
-      'dashboard':'Panorama Accidentes', 
-      'form1':'Registro Accidentes / Incidentes',
-      'ippi':'IPPI´s'
-    };
-    if(document.getElementById('titulo-contenido')){
-      document.getElementById('titulo-contenido').innerText = titulo[id] || '';
-    }
     document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
     if(document.getElementById('menu-'+id)) document.getElementById('menu-'+id).classList.add('active');
   }
