@@ -55,7 +55,6 @@
     width:100%; 
     height:100%; 
     border:none; 
-    display:none; /* Se activa según menú */
   }
 
   #logoutButton { 
@@ -72,7 +71,7 @@
   #logoutButton:hover { background:#003366; }
 </style>
 </head>
-<body onload="mostrar('dashboard')">
+<body>
 
 <script>
   if(!localStorage.getItem("usuario")) {
@@ -100,6 +99,8 @@
     const iframe = document.getElementById(id);
     if(id === "ippi"){
       iframe.src = "ippi.html"; // O URL completa si está en otro dominio
+    } else if(id === "dashboard"){
+      iframe.src = "https://lookerstudio.google.com/u/0/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF"; // nuevo link
     }
     iframe.style.display = "block";
 
@@ -108,6 +109,11 @@
     const menu = document.getElementById('menu-'+id);
     if(menu) menu.classList.add('active');
   }
+
+  // Cargar dashboard por defecto al inicio
+  window.onload = function() {
+    mostrar('dashboard');
+  };
 </script>
 
 <nav>
@@ -119,17 +125,17 @@
 </nav>
 
 <div id="contenido">
-  <!-- Dashboard -->
+  <!-- Dashboard cargado automáticamente -->
   <iframe id="dashboard" 
-    src="https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF&rm=minimal"
     allowfullscreen
     sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
   </iframe>
 
-  <!-- IPPI´s cargado vía iframe -->
+  <!-- IPPI´s cargado vía iframe al seleccionarlo -->
   <iframe id="ippi" src=""></iframe>
 </div>
 
 </body>
 </html>
+
 
