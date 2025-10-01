@@ -29,6 +29,7 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     box-sizing: border-box;
     overflow-x: auto;
+    position: relative;
   }
 
   table {
@@ -89,17 +90,17 @@
   }
 
   /* Ajuste de ancho de columnas */
-  th:nth-child(1) { width: 3%; }   /* N° */
-  th:nth-child(2) { width: 8%; }   /* Fecha/Hora */
-  th:nth-child(3) { width: 12%; }  /* Asunto */
-  th:nth-child(4) { width: 10%; }  /* Lugar */
-  th:nth-child(5) { width: 18%; }  /* Descripción */
-  th:nth-child(6) { width: 15%; }  /* Recomendaciones */
-  th:nth-child(7) { width: 10%; }  /* Reporta */
-  th:nth-child(8) { width: 7%; }   /* Imágenes */
-  th:nth-child(9) { width: 8%; }   /* Estado */
-  th:nth-child(10){ width: 15%; }  /* Acciones tomadas */
-  th:nth-child(11){ width: 6%; }   /* Acción */
+  th:nth-child(1) { width: 3%; }   
+  th:nth-child(2) { width: 8%; }   
+  th:nth-child(3) { width: 12%; }  
+  th:nth-child(4) { width: 10%; }  
+  th:nth-child(5) { width: 18%; }  
+  th:nth-child(6) { width: 15%; }  
+  th:nth-child(7) { width: 10%; }  
+  th:nth-child(8) { width: 7%; }   
+  th:nth-child(9) { width: 8%; }   
+  th:nth-child(10){ width: 15%; }  
+  th:nth-child(11){ width: 6%; }   
 
   input.accion-input {
     width: 90%;
@@ -135,9 +136,29 @@
   .pagination button.active {
     background-color: #0056A6;
   }
+
+  /* Overlay cargando */
+  #loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: #003366;
+    z-index: 9999;
+    display: none; /* inicialmente oculto */
+  }
+
 </style>
 </head>
 <body>
+<div id="loading-overlay">Cargando datos, por favor espere...</div>
+
 <div class="container">
   <h2>CONSULTA DE INFORMES DE PELIGROS POTENCIALES E INCIDENTES</h2>
   <table id="data-table">
@@ -179,13 +200,20 @@ function formatearFecha(fecha) {
   return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
 }
 
+function mostrarOverlay(show) {
+  document.getElementById("loading-overlay").style.display = show ? "flex" : "none";
+}
+
 async function cargarDatos() {
   try {
+    mostrarOverlay(true); // mostrar overlay
     const response = await fetch(SCRIPT_URL);
     datos = await response.json();
     mostrarPagina(1);
   } catch (error) {
     console.error("Error cargando los datos:", error);
+  } finally {
+    mostrarOverlay(false); // ocultar overlay
   }
 }
 
@@ -203,7 +231,7 @@ function mostrarPagina(pagina) {
     if(row["archivos"]){
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
       urls.forEach(url => {
-        imagenesHTML += `<span class="icono"><img src="https://www.flaticon.es/icono-gratis/archivo-de-imagen_2651440?term=miniatura+camara+y+video&page=1&position=1&origin=search&related_id=2651440" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
+        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/860/860814.png" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
       });
     }
 
@@ -261,3 +289,4 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
+
