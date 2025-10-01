@@ -40,7 +40,7 @@
     th {
       background-color: #003366;
       color: white;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 500;
       text-transform: uppercase;
       text-align: center;
@@ -76,17 +76,17 @@
       font-weight: bold;
     }
 
-    th:nth-child(1) { width: 4%; }   /* N° */
-    th:nth-child(2) { width: 10%; }  /* Fecha y Hora */
-    th:nth-child(3) { width: 8%; }   /* Asunto */
-    th:nth-child(4) { width: 8%; }   /* Lugar */
-    th:nth-child(5) { width: 18%; }  /* Descripción */
-    th:nth-child(6) { width: 15%; }  /* Recomendaciones */
-    th:nth-child(7) { width: 10%; }  /* Reporta */
-    th:nth-child(8) { width: 7%; }   /* Imágenes */
-    th:nth-child(9) { width: 8%; }   /* Estado */
-    th:nth-child(10){ width: 15%; }  /* Acciones tomadas */
-    th:nth-child(11){ width: 6%; }   /* Acción */
+    th:nth-child(1) { width: 4%; }
+    th:nth-child(2) { width: 10%; }
+    th:nth-child(3) { width: 12%; }
+    th:nth-child(4) { width: 12%; }
+    th:nth-child(5) { width: 18%; }
+    th:nth-child(6) { width: 15%; }
+    th:nth-child(7) { width: 10%; }
+    th:nth-child(8) { width: 7%; }
+    th:nth-child(9) { width: 8%; }
+    th:nth-child(10){ width: 15%; }
+    th:nth-child(11){ width: 6%; }
 
     input.accion-input {
       width: 90%;
@@ -131,9 +131,11 @@
   </div>
 
   <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi8X15CNxU10c48V1MUYbb9ZiT-2s2sxJFeSDTuuaMjkw1Qqo-mLFF6tLsh6Phplgn/exec";
+
     async function cargarDatos() {
       try {
-        const response = await fetch("https://script.google.com/macros/s/AKfycbwi8X15CNxU10c48V1MUYbb9ZiT-2s2sxJFeSDTuuaMjkw1Qqo-mLFF6tLsh6Phplgn/exec");
+        const response = await fetch(SCRIPT_URL);
         const data = await response.json();
         const tbody = document.querySelector("#data-table tbody");
         tbody.innerHTML = "";
@@ -148,9 +150,7 @@
             <td class="descripcion">${row["descripcion"] || ""}</td>
             <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
             <td class="reporta">${row["nombre"] || ""}</td>
-            <td>
-              ${row["archivos"] ? `<span class="icono" onclick="window.open('${row["archivos"]}', '_blank')">📷 Ver</span>` : ""}
-            </td>
+            <td>${row["archivos"] ? `<span class="icono" onclick="window.open('${row["archivos"]}', '_blank')">📷 Ver</span>` : ""}</td>
             <td>${row["estado"] || ""}</td>
             <td class="acciones">${row["accion tomada"] || ""}</td>
             <td>
@@ -177,7 +177,7 @@
           formData.append('row', parseInt(rowIndex) + 2); // +2 por encabezado
           formData.append('accion', valor);
 
-          const response = await fetch('TU_URL_DEL_APPS_SCRIPT', {
+          const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             body: formData
           });
@@ -193,4 +193,3 @@
   </script>
 </body>
 </html>
-
