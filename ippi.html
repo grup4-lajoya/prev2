@@ -60,15 +60,14 @@
     max-width: 200px;
   }
 
-  td.asunto, td.lugar, td.reporta, td.acciones {
+  td.asunto, td.lugar, td.reporta, td.acciones, td.descripcion, td.recomendaciones {
     text-align: left;
   }
 
   td.descripcion, td.recomendaciones {
-    text-align: left;
     max-height: 100px;
     overflow-y: auto;
-    display: block;
+    padding-right: 6px; /* espacio para scroll */
   }
 
   tr:nth-child(even) {
@@ -158,7 +157,6 @@ const filasPorPagina = 5;
 let datos = [];
 let paginaActual = 1;
 
-// Formatear fecha a DD/MM/YYYY HH:MM:SS
 function formatearFecha(fecha) {
   if(!fecha) return "";
   const d = new Date(fecha);
@@ -224,7 +222,6 @@ function mostrarPagina(pagina) {
   }
 }
 
-// Guardar acción
 document.addEventListener('click', async function(e){
   if(e.target && e.target.classList.contains('accion-btn')){
     const rowIndex = e.target.dataset.row;
@@ -247,4 +244,3 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
-
