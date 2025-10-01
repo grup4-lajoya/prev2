@@ -8,7 +8,7 @@
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f6fa;
-      margin: 0; /* quitamos padding y margin que empujaban */
+      margin: 0;
       padding: 0;
     }
 
@@ -81,8 +81,8 @@
     /* Ajustes de ancho de columnas */
     th:nth-child(1) { width: 4%; }   /* N° */
     th:nth-child(2) { width: 10%; }  /* Fecha y Hora */
-    th:nth-child(3) { width: 8%; }   /* Asunto */
-    th:nth-child(4) { width: 8%; }   /* Lugar */
+    th:nth-child(3) { width: 10%; }  /* Asunto */
+    th:nth-child(4) { width: 12%; }  /* Lugar */
     th:nth-child(5) { width: 18%; }  /* Descripción */
     th:nth-child(6) { width: 15%; }  /* Recomendaciones */
     th:nth-child(7) { width: 10%; }  /* Reporta */
@@ -127,18 +127,18 @@
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${index + 1}</td>
-            <td>${row["marca temporal"] || ""}</td>
-            <td class="asunto">${row["informe"] || ""}</td>
-            <td class="lugar">${row["lugar"] || ""}</td>
-            <td class="descripcion">${row["descripcion"] || ""}</td>
-            <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
-            <td class="reporta">${row["nombre"] || ""}</td>
+            <td>${row["Marca temporal"] || ""}</td>
+            <td class="asunto">${row["INFORME (asunto breve)"] || ""}</td>
+            <td class="lugar">${row["LUGAR DEL ACTO O CONDICIÓN INSEGURA"] || ""}</td>
+            <td class="descripcion">${row["DESCRIPCIÓN (Hacer una descripción completa de la ocurrencia)"] || ""}</td>
+            <td class="recomendaciones">${row["RECOMENDACIONES"] || ""}</td>
+            <td class="reporta">${row["NOMBRE DE QUIEN REPORTA (Opcional)"] || ""}</td>
             <td>
-              ${row["archivos"] ? `<span class="icono" onclick="window.open('${row["archivos"]}', '_blank')">📷 Ver</span>` : ""}
+              ${row["SUBIR IMAGEN O VIDEO (Opcional)"] ? `<span class="icono" onclick="window.open('${row["SUBIR IMAGEN O VIDEO (Opcional)"]}', '_blank')">📷 Ver</span>` : ""}
             </td>
-            <td>${row["estado"] || ""}</td>
-            <td class="acciones">${row["accion tomada"] || ""}</td>
-            <td>${row["guardar"] || ""}</td>
+            <td>${row["ESTADO"] || ""}</td>
+            <td class="acciones">${row["ACCIÓN TOMADA"] || ""}</td>
+            <td></td>
           `;
           tbody.appendChild(tr);
         });
@@ -151,4 +151,5 @@
   </script>
 </body>
 </html>
+
 
