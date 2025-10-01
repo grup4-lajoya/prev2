@@ -11,14 +11,12 @@
       margin: 0;
       padding: 0;
     }
-
     h2 {
       text-align: center;
       color: #002147;
       margin-bottom: 20px;
       font-size: 1.3rem;
     }
-
     .container {
       width: 100%;
       max-width: 1600px;
@@ -29,14 +27,12 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       box-sizing: border-box;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
       table-layout: fixed;
     }
-
     th {
       background-color: #003366;
       color: white;
@@ -47,7 +43,6 @@
       padding: 6px;
       white-space: nowrap;
     }
-
     td {
       border: 1px solid #ddd;
       padding: 6px 8px;
@@ -56,37 +51,28 @@
       text-align: center;
       word-wrap: break-word;
     }
-
-    td.asunto,
-    td.lugar,
-    td.descripcion,
-    td.recomendaciones,
-    td.reporta,
-    td.acciones {
+    td.asunto, td.lugar, td.descripcion, td.recomendaciones, td.reporta, td.acciones {
       text-align: left;
     }
-
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-
     .icono {
       cursor: pointer;
       color: #0056A6;
       font-weight: bold;
     }
-
-    th:nth-child(1) { width: 4%; }   /* N° */
-    th:nth-child(2) { width: 10%; }  /* Fecha y Hora */
-    th:nth-child(3) { width: 8%; }   /* Asunto */
-    th:nth-child(4) { width: 8%; }   /* Lugar */
-    th:nth-child(5) { width: 18%; }  /* Descripción */
-    th:nth-child(6) { width: 15%; }  /* Recomendaciones */
-    th:nth-child(7) { width: 10%; }  /* Reporta */
-    th:nth-child(8) { width: 7%; }   /* Imágenes */
-    th:nth-child(9) { width: 8%; }   /* Estado */
-    th:nth-child(10){ width: 15%; }  /* Acciones tomadas */
-    th:nth-child(11){ width: 6%; }   /* Acción */
+    th:nth-child(1) { width: 4%; }
+    th:nth-child(2) { width: 10%; }
+    th:nth-child(3) { width: 8%; }
+    th:nth-child(4) { width: 8%; }
+    th:nth-child(5) { width: 18%; }
+    th:nth-child(6) { width: 15%; }
+    th:nth-child(7) { width: 10%; }
+    th:nth-child(8) { width: 7%; }
+    th:nth-child(9) { width: 8%; }
+    th:nth-child(10){ width: 15%; }
+    th:nth-child(11){ width: 6%; }
 
     input.accion-input {
       width: 90%;
@@ -166,14 +152,14 @@
     }
 
     document.addEventListener('click', async function(e) {
-      if(e.target && e.target.classList.contains('accion-btn')) {
+      if (e.target && e.target.classList.contains('accion-btn')) {
         const rowIndex = e.target.dataset.row;
         const input = e.target.previousElementSibling;
         const valor = input.value;
 
         try {
           const formData = new FormData();
-          formData.append('row', parseInt(rowIndex) + 2); // +2 por encabezado
+          formData.append('row', parseInt(rowIndex) + 2);
           formData.append('accion', valor);
 
           await fetch(SCRIPT_URL, { method: 'POST', body: formData });
@@ -188,5 +174,4 @@
   </script>
 </body>
 </html>
-
 
