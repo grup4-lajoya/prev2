@@ -26,6 +26,7 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       box-sizing: border-box;
+      overflow-x: auto;
     }
     table {
       width: 100%;
@@ -119,6 +120,7 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi8X15CNxU10c48V1MUYbb9ZiT-2s2sxJFeSDTuuaMjkw1Qqo-mLFF6tLsh6Phplgn/exec";
 
+    // Función para cargar datos desde Google Sheets
     async function cargarDatos() {
       try {
         const response = await fetch(SCRIPT_URL);
@@ -151,8 +153,9 @@
       }
     }
 
+    // Guardar cambios en la columna "ACCIÓN"
     document.addEventListener('click', async function(e) {
-      if (e.target && e.target.classList.contains('accion-btn')) {
+      if(e.target && e.target.classList.contains('accion-btn')) {
         const rowIndex = e.target.dataset.row;
         const input = e.target.previousElementSibling;
         const valor = input.value;
@@ -170,8 +173,10 @@
       }
     });
 
+    // Cargar datos al abrir la página
     window.onload = cargarDatos;
   </script>
 </body>
 </html>
+
 
