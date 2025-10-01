@@ -1,23 +1,97 @@
-<!-- formulario.html -->
-<div id="formulario-container" style="max-width:950px; margin:0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
-  <h1 class="titulo-seccion" style="text-align:center;">IPPI´s - Gestión</h1>
+<!-- ippi.html -->
+<style>
+  #formulario-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+    overflow-x: auto;
+  }
 
-  <table id="tablaIPPI" style="width:100%; border-collapse: collapse; margin-top:20px;">
+  #formulario-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #003366;
+  }
+
+  #tablaIPPI {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+
+  #tablaIPPI thead tr {
+    background: #002147;
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  #tablaIPPI th,
+  #tablaIPPI td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    vertical-align: middle;
+  }
+
+  #tablaIPPI thead th {
+    position: sticky;
+    top: 0;
+    background: #002147;
+    z-index: 2;
+  }
+
+  #tablaIPPI tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  #tablaIPPI select,
+  #tablaIPPI textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.9em;
+    box-sizing: border-box;
+  }
+
+  #tablaIPPI button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #0056A6;
+    color: #fff;
+    font-size: 0.9em;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+
+  #tablaIPPI button:hover {
+    background-color: #003366;
+  }
+</style>
+
+<div id="formulario-container">
+  <h1 class="titulo-seccion">IPPI´s - gestión</h1>
+
+  <table id="tablaIPPI">
     <thead>
-      <tr style="background:#002147; color:#fff;">
-        <th style="border:1px solid #ccc; padding:8px;">#</th>
-        <th style="border:1px solid #ccc; padding:8px;">Marca temporal</th>
-        <th style="border:1px solid #ccc; padding:8px;">Informe</th>
-        <th style="border:1px solid #ccc; padding:8px;">Fecha</th>
-        <th style="border:1px solid #ccc; padding:8px;">Hora</th>
-        <th style="border:1px solid #ccc; padding:8px;">Lugar</th>
-        <th style="border:1px solid #ccc; padding:8px;">Descripción</th>
-        <th style="border:1px solid #ccc; padding:8px;">Recomendaciones</th>
-        <th style="border:1px solid #ccc; padding:8px;">Nombre</th>
-        <th style="border:1px solid #ccc; padding:8px;">Archivos</th>
-        <th style="border:1px solid #ccc; padding:8px;">ESTADO</th>
-        <th style="border:1px solid #ccc; padding:8px;">ACCIÓN TOMADA</th>
-        <th style="border:1px solid #ccc; padding:8px;">Guardar</th>
+      <tr>
+        <th>n°</th>
+        <th>fecha y hora</th>
+        <th>informe</th>
+        <th>lugar</th>
+        <th>descripción</th>
+        <th>recomendaciones</th>
+        <th>nombre</th>
+        <th>archivos</th>
+        <th>estado</th>
+        <th>acción tomada</th>
+        <th>guardar</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -27,6 +101,22 @@
 <script>
 const urlIPPI = "TU_URL_DEL_APPS_SCRIPT_O_CSV_PUBLICO"; 
 const urlActualizar = "TU_URL_DEL_APPS_SCRIPT_PARA_ACTUALIZAR"; 
+
+// 👉 Función para dar formato a fecha y hora
+function formatearFecha(fechaStr) {
+  if (!fechaStr) return "";
+  const fecha = new Date(fechaStr);
+  if (isNaN(fecha)) return fechaStr; // si no se puede parsear, se muestra tal cual
+
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const anio = fecha.getFullYear();
+
+  const horas = String(fecha.getHours()).padStart(2, "0");
+  const minutos = String(fecha.getMinutes()).padStart(2, "0");
+
+  return `${dia}/${mes}/${anio} - ${horas}:${minutos}`;
+}
 
 function cargarIPPI() {
   fetch(urlIPPI)
@@ -40,34 +130,32 @@ function cargarIPPI() {
         const archivos = row["SUBIR IMAGEN O VIDEO (Opcional)"] 
           ? row["SUBIR IMAGEN O VIDEO (Opcional)"].split(", ").map(url => 
               `<a href="${url}" target="_blank" style="text-decoration:none; margin-right:5px;">
-                 <img src="https://img.icons8.com/ios-filled/24/0056A6/picture.png" alt="Ver archivo"/>
+                 <img src="https://img.icons8.com/ios-filled/20/0056A6/picture.png" alt="ver archivo"/>
                </a>`).join("") 
           : "";
 
         tr.innerHTML = `
-          <td class="numero" style="border:1px solid #ccc; padding:8px; text-align:center;"></td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["Marca temporal"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["INFORME (asunto breve)"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["fecha"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["Hora"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["LUGAR DEL ACTO O CONDICIÓN INSEGURA"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["DESCRIPCIÓN (Hacer una descripción completa de la ocurrencia)"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["RECOMENDACIONES"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px;">${row["NOMBRE DE QUIEN REPORTA (Opcional)"]||""}</td>
-          <td style="border:1px solid #ccc; padding:8px; text-align:center;">${archivos}</td>
-          <td style="border:1px solid #ccc; padding:8px;">
-            <select name="ESTADO" style="width:100%; padding:6px; border-radius:4px; border:1px solid #ccc;">
-              <option value="">Seleccionar</option>
-              <option value="Pendiente" ${row["ESTADO"]==="Pendiente"?'selected':''}>Pendiente</option>
-              <option value="En proceso" ${row["ESTADO"]==="En proceso"?'selected':''}>En proceso</option>
-              <option value="Solucionado" ${row["ESTADO"]==="Solucionado"?'selected':''}>Solucionado</option>
+          <td class="numero" style="text-align:center;"></td>
+          <td>${formatearFecha(row["Marca temporal"])}</td>
+          <td>${row["INFORME (asunto breve)"]||""}</td>
+          <td>${row["LUGAR DEL ACTO O CONDICIÓN INSEGURA"]||""}</td>
+          <td>${row["DESCRIPCIÓN (Hacer una descripción completa de la ocurrencia)"]||""}</td>
+          <td>${row["RECOMENDACIONES"]||""}</td>
+          <td>${row["NOMBRE DE QUIEN REPORTA (Opcional)"]||""}</td>
+          <td style="text-align:center;">${archivos}</td>
+          <td>
+            <select name="ESTADO">
+              <option value="">seleccionar</option>
+              <option value="Pendiente" ${row["ESTADO"]==="Pendiente"?'selected':''}>pendiente</option>
+              <option value="En proceso" ${row["ESTADO"]==="En proceso"?'selected':''}>en proceso</option>
+              <option value="Solucionado" ${row["ESTADO"]==="Solucionado"?'selected':''}>solucionado</option>
             </select>
           </td>
-          <td style="border:1px solid #ccc; padding:8px;">
-            <textarea name="ACCION_TOMADA" placeholder="Acción tomada" style="width:100%; height:60px; border-radius:4px; border:1px solid #ccc; padding:6px;">${row["ACCIÓN TOMADA"]||''}</textarea>
+          <td>
+            <textarea name="ACCION_TOMADA" placeholder="acción tomada">${row["ACCIÓN TOMADA"]||''}</textarea>
           </td>
-          <td style="border:1px solid #ccc; padding:8px; text-align:center;">
-            <button data-index="${index}" style="padding:6px 12px; border:none; border-radius:6px; background:#0056A6; color:#fff; cursor:pointer;">Guardar</button>
+          <td style="text-align:center;">
+            <button data-index="${index}">guardar</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -89,26 +177,24 @@ function cargarIPPI() {
           .then(res => res.text())
           .then(data => {
             alert("Fila actualizada ✅");
-            renumerarFilas(); // actualizar numeración
+            renumerarFilas();
           })
           .catch(err => alert("Error al guardar ❌ " + err));
         });
       });
 
-      // Al terminar de cargar, numeramos
       renumerarFilas();
     })
     .catch(err => console.error("Error al cargar datos:", err));
 }
 
-// Función para renumerar filas dinámicamente
 function renumerarFilas() {
   document.querySelectorAll("#tablaIPPI tbody tr").forEach((tr, idx) => {
     tr.querySelector(".numero").textContent = idx + 1;
   });
 }
 
-// Ejecutar al cargar el HTML
 cargarIPPI();
 </script>
+
 
