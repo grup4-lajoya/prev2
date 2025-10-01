@@ -12,15 +12,18 @@
       width: 100%;
       height: 100%;
       background: #f0f2f5;
+      font-family: Arial, sans-serif;
     }
 
     #formulario-container {
-      width: 100vw;           /* ocupa TODO el ancho */
-      min-height: 100vh;      /* al menos toda la altura */
-      margin: 0;
+      max-width: 1400px;     /* ancho máximo */
+      width: 95%;            /* ocupa el 95% de la pantalla */
+      min-height: 100vh;     /* al menos toda la altura */
+      margin: 20px auto;     /* centra el bloque */
       padding: 20px;
-      background-color: #fff; /* fondo blanco completo */
-      font-family: Arial, sans-serif;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       box-sizing: border-box;
     }
 
@@ -34,7 +37,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.95em;
-      table-layout: fixed; /* distribuye columnas */
+      table-layout: fixed;
     }
 
     #tablaIPPI thead tr {
@@ -123,7 +126,6 @@
     const urlIPPI = "TU_URL_DEL_APPS_SCRIPT_O_CSV_PUBLICO"; 
     const urlActualizar = "TU_URL_DEL_APPS_SCRIPT_PARA_ACTUALIZAR"; 
 
-    // 👉 Función para dar formato a fecha y hora
     function formatearFecha(fechaStr) {
       if (!fechaStr) return "";
       const fecha = new Date(fechaStr);
@@ -181,7 +183,6 @@
             `;
             tbody.appendChild(tr);
 
-            // Evento de guardar fila
             tr.querySelector("button").addEventListener("click", () => {
               const estado = tr.querySelector("select[name='ESTADO']").value;
               const accion = tr.querySelector("textarea[name='ACCION_TOMADA']").value;
@@ -219,5 +220,4 @@
   </script>
 </body>
 </html>
-
 
