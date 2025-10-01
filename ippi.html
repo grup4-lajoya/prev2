@@ -76,17 +76,17 @@
       font-weight: bold;
     }
 
-    th:nth-child(1) { width: 4%; }
-    th:nth-child(2) { width: 10%; }
-    th:nth-child(3) { width: 8%; }
-    th:nth-child(4) { width: 8%; }
-    th:nth-child(5) { width: 18%; }
-    th:nth-child(6) { width: 15%; }
-    th:nth-child(7) { width: 10%; }
-    th:nth-child(8) { width: 7%; }
-    th:nth-child(9) { width: 8%; }
-    th:nth-child(10){ width: 15%; }
-    th:nth-child(11){ width: 6%; }
+    th:nth-child(1) { width: 4%; }   /* N° */
+    th:nth-child(2) { width: 10%; }  /* Fecha y Hora */
+    th:nth-child(3) { width: 8%; }   /* Asunto */
+    th:nth-child(4) { width: 8%; }   /* Lugar */
+    th:nth-child(5) { width: 18%; }  /* Descripción */
+    th:nth-child(6) { width: 15%; }  /* Recomendaciones */
+    th:nth-child(7) { width: 10%; }  /* Reporta */
+    th:nth-child(8) { width: 7%; }   /* Imágenes */
+    th:nth-child(9) { width: 8%; }   /* Estado */
+    th:nth-child(10){ width: 15%; }  /* Acciones tomadas */
+    th:nth-child(11){ width: 6%; }   /* Acción */
 
     input.accion-input {
       width: 90%;
@@ -165,21 +165,21 @@
       }
     }
 
-    document.addEventListener('click', async function(e){
-      if(e.target && e.target.classList.contains('accion-btn')){
+    document.addEventListener('click', async function(e) {
+      if(e.target && e.target.classList.contains('accion-btn')) {
         const rowIndex = e.target.dataset.row;
         const input = e.target.previousElementSibling;
         const valor = input.value;
 
         try {
           const formData = new FormData();
-          formData.append('row', parseInt(rowIndex) + 2);
+          formData.append('row', parseInt(rowIndex) + 2); // +2 por encabezado
           formData.append('accion', valor);
 
           await fetch(SCRIPT_URL, { method: 'POST', body: formData });
           alert('Acción guardada correctamente ✅');
-        } catch(err){
-          alert('Error al guardar ❌ '+err);
+        } catch(err) {
+          alert('Error al guardar ❌ ' + err);
         }
       }
     });
@@ -188,4 +188,5 @@
   </script>
 </body>
 </html>
+
 
