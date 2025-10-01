@@ -1,9 +1,9 @@
 <!-- ippi.html -->
 <style>
   #formulario-container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
+    max-width: 100%;
+    margin: 30px auto;
+    padding: 25px;
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -19,8 +19,10 @@
 
   #tablaIPPI {
     width: 100%;
+    min-width: 1200px; /* asegura que no se comprima demasiado */
     border-collapse: collapse;
     font-size: 0.95em;
+    table-layout: auto; /* las columnas se ajustan automáticamente */
   }
 
   #tablaIPPI thead tr {
@@ -33,8 +35,9 @@
   #tablaIPPI th,
   #tablaIPPI td {
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 12px;
     vertical-align: middle;
+    text-align: left;
   }
 
   #tablaIPPI thead th {
@@ -56,6 +59,11 @@
     border-radius: 6px;
     font-size: 0.9em;
     box-sizing: border-box;
+  }
+
+  #tablaIPPI textarea {
+    min-height: 60px;
+    resize: vertical;
   }
 
   #tablaIPPI button {
@@ -81,17 +89,17 @@
   <table id="tablaIPPI">
     <thead>
       <tr>
-        <th>n°</th>
-        <th>fecha y hora</th>
-        <th>informe</th>
-        <th>lugar</th>
-        <th>descripción</th>
-        <th>recomendaciones</th>
-        <th>nombre</th>
-        <th>archivos</th>
-        <th>estado</th>
-        <th>acción tomada</th>
-        <th>guardar</th>
+        <th style="width: 50px;">n°</th>
+        <th style="width: 160px;">fecha y hora</th>
+        <th style="width: 200px;">informe</th>
+        <th style="width: 200px;">lugar</th>
+        <th style="width: 300px;">descripción</th>
+        <th style="width: 250px;">recomendaciones</th>
+        <th style="width: 180px;">nombre</th>
+        <th style="width: 120px;">archivos</th>
+        <th style="width: 140px;">estado</th>
+        <th style="width: 250px;">acción tomada</th>
+        <th style="width: 120px;">guardar</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -102,19 +110,15 @@
 const urlIPPI = "TU_URL_DEL_APPS_SCRIPT_O_CSV_PUBLICO"; 
 const urlActualizar = "TU_URL_DEL_APPS_SCRIPT_PARA_ACTUALIZAR"; 
 
-// 👉 Función para dar formato a fecha y hora
 function formatearFecha(fechaStr) {
   if (!fechaStr) return "";
   const fecha = new Date(fechaStr);
-  if (isNaN(fecha)) return fechaStr; // si no se puede parsear, se muestra tal cual
-
+  if (isNaN(fecha)) return fechaStr;
   const dia = String(fecha.getDate()).padStart(2, "0");
   const mes = String(fecha.getMonth() + 1).padStart(2, "0");
   const anio = fecha.getFullYear();
-
   const horas = String(fecha.getHours()).padStart(2, "0");
   const minutos = String(fecha.getMinutes()).padStart(2, "0");
-
   return `${dia}/${mes}/${anio} - ${horas}:${minutos}`;
 }
 
@@ -160,11 +164,9 @@ function cargarIPPI() {
         `;
         tbody.appendChild(tr);
 
-        // Evento de guardar fila
         tr.querySelector("button").addEventListener("click", () => {
           const estado = tr.querySelector("select[name='ESTADO']").value;
           const accion = tr.querySelector("textarea[name='ACCION_TOMADA']").value;
-          
           const formData = new FormData();
           formData.append("filaIndex", index);
           formData.append("ESTADO", estado);
@@ -196,5 +198,4 @@ function renumerarFilas() {
 
 cargarIPPI();
 </script>
-
 
