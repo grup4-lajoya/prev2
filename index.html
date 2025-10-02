@@ -94,6 +94,22 @@
 
 <div id="loading-overlay">Cargando datos, por favor espere...</div>
 
+<nav>
+  <ul>
+    <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
+    <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
+  </ul>
+  <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
+</nav>
+
+<div id="contenido">
+  <!-- Dashboard -->
+  <iframe id="dashboard" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+
+  <!-- IPPI´s -->
+  <iframe id="ippi" src=""></iframe>
+</div>
+
 <script>
   // Validación de sesión
   if(!localStorage.getItem("usuario")) {
@@ -125,51 +141,36 @@
     const iframe = document.getElementById(id);
 
     if(id === "ippi"){
-      iframe.src = "ippi.html"; 
+      // Solo asignar src si aún no se cargó
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "ippi.html"; 
+        // Mostrar overlay solo la primera vez
+        mostrarOverlay(true);
+
+        let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
+        iframe.onload = function() {
+          clearTimeout(overlayTimeout);
+          mostrarOverlay(false);
+        };
+      }
       iframe.style.display = "block";
-
-      // Mostrar overlay solo para IPPI´s
-      mostrarOverlay(true);
-
-      // Ocultar overlay al cargar o tras 10 segundos máximo
-      let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000); // 10 segundos máximo
-      iframe.onload = function() {
-        clearTimeout(overlayTimeout);
-        mostrarOverlay(false);
-      };
 
     } else if(id === "dashboard"){
-      // Dashboard con embed de Looker Studio
-      iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      // Solo asignar src si aún no se cargó
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      }
       iframe.style.display = "block";
-
-      // **No se muestra overlay para dashboard**
     }
 
     // Activar menú
     document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-    if(document.getElementById('menu-'+id)) document.getElementById('menu-'+id).classList.add('active');
+    if(document.getElementById('menu-'+id)) {
+      document.getElementById('menu-'+id).classList.add('active');
+    }
   }
 </script>
 
-<nav>
-  <ul>
-    <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
-    <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
-  </ul>
-  <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
-</nav>
-
-<div id="contenido">
-  <!-- Dashboard -->
-  <iframe id="dashboard" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
-
-  <!-- IPPI´s -->
-  <iframe id="ippi" src=""></iframe>
-</div>
-
 </body>
 </html>
-
-
 
