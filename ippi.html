@@ -89,7 +89,6 @@
     background-color: #f9f9f9;
   }
 
-  /* Ajuste de ancho de columnas */
   th:nth-child(1) { width: 3%; }   
   th:nth-child(2) { width: 8%; }   
   th:nth-child(3) { width: 12%; }  
@@ -206,14 +205,14 @@ function mostrarOverlay(show) {
 
 async function cargarDatos() {
   try {
-    mostrarOverlay(true); // mostrar overlay
+    mostrarOverlay(true);
     const response = await fetch(SCRIPT_URL);
     datos = await response.json();
     mostrarPagina(1);
   } catch (error) {
     console.error("Error cargando los datos:", error);
   } finally {
-    mostrarOverlay(false); // ocultar overlay
+    mostrarOverlay(false);
   }
 }
 
@@ -231,7 +230,8 @@ function mostrarPagina(pagina) {
     if(row["archivos"]){
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
       urls.forEach(url => {
-        imagenesHTML += `<span class="icono"><img src="https://www.flaticon.es/icono-gratis/camara-fotografica_711191?term=c%C3%A1mara&page=1&position=4&origin=search&related_id=711191" onclick="window.open('${url}', '_blank')" title="Ver imagen"></span>`;
+        // Aquí se reemplaza window.open tradicional por abrir en pantalla completa centrada
+        imagenesHTML += `<span class="icono"><img src="https://www.flaticon.es/icono-gratis/camara-fotografica_711191?term=c%C3%A1mara&page=1&position=4&origin=search&related_id=711191" onclick="abrirImagen('${url}')" title="Ver imagen"></span>`;
       });
     }
 
@@ -267,6 +267,7 @@ function mostrarPagina(pagina) {
   }
 }
 
+// Guardar acciones
 document.addEventListener('click', async function(e){
   if(e.target && e.target.classList.contains('accion-btn')){
     const rowIndex = e.target.dataset.row;
@@ -284,6 +285,18 @@ document.addEventListener('click', async function(e){
     }
   }
 });
+
+// Función para abrir imagen en nueva ventana pantalla completa
+function abrirImagen(url) {
+  const ancho = window.screen.width;
+  const alto = window.screen.height;
+
+  window.open(
+    url,
+    '_blank',
+    `width=${ancho},height=${alto},top=0,left=0,resizable=yes,scrollbars=yes`
+  );
+}
 
 window.onload = cargarDatos;
 </script>
