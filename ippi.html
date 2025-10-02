@@ -11,14 +11,12 @@
     margin: 0;
     padding: 0;
   }
-
   h2 {
     text-align: center;
     color: #002147;
     margin-bottom: 20px;
     font-size: 1.3rem;
   }
-
   .container {
     width: 100%;
     max-width: 1600px;
@@ -31,14 +29,12 @@
     overflow-x: auto;
     position: relative;
   }
-
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
     table-layout: fixed;
   }
-
   th {
     background-color: #003366;
     color: white;
@@ -49,7 +45,6 @@
     padding: 6px;
     white-space: nowrap;
   }
-
   td {
     border: 1px solid #ddd;
     padding: 6px 8px;
@@ -58,37 +53,28 @@
     word-wrap: break-word;
     white-space: normal;
   }
-
   td.asunto, td.lugar, td.reporta, td.acciones, td.descripcion, td.recomendaciones {
     text-align: left;
   }
-
   td.descripcion, td.recomendaciones {
     max-height: 100px;
     overflow-y: auto;
     padding-right: 6px;
   }
-
   td.imagenes-cell {
     max-height: 120px;
     overflow-y: auto;
     white-space: normal;
   }
-
   td.imagenes-cell .icono {
     display: block;
     margin-bottom: 4px;
   }
-
   td.imagenes-cell .icono img {
     width: 24px;
     cursor: pointer;
   }
-
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-
+  tr:nth-child(even) { background-color: #f9f9f9; }
   th:nth-child(1) { width: 3%; }   
   th:nth-child(2) { width: 8%; }   
   th:nth-child(3) { width: 12%; }  
@@ -100,7 +86,6 @@
   th:nth-child(9) { width: 8%; }   
   th:nth-child(10){ width: 15%; }  
   th:nth-child(11){ width: 6%; }   
-
   input.accion-input {
     width: 90%;
     padding: 4px;
@@ -118,7 +103,6 @@
   button.accion-btn:hover {
     background-color: #003366;
   }
-
   .pagination {
     margin-top: 10px;
     text-align: center;
@@ -132,10 +116,7 @@
     color: white;
     cursor: pointer;
   }
-  .pagination button.active {
-    background-color: #0056A6;
-  }
-
+  .pagination button.active { background-color: #0056A6; }
   /* Overlay cargando */
   #loading-overlay {
     position: fixed;
@@ -150,14 +131,12 @@
     font-size: 1.2rem;
     color: #003366;
     z-index: 9999;
-    display: none; /* inicialmente oculto */
+    display: none;
   }
-
 </style>
 </head>
 <body>
 <div id="loading-overlay">Cargando datos, por favor espere...</div>
-
 <div class="container">
   <h2>CONSULTA DE INFORMES DE PELIGROS POTENCIALES E INCIDENTES</h2>
   <table id="data-table">
@@ -182,7 +161,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwod_J3-p-m65ICrWj6u58h7JUWHB4gi7qY6Yt7HBmtbGUdNHe37VEHmx2E5GTdXVAr/exec";
+const SCRIPT_URL = "TU_URL_DEL_SCRIPT"; // <-- pon aquí tu nueva URL publicada
 const filasPorPagina = 5;
 let datos = [];
 let paginaActual = 1;
@@ -190,13 +169,7 @@ let paginaActual = 1;
 function formatearFecha(fecha) {
   if(!fecha) return "";
   const d = new Date(fecha);
-  const dia = d.getDate().toString().padStart(2,"0");
-  const mes = (d.getMonth()+1).toString().padStart(2,"0");
-  const anio = d.getFullYear();
-  const hora = d.getHours().toString().padStart(2,"0");
-  const min = d.getMinutes().toString().padStart(2,"0");
-  const seg = d.getSeconds().toString().padStart(2,"0");
-  return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
+  return d.toLocaleString("es-PE");
 }
 
 function mostrarOverlay(show) {
@@ -230,8 +203,7 @@ function mostrarPagina(pagina) {
     if(row["archivos"]){
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
       urls.forEach(url => {
-        // Aquí se reemplaza window.open tradicional por abrir en pantalla completa centrada
-        imagenesHTML += `<span class="icono"><img src="https://www.flaticon.es/icono-gratis/camara-fotografica_711191?term=c%C3%A1mara&page=1&position=4&origin=search&related_id=711191" onclick="abrirImagen('${url}')" title="Ver imagen"></span>`;
+        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/711/711191.png" onclick="abrirImagen('${url}')" title="Ver imagen"></span>`;
       });
     }
 
@@ -267,13 +239,11 @@ function mostrarPagina(pagina) {
   }
 }
 
-// Guardar acciones
 document.addEventListener('click', async function(e){
   if(e.target && e.target.classList.contains('accion-btn')){
     const rowIndex = e.target.dataset.row;
     const input = e.target.previousElementSibling;
     const valor = input.value;
-
     try {
       const formData = new FormData();
       formData.append('row', parseInt(rowIndex)+2);
@@ -286,21 +256,14 @@ document.addEventListener('click', async function(e){
   }
 });
 
-// Función para abrir imagen en nueva ventana pantalla completa
 function abrirImagen(url) {
   const ancho = window.screen.width;
   const alto = window.screen.height;
-
-  window.open(
-    url,
-    '_blank',
-    `width=${ancho},height=${alto},top=0,left=0,resizable=yes,scrollbars=yes`
-  );
+  window.open(url,'_blank',`width=${ancho},height=${alto},top=0,left=0,resizable=yes,scrollbars=yes`);
 }
 
 window.onload = cargarDatos;
 </script>
 </body>
 </html>
-
 
