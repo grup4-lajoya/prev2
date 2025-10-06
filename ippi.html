@@ -130,18 +130,6 @@
     border-color: #0056A6;
   }
 
-  .thumbnail-loading {
-    width: 60px;
-    height: 60px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: #999;
-  }
-
   tr:nth-child(even) {
     background-color: #f9f9f9;
   }
@@ -158,24 +146,28 @@
   th:nth-child(10){ width: 14%; }  
   th:nth-child(11){ width: 6%; }   
 
-  input.accion-input {
-    width: 90%;
-    padding: 4px;
-    font-size: 0.8rem;
+  .action-icons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
   }
-  button.accion-btn {
-    padding: 3px 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    background-color: #0056A6;
-    color: white;
+
+  .icon-btn {
+    background: none;
     border: none;
-    border-radius: 4px;
-    margin-top: 2px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    transition: transform 0.2s;
   }
-  button.accion-btn:hover {
-    background-color: #003366;
+
+  .icon-btn:hover {
+    transform: scale(1.2);
   }
+
+  .icon-edit { color: #0056A6; }
+  .icon-delete { color: #dc3545; }
 
   .pagination {
     margin-top: 10px;
@@ -251,11 +243,11 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.95);
+    background-color: rgba(0,0,0,0.8);
     overflow: auto;
   }
 
-  .modal-content {
+  .modal-content-img {
     margin: auto;
     display: block;
     max-width: 90%;
@@ -294,6 +286,112 @@
     color: #ccc;
   }
 
+  /* Modal de edición */
+  .modal-edit {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    overflow: auto;
+  }
+
+  .modal-edit-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .modal-edit h3 {
+    color: #002147;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #0056A6;
+    padding-bottom: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #002147;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #0056A6;
+  }
+
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+  }
+
+  .btn-primary {
+    background-color: #0056A6;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #003366;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+
+  .btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
 </style>
 </head>
 <body>
@@ -304,9 +402,35 @@
 
 <!-- Modal para mostrar imagen -->
 <div id="imageModal" class="modal">
-  <span class="modal-close" onclick="cerrarModal()">&times;</span>
+  <span class="modal-close" onclick="cerrarModalImagen()">&times;</span>
   <div class="modal-loading" id="modalLoading">Cargando imagen...</div>
-  <img class="modal-content" id="modalImage" style="display:none;">
+  <img class="modal-content-img" id="modalImage" style="display:none;">
+</div>
+
+<!-- Modal de edición -->
+<div id="editModal" class="modal-edit">
+  <div class="modal-edit-content">
+    <h3>Editar Registro</h3>
+    
+    <div class="form-group">
+      <label for="editEstado">Estado:</label>
+      <select id="editEstado">
+        <option value="Abierto">Abierto</option>
+        <option value="En proceso">En proceso</option>
+        <option value="Cerrado">Cerrado</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="editAcciones">Acciones Tomadas:</label>
+      <textarea id="editAcciones" placeholder="Describa las acciones tomadas..."></textarea>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarEdicion" onclick="guardarEdicion()">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <div class="container">
@@ -352,6 +476,7 @@ let datosOriginales = [];
 let datosFiltrados = [];
 let paginaActual = 1;
 let cargaInicial = true;
+let filaEditando = null;
 
 function formatearFecha(fecha) {
   if(!fecha) return "";
@@ -424,13 +549,12 @@ function aplicarFiltros() {
 function extraerIdDrive(url) {
   if(!url) return null;
   
-  // Diferentes formatos de URL de Google Drive
   const patterns = [
     /\/d\/([a-zA-Z0-9_-]+)/,
     /id=([a-zA-Z0-9_-]+)/,
     /\/file\/d\/([a-zA-Z0-9_-]+)/,
     /open\?id=([a-zA-Z0-9_-]+)/,
-    /^([a-zA-Z0-9_-]{25,})$/  // ID directo (mínimo 25 caracteres)
+    /^([a-zA-Z0-9_-]{25,})$/
   ];
   
   for(let pattern of patterns) {
@@ -444,16 +568,12 @@ function extraerIdDrive(url) {
 function crearURLVisualizacion(url) {
   const id = extraerIdDrive(url);
   if(!id) return url;
-  
-  // URL optimizada para miniatura
   return `https://drive.google.com/thumbnail?id=${id}&sz=w200`;
 }
 
 function crearURLCompleta(url) {
   const id = extraerIdDrive(url);
   if(!id) return url;
-  
-  // URL para visualización completa en modal
   return `https://drive.google.com/uc?export=view&id=${id}`;
 }
 
@@ -511,8 +631,14 @@ function mostrarPagina(pagina) {
       <td>${row["estado"] || ""}</td>
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
-        <input type="text" class="accion-input" value="${row['guardar'] || ''}" data-original="${row['guardar'] || ''}">
-        <button class="accion-btn" data-row="${numeroGlobal}">Guardar</button>
+        <div class="action-icons">
+          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${numeroGlobal})" title="Editar">
+            ✏️
+          </button>
+          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${numeroGlobal})" title="Eliminar">
+            🗑️
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -528,14 +654,12 @@ function renderizarPaginacion() {
 
   if(totalPaginas <= 1) return;
 
-  // Botón anterior
   const btnPrev = document.createElement("button");
   btnPrev.textContent = "‹ Anterior";
   btnPrev.disabled = paginaActual === 1;
   btnPrev.addEventListener("click", () => mostrarPagina(paginaActual - 1));
   pagDiv.appendChild(btnPrev);
 
-  // Números de página
   let inicio = Math.max(1, paginaActual - 2);
   let fin = Math.min(totalPaginas, inicio + 4);
   
@@ -577,70 +701,115 @@ function renderizarPaginacion() {
     pagDiv.appendChild(btnLast);
   }
 
-  // Botón siguiente
   const btnNext = document.createElement("button");
   btnNext.textContent = "Siguiente ›";
   btnNext.disabled = paginaActual === totalPaginas;
   btnNext.addEventListener("click", () => mostrarPagina(paginaActual + 1));
   pagDiv.appendChild(btnNext);
 
-  // Info de registros
   const info = document.createElement("span");
   info.style.marginLeft = "15px";
-  const desde = inicio + 1;
-  const hasta = Math.min(fin, datosFiltrados.length);
+  const desde = (paginaActual - 1) * filasPorPagina + 1;
+  const hasta = Math.min(paginaActual * filasPorPagina, datosFiltrados.length);
   info.textContent = `Mostrando ${desde}-${hasta} de ${datosFiltrados.length} registros`;
   pagDiv.appendChild(info);
 }
 
-// Guardar acciones
-document.addEventListener('click', async function(e){
-  if(e.target && e.target.classList.contains('accion-btn')){
-    const rowIndex = e.target.dataset.row;
-    const input = e.target.previousElementSibling;
-    const valor = input.value;
-    const valorOriginal = input.dataset.original;
-
-    // Si no cambió, no hacer nada
-    if(valor === valorOriginal) {
-      alert('ℹ️ No hay cambios para guardar');
-      return;
-    }
-
-    try {
-      e.target.disabled = true;
-      e.target.textContent = "⏳";
-      
-      const formData = new FormData();
-      formData.append('row', parseInt(rowIndex) + 1);
-      formData.append('accion', valor);
-      
-      const response = await fetch(SCRIPT_URL, {method:'POST', body:formData});
-      const result = await response.json();
-      
-      if(result.status === "ok") {
-        e.target.textContent = "✓";
-        e.target.style.backgroundColor = "#28a745";
-        input.dataset.original = valor; // Actualizar valor original
-        
-        setTimeout(() => {
-          e.target.textContent = "Guardar";
-          e.target.style.backgroundColor = "#0056A6";
-          e.target.disabled = false;
-        }, 1500);
-      } else {
-        throw new Error(result.error || "Error desconocido");
-      }
-      
-    } catch(err){
-      alert('❌ Error al guardar: ' + err.message);
-      e.target.disabled = false;
-      e.target.textContent = "Guardar";
-    }
+// Función para abrir modal de edición
+function abrirModalEdicion(numeroFila) {
+  const registro = datosOriginales[numeroFila - 1];
+  
+  if(!registro) {
+    alert("Error: Registro no encontrado");
+    return;
   }
-});
 
-// Función para abrir imagen en modal centrado
+  filaEditando = numeroFila;
+  
+  document.getElementById("editEstado").value = registro["estado"] || "Abierto";
+  document.getElementById("editAcciones").value = registro["accion tomada"] || "";
+  
+  document.getElementById("editModal").style.display = "block";
+}
+
+function cerrarModalEdicion() {
+  document.getElementById("editModal").style.display = "none";
+  filaEditando = null;
+}
+
+async function guardarEdicion() {
+  if(!filaEditando) return;
+
+  const estado = document.getElementById("editEstado").value;
+  const acciones = document.getElementById("editAcciones").value;
+
+  const btnGuardar = document.getElementById("btnGuardarEdicion");
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = "Guardando...";
+
+  try {
+    const formData = new FormData();
+    formData.append('action', 'update');
+    formData.append('row', filaEditando + 1);
+    formData.append('estado', estado);
+    formData.append('accionTomada', acciones);
+    
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if(result.status === "ok") {
+      alert("Registro actualizado correctamente");
+      cerrarModalEdicion();
+      cargarDatos(true);
+    } else {
+      throw new Error(result.error || "Error desconocido");
+    }
+    
+  } catch(err){
+    alert("Error al guardar: " + err.message);
+  } finally {
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = "Guardar";
+  }
+}
+
+async function eliminarRegistro(numeroFila) {
+  if(!confirm("¿Está seguro de que desea eliminar este registro? Esta acción no se puede deshacer.")) {
+    return;
+  }
+
+  mostrarOverlay(true, "Eliminando registro...");
+
+  try {
+    const formData = new FormData();
+    formData.append('action', 'delete');
+    formData.append('row', numeroFila + 1);
+    
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if(result.status === "ok") {
+      alert("Registro eliminado correctamente");
+      cargarDatos(true);
+    } else {
+      throw new Error(result.error || "Error desconocido");
+    }
+    
+  } catch(err){
+    alert("Error al eliminar: " + err.message);
+  } finally {
+    mostrarOverlay(false);
+  }
+}
+
 function abrirImagen(url) {
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImage");
@@ -651,7 +820,6 @@ function abrirImagen(url) {
   modalImg.style.display = "none";
   modalImg.src = "";
   
-  // Crear nueva imagen para precargar
   const img = new Image();
   
   img.onload = function() {
@@ -661,7 +829,6 @@ function abrirImagen(url) {
   };
   
   img.onerror = function() {
-    // Intentar con URL alternativa si falla
     const id = extraerIdDrive(url);
     if(id) {
       const urlAlternativa = `https://lh3.googleusercontent.com/d/${id}`;
@@ -675,20 +842,20 @@ function abrirImagen(url) {
       
       img2.onerror = function() {
         loading.innerHTML = "❌ Error al cargar la imagen<br><small>Verifica que el archivo sea público</small>";
-        setTimeout(() => cerrarModal(), 3000);
+        setTimeout(() => cerrarModalImagen(), 3000);
       };
       
       img2.src = urlAlternativa;
     } else {
       loading.innerHTML = "❌ Error al cargar la imagen<br><small>URL no válida</small>";
-      setTimeout(() => cerrarModal(), 3000);
+      setTimeout(() => cerrarModalImagen(), 3000);
     }
   };
   
   img.src = url;
 }
 
-function cerrarModal() {
+function cerrarModalImagen() {
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImage");
   const loading = document.getElementById("modalLoading");
@@ -700,18 +867,22 @@ function cerrarModal() {
   loading.innerHTML = "Cargando imagen...";
 }
 
-// Cerrar modal al hacer clic fuera de la imagen
 window.onclick = function(event) {
-  const modal = document.getElementById("imageModal");
-  if (event.target == modal) {
-    cerrarModal();
+  const modalImg = document.getElementById("imageModal");
+  const modalEdit = document.getElementById("editModal");
+  
+  if (event.target == modalImg) {
+    cerrarModalImagen();
+  }
+  if (event.target == modalEdit) {
+    cerrarModalEdicion();
   }
 }
 
-// Tecla ESC para cerrar modal
 document.addEventListener('keydown', function(e) {
   if (e.key === "Escape") {
-    cerrarModal();
+    cerrarModalImagen();
+    cerrarModalEdicion();
   }
 });
 
