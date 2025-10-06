@@ -32,7 +32,10 @@
     padding:0; 
     display:flex; 
   }
-  nav li { margin:0; }
+  nav li { 
+    margin:0;
+    position:relative;
+  }
   nav a { 
     display:block; 
     padding:16px 24px; 
@@ -44,6 +47,60 @@
   }
   nav a:hover { background-color:#003366; color:#e6e6e6; }
   nav a.active { background-color:#0056A6; color:#fff; }
+
+  /* Estilos para menú desplegable */
+  .dropdown {
+    position: relative;
+  }
+  
+  .dropdown-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .dropdown-toggle::after {
+    content: '▼';
+    font-size: 0.7em;
+    transition: transform 0.3s;
+  }
+  
+  .dropdown:hover .dropdown-toggle::after {
+    transform: rotate(180deg);
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #003366;
+    min-width: 200px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s, transform 0.3s, visibility 0.3s;
+  }
+  
+  .dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  
+  .dropdown-menu a {
+    padding: 12px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .dropdown-menu a:last-child {
+    border-bottom: none;
+  }
+  
+  .dropdown-menu a:hover {
+    background-color:#0056A6;
+  }
 
   #contenido { 
     flex:1; 
@@ -98,6 +155,14 @@
   <ul>
     <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
     <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle">Registro</a>
+      <div class="dropdown-menu">
+        <a href="#" id="menu-jiat" onclick="mostrar('jiat')">JIAT</a>
+        <a href="#" id="menu-jiu" onclick="mostrar('jiu')">JIU</a>
+        <a href="#" id="menu-jia" onclick="mostrar('jia')">JIA</a>
+      </div>
+    </li>
   </ul>
   <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
 </nav>
@@ -108,6 +173,15 @@
 
   <!-- IPPI´s -->
   <iframe id="ippi" src=""></iframe>
+  
+  <!-- JIAT -->
+  <iframe id="jiat" src=""></iframe>
+  
+  <!-- JIU -->
+  <iframe id="jiu" src=""></iframe>
+  
+  <!-- JIA -->
+  <iframe id="jia" src=""></iframe>
 </div>
 
 <script>
@@ -141,10 +215,8 @@
     const iframe = document.getElementById(id);
 
     if(id === "ippi"){
-      // Solo asignar src si aún no se cargó
       if(!iframe.src || iframe.src === window.location.href){
         iframe.src = "ippi.html"; 
-        // Mostrar overlay solo la primera vez
         mostrarOverlay(true);
 
         let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
@@ -156,9 +228,26 @@
       iframe.style.display = "block";
 
     } else if(id === "dashboard"){
-      // Solo asignar src si aún no se cargó
       if(!iframe.src || iframe.src === window.location.href){
         iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "jiat"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jiat.html"; // Cambia por tu URL
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "jiu"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jiu.html"; // Cambia por tu URL
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "jia"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jia.html"; // Cambia por tu URL
       }
       iframe.style.display = "block";
     }
@@ -173,4 +262,3 @@
 
 </body>
 </html>
-
