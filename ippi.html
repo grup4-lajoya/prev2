@@ -32,6 +32,20 @@
     position: relative;
   }
 
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  .filters input, .filters select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -48,6 +62,9 @@
     text-align: center;
     padding: 6px;
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   td {
@@ -73,16 +90,23 @@
     max-height: 120px;
     overflow-y: auto;
     white-space: normal;
+    text-align: center;
   }
 
   td.imagenes-cell .icono {
-    display: block;
-    margin-bottom: 4px;
+    display: inline-block;
+    margin: 2px;
   }
 
   td.imagenes-cell .icono img {
-    width: 24px;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  td.imagenes-cell .icono img:hover {
+    transform: scale(1.2);
   }
 
   tr:nth-child(even) {
@@ -114,6 +138,7 @@
     color: white;
     border: none;
     border-radius: 4px;
+    margin-top: 2px;
   }
   button.accion-btn:hover {
     background-color: #003366;
@@ -122,44 +147,131 @@
   .pagination {
     margin-top: 10px;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
   }
   .pagination button {
-    padding: 5px 10px;
-    margin: 0 2px;
+    padding: 8px 12px;
     border: none;
     border-radius: 4px;
     background-color: #003366;
     color: white;
     cursor: pointer;
+    font-size: 0.9rem;
   }
   .pagination button.active {
     background-color: #0056A6;
+    font-weight: bold;
+  }
+  .pagination button:hover:not(.active) {
+    background-color: #0056A6;
+  }
+  .pagination span {
+    padding: 0 10px;
+    color: #003366;
   }
 
-  /* Overlay cargando */
   #loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.9);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     font-size: 1.2rem;
     color: #003366;
     z-index: 9999;
-    display: none; /* inicialmente oculto */
+    display: none;
+  }
+
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #003366;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Modal para imagen */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.95);
+    overflow: auto;
+  }
+
+  .modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10001;
+  }
+
+  .modal-close:hover {
+    color: #ccc;
   }
 
 </style>
 </head>
 <body>
-<div id="loading-overlay">Cargando datos, por favor espere...</div>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div>Cargando datos, por favor espere...</div>
+</div>
+
+<!-- Modal para mostrar imagen -->
+<div id="imageModal" class="modal">
+  <span class="modal-close" onclick="cerrarModal()">&times;</span>
+  <img class="modal-content" id="modalImage">
+</div>
 
 <div class="container">
   <h2>CONSULTA DE INFORMES DE PELIGROS POTENCIALES E INCIDENTES</h2>
+  
+  <div class="filters">
+    <input type="text" id="filtroAsunto" placeholder="Buscar por asunto..." onkeyup="aplicarFiltros()">
+    <input type="text" id="filtroLugar" placeholder="Buscar por lugar..." onkeyup="aplicarFiltros()">
+    <select id="filtroEstado" onchange="aplicarFiltros()">
+      <option value="">Todos los estados</option>
+      <option value="Abierto">Abierto</option>
+      <option value="En proceso">En proceso</option>
+      <option value="Cerrado">Cerrado</option>
+    </select>
+  </div>
+
   <table id="data-table">
     <thead>
       <tr>
@@ -182,9 +294,10 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwod_J3-p-m65ICrWj6u58h7JUWHB4gi7qY6Yt7HBmtbGUdNHe37VEHmx2E5GTdXVAr/exec"; // reemplazar por la URL de tu despliegue WebApp
-const filasPorPagina = 5;
-let datos = [];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwod_J3-p-m65ICrWj6u58h7JUWHB4gi7qY6Yt7HBmtbGUdNHe37VEHmx2E5GTdXVAr/exec";
+const filasPorPagina = 10;
+let datosOriginales = [];
+let datosFiltrados = [];
 let paginaActual = 1;
 
 function formatearFecha(fecha) {
@@ -195,8 +308,7 @@ function formatearFecha(fecha) {
   const anio = d.getFullYear();
   const hora = d.getHours().toString().padStart(2,"0");
   const min = d.getMinutes().toString().padStart(2,"0");
-  const seg = d.getSeconds().toString().padStart(2,"0");
-  return `${dia}/${mes}/${anio} ${hora}:${min}:${seg}`;
+  return `${dia}/${mes}/${anio} ${hora}:${min}`;
 }
 
 function mostrarOverlay(show) {
@@ -207,13 +319,31 @@ async function cargarDatos() {
   try {
     mostrarOverlay(true);
     const response = await fetch(SCRIPT_URL);
-    datos = await response.json();
+    datosOriginales = await response.json();
+    datosFiltrados = [...datosOriginales];
     mostrarPagina(1);
   } catch (error) {
     console.error("Error cargando los datos:", error);
+    alert("Error al cargar los datos. Por favor, recargue la página.");
   } finally {
     mostrarOverlay(false);
   }
+}
+
+function aplicarFiltros() {
+  const filtroAsunto = document.getElementById("filtroAsunto").value.toLowerCase();
+  const filtroLugar = document.getElementById("filtroLugar").value.toLowerCase();
+  const filtroEstado = document.getElementById("filtroEstado").value;
+
+  datosFiltrados = datosOriginales.filter(row => {
+    const cumpleAsunto = !filtroAsunto || (row["informe"] || "").toLowerCase().includes(filtroAsunto);
+    const cumpleLugar = !filtroLugar || (row["lugar"] || "").toLowerCase().includes(filtroLugar);
+    const cumpleEstado = !filtroEstado || (row["estado"] || "") === filtroEstado;
+    
+    return cumpleAsunto && cumpleLugar && cumpleEstado;
+  });
+
+  mostrarPagina(1);
 }
 
 function mostrarPagina(pagina) {
@@ -223,7 +353,13 @@ function mostrarPagina(pagina) {
 
   const inicio = (pagina - 1) * filasPorPagina;
   const fin = inicio + filasPorPagina;
-  const paginaDatos = datos.slice(inicio, fin);
+  const paginaDatos = datosFiltrados.slice(inicio, fin);
+
+  if(paginaDatos.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="11" style="text-align:center; padding:20px; color:#666;">No se encontraron registros</td>`;
+    tbody.appendChild(tr);
+  }
 
   paginaDatos.forEach((row, index) => {
     let imagenesHTML = "";
@@ -234,9 +370,11 @@ function mostrarPagina(pagina) {
       });
     }
 
+    const numeroGlobal = datosOriginales.findIndex(item => item === row) + 1;
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${inicio + index + 1}</td>
+      <td>${numeroGlobal}</td>
       <td>${formatearFecha(row["marca temporal"])}</td>
       <td class="asunto">${row["informe"] || ""}</td>
       <td class="lugar">${row["lugar"] || ""}</td>
@@ -248,22 +386,83 @@ function mostrarPagina(pagina) {
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
         <input type="text" class="accion-input" value="${row['guardar'] || ''}">
-        <button class="accion-btn" data-row="${inicio + index}">Guardar</button>
+        <button class="accion-btn" data-row="${numeroGlobal}">Guardar</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  const totalPaginas = Math.ceil(datos.length / filasPorPagina);
+  renderizarPaginacion();
+}
+
+function renderizarPaginacion() {
+  const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
   const pagDiv = document.getElementById("pagination");
   pagDiv.innerHTML = "";
-  for(let i=1;i<=totalPaginas;i++){
+
+  if(totalPaginas <= 1) return;
+
+  // Botón anterior
+  const btnPrev = document.createElement("button");
+  btnPrev.textContent = "‹ Anterior";
+  btnPrev.disabled = paginaActual === 1;
+  btnPrev.addEventListener("click", () => mostrarPagina(paginaActual - 1));
+  pagDiv.appendChild(btnPrev);
+
+  // Números de página (mostrar máximo 5)
+  let inicio = Math.max(1, paginaActual - 2);
+  let fin = Math.min(totalPaginas, inicio + 4);
+  
+  if(fin - inicio < 4) {
+    inicio = Math.max(1, fin - 4);
+  }
+
+  if(inicio > 1) {
+    const btn1 = document.createElement("button");
+    btn1.textContent = "1";
+    btn1.addEventListener("click", () => mostrarPagina(1));
+    pagDiv.appendChild(btn1);
+    
+    if(inicio > 2) {
+      const span = document.createElement("span");
+      span.textContent = "...";
+      pagDiv.appendChild(span);
+    }
+  }
+
+  for(let i = inicio; i <= fin; i++) {
     const btn = document.createElement("button");
     btn.textContent = i;
-    btn.classList.toggle("active", i===pagina);
-    btn.addEventListener("click",()=>mostrarPagina(i));
+    btn.classList.toggle("active", i === paginaActual);
+    btn.addEventListener("click", () => mostrarPagina(i));
     pagDiv.appendChild(btn);
   }
+
+  if(fin < totalPaginas) {
+    if(fin < totalPaginas - 1) {
+      const span = document.createElement("span");
+      span.textContent = "...";
+      pagDiv.appendChild(span);
+    }
+    
+    const btnLast = document.createElement("button");
+    btnLast.textContent = totalPaginas;
+    btnLast.addEventListener("click", () => mostrarPagina(totalPaginas));
+    pagDiv.appendChild(btnLast);
+  }
+
+  // Botón siguiente
+  const btnNext = document.createElement("button");
+  btnNext.textContent = "Siguiente ›";
+  btnNext.disabled = paginaActual === totalPaginas;
+  btnNext.addEventListener("click", () => mostrarPagina(paginaActual + 1));
+  pagDiv.appendChild(btnNext);
+
+  // Info de registros
+  const info = document.createElement("span");
+  info.style.marginLeft = "15px";
+  info.textContent = `Mostrando ${datosFiltrados.length} registros`;
+  pagDiv.appendChild(info);
 }
 
 // Guardar acciones
@@ -274,28 +473,58 @@ document.addEventListener('click', async function(e){
     const valor = input.value;
 
     try {
+      e.target.disabled = true;
+      e.target.textContent = "Guardando...";
+      
       const formData = new FormData();
-      formData.append('row', parseInt(rowIndex)+2);
+      formData.append('row', parseInt(rowIndex) + 1);
       formData.append('accion', valor);
+      
       await fetch(SCRIPT_URL, {method:'POST', body:formData});
-      alert('Acción guardada correctamente ✅');
+      
+      e.target.textContent = "✓ Guardado";
+      e.target.style.backgroundColor = "#28a745";
+      
+      setTimeout(() => {
+        e.target.textContent = "Guardar";
+        e.target.style.backgroundColor = "#0056A6";
+        e.target.disabled = false;
+      }, 2000);
+      
     } catch(err){
       alert('Error al guardar ❌ '+err);
+      e.target.disabled = false;
+      e.target.textContent = "Guardar";
     }
   }
 });
 
-// Función para abrir imagen en nueva ventana pantalla completa
+// Función para abrir imagen en modal centrado
 function abrirImagen(url) {
-  const ancho = window.screen.width;
-  const alto = window.screen.height;
-
-  window.open(
-    url,
-    '_blank',
-    `width=${ancho},height=${alto},top=0,left=0,resizable=yes,scrollbars=yes`
-  );
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImage");
+  modal.style.display = "block";
+  modalImg.src = url;
 }
+
+function cerrarModal() {
+  document.getElementById("imageModal").style.display = "none";
+}
+
+// Cerrar modal al hacer clic fuera de la imagen
+window.onclick = function(event) {
+  const modal = document.getElementById("imageModal");
+  if (event.target == modal) {
+    cerrarModal();
+  }
+}
+
+// Tecla ESC para cerrar modal
+document.addEventListener('keydown', function(e) {
+  if (e.key === "Escape") {
+    cerrarModal();
+  }
+});
 
 window.onload = cargarDatos;
 </script>
