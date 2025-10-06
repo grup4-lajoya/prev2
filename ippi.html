@@ -510,6 +510,11 @@ async function cargarDatos(forzar = false) {
       throw new Error(datosOriginales.error);
     }
     
+    // GUARDAR FILA REAL DE EXCEL
+    datosOriginales.forEach((row, index) => {
+      row._filaExcel = index + 2;
+    });
+    
     datosFiltrados = [...datosOriginales];
     mostrarPagina(1);
     cargaInicial = false;
@@ -731,6 +736,7 @@ function cerrarModalEdicion() {
 async function guardarEdicion() {
   if(filaEditando === null || filaEditando === undefined) return;
 
+  const registro = datosOriginales[filaEditando];
   const estado = document.getElementById("editEstado").value;
   const acciones = document.getElementById("editAcciones").value;
 
@@ -741,7 +747,7 @@ async function guardarEdicion() {
   try {
     const formData = new FormData();
     formData.append('action', 'update');
-    formData.append('row', filaEditando + 2);
+    formData.append('row', registro._filaExcel);
     formData.append('estado', estado);
     formData.append('accionTomada', acciones);
     
@@ -787,7 +793,7 @@ async function eliminarRegistro(indiceOriginal) {
   try {
     const formData = new FormData();
     formData.append('action', 'delete');
-    formData.append('row', indiceOriginal + 2);
+    formData.append('row', registro._filaExcel);
     
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -890,5 +896,3 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
-
-
