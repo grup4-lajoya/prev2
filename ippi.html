@@ -510,11 +510,7 @@ async function cargarDatos(forzar = false) {
       throw new Error(datosOriginales.error);
     }
     
-    // GUARDAR FILA REAL DE EXCEL
-    datosOriginales.forEach((row, index) => {
-      row._filaExcel = index + 2;
-    });
-    
+   
     datosFiltrados = [...datosOriginales];
     mostrarPagina(1);
     cargaInicial = false;
