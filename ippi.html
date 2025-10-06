@@ -234,7 +234,6 @@
     100% { transform: rotate(360deg); }
   }
 
-  /* Modal para imagen */
   .modal {
     display: none;
     position: fixed;
@@ -286,7 +285,6 @@
     color: #ccc;
   }
 
-  /* Modal de edición */
   .modal-edit {
     display: none;
     position: fixed;
@@ -400,14 +398,12 @@
   <div id="loading-text">Cargando datos, por favor espere...</div>
 </div>
 
-<!-- Modal para mostrar imagen -->
 <div id="imageModal" class="modal">
   <span class="modal-close" onclick="cerrarModalImagen()">&times;</span>
   <div class="modal-loading" id="modalLoading">Cargando imagen...</div>
   <img class="modal-content-img" id="modalImage" style="display:none;">
 </div>
 
-<!-- Modal de edición -->
 <div id="editModal" class="modal-edit">
   <div class="modal-edit-content">
     <h3>Editar Registro</h3>
@@ -470,7 +466,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwod_J3-p-m65ICrWj6u58h7JUWHB4gi7qY6Yt7HBmtbGUdNHe37VEHmx2E5GTdXVAr/exec";
+const SCRIPT_URL = "PEGA_AQUI_TU_NUEVA_URL_DEL_SCRIPT";
 const filasPorPagina = 15;
 let datosOriginales = [];
 let datosFiltrados = [];
@@ -632,12 +628,8 @@ function mostrarPagina(pagina) {
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
         <div class="action-icons">
-          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${numeroGlobal})" title="Editar">
-            ✏️
-          </button>
-          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${numeroGlobal})" title="Eliminar">
-            🗑️
-          </button>
+          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${numeroGlobal})" title="Editar">✏️</button>
+          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${numeroGlobal})" title="Eliminar">🗑️</button>
         </div>
       </td>
     `;
@@ -715,7 +707,6 @@ function renderizarPaginacion() {
   pagDiv.appendChild(info);
 }
 
-// Función para abrir modal de edición
 function abrirModalEdicion(numeroFila) {
   const registro = datosOriginales[numeroFila - 1];
   
