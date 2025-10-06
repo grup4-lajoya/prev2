@@ -46,6 +46,20 @@
     font-size: 0.9rem;
   }
 
+  .filters button {
+    padding: 8px 16px;
+    background-color: #0056A6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .filters button:hover {
+    background-color: #003366;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -91,22 +105,41 @@
     overflow-y: auto;
     white-space: normal;
     text-align: center;
+    padding: 4px;
   }
 
-  td.imagenes-cell .icono {
-    display: inline-block;
-    margin: 2px;
+  .thumbnail-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
   }
 
-  td.imagenes-cell .icono img {
-    width: 28px;
-    height: 28px;
+  .thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
     cursor: pointer;
-    transition: transform 0.2s;
+    border: 2px solid #ddd;
+    transition: transform 0.2s, border-color 0.2s;
   }
 
-  td.imagenes-cell .icono img:hover {
-    transform: scale(1.2);
+  .thumbnail:hover {
+    transform: scale(1.1);
+    border-color: #0056A6;
+  }
+
+  .thumbnail-loading {
+    width: 60px;
+    height: 60px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #999;
   }
 
   tr:nth-child(even) {
@@ -117,12 +150,12 @@
   th:nth-child(2) { width: 8%; }   
   th:nth-child(3) { width: 12%; }  
   th:nth-child(4) { width: 10%; }  
-  th:nth-child(5) { width: 18%; }  
-  th:nth-child(6) { width: 15%; }  
+  th:nth-child(5) { width: 16%; }  
+  th:nth-child(6) { width: 14%; }  
   th:nth-child(7) { width: 10%; }  
-  th:nth-child(8) { width: 7%; }   
+  th:nth-child(8) { width: 9%; }   
   th:nth-child(9) { width: 8%; }   
-  th:nth-child(10){ width: 15%; }  
+  th:nth-child(10){ width: 14%; }  
   th:nth-child(11){ width: 6%; }   
 
   input.accion-input {
@@ -168,6 +201,10 @@
   .pagination button:hover:not(.active) {
     background-color: #0056A6;
   }
+  .pagination button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
   .pagination span {
     padding: 0 10px;
     color: #003366;
@@ -179,7 +216,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.95);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -222,11 +259,23 @@
     margin: auto;
     display: block;
     max-width: 90%;
-    max-height: 90%;
+    max-height: 90vh;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    border-radius: 4px;
+    object-fit: contain;
+    background: white;
+  }
+
+  .modal-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.2rem;
   }
 
   .modal-close {
@@ -238,6 +287,7 @@
     font-weight: bold;
     cursor: pointer;
     z-index: 10001;
+    transition: color 0.3s;
   }
 
   .modal-close:hover {
@@ -249,13 +299,14 @@
 <body>
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <div>Cargando datos, por favor espere...</div>
+  <div id="loading-text">Cargando datos, por favor espere...</div>
 </div>
 
 <!-- Modal para mostrar imagen -->
 <div id="imageModal" class="modal">
   <span class="modal-close" onclick="cerrarModal()">&times;</span>
-  <img class="modal-content" id="modalImage">
+  <div class="modal-loading" id="modalLoading">Cargando imagen...</div>
+  <img class="modal-content" id="modalImage" style="display:none;">
 </div>
 
 <div class="container">
@@ -270,6 +321,7 @@
       <option value="En proceso">En proceso</option>
       <option value="Cerrado">Cerrado</option>
     </select>
+    <button onclick="forzarRecarga()">🔄 Recargar datos</button>
   </div>
 
   <table id="data-table">
@@ -295,10 +347,11 @@
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwod_J3-p-m65ICrWj6u58h7JUWHB4gi7qY6Yt7HBmtbGUdNHe37VEHmx2E5GTdXVAr/exec";
-const filasPorPagina = 10;
+const filasPorPagina = 15;
 let datosOriginales = [];
 let datosFiltrados = [];
 let paginaActual = 1;
+let cargaInicial = true;
 
 function formatearFecha(fecha) {
   if(!fecha) return "";
@@ -311,23 +364,45 @@ function formatearFecha(fecha) {
   return `${dia}/${mes}/${anio} ${hora}:${min}`;
 }
 
-function mostrarOverlay(show) {
+function mostrarOverlay(show, texto = "Cargando datos, por favor espere...") {
   document.getElementById("loading-overlay").style.display = show ? "flex" : "none";
+  document.getElementById("loading-text").textContent = texto;
 }
 
-async function cargarDatos() {
+async function cargarDatos(forzar = false) {
   try {
-    mostrarOverlay(true);
-    const response = await fetch(SCRIPT_URL);
+    mostrarOverlay(true, cargaInicial ? "Cargando datos por primera vez..." : "Actualizando datos...");
+    
+    const url = forzar ? `${SCRIPT_URL}?t=${Date.now()}` : SCRIPT_URL;
+    const response = await fetch(url, {
+      method: 'GET',
+      cache: forzar ? 'no-cache' : 'default'
+    });
+    
+    if(!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+    
     datosOriginales = await response.json();
+    
+    if(datosOriginales.error) {
+      throw new Error(datosOriginales.error);
+    }
+    
     datosFiltrados = [...datosOriginales];
     mostrarPagina(1);
+    cargaInicial = false;
+    
   } catch (error) {
     console.error("Error cargando los datos:", error);
-    alert("Error al cargar los datos. Por favor, recargue la página.");
+    alert("Error al cargar los datos: " + error.message + "\nPor favor, recargue la página.");
   } finally {
     mostrarOverlay(false);
   }
+}
+
+function forzarRecarga() {
+  cargarDatos(true);
 }
 
 function aplicarFiltros() {
@@ -346,6 +421,42 @@ function aplicarFiltros() {
   mostrarPagina(1);
 }
 
+function extraerIdDrive(url) {
+  if(!url) return null;
+  
+  // Diferentes formatos de URL de Google Drive
+  const patterns = [
+    /\/d\/([a-zA-Z0-9_-]+)/,
+    /id=([a-zA-Z0-9_-]+)/,
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /open\?id=([a-zA-Z0-9_-]+)/,
+    /^([a-zA-Z0-9_-]{25,})$/  // ID directo (mínimo 25 caracteres)
+  ];
+  
+  for(let pattern of patterns) {
+    const match = url.match(pattern);
+    if(match) return match[1];
+  }
+  
+  return null;
+}
+
+function crearURLVisualizacion(url) {
+  const id = extraerIdDrive(url);
+  if(!id) return url;
+  
+  // URL optimizada para miniatura
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w200`;
+}
+
+function crearURLCompleta(url) {
+  const id = extraerIdDrive(url);
+  if(!id) return url;
+  
+  // URL para visualización completa en modal
+  return `https://drive.google.com/uc?export=view&id=${id}`;
+}
+
 function mostrarPagina(pagina) {
   const tbody = document.querySelector("#data-table tbody");
   tbody.innerHTML = "";
@@ -359,15 +470,30 @@ function mostrarPagina(pagina) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="11" style="text-align:center; padding:20px; color:#666;">No se encontraron registros</td>`;
     tbody.appendChild(tr);
+    document.getElementById("pagination").innerHTML = "";
+    return;
   }
 
   paginaDatos.forEach((row, index) => {
     let imagenesHTML = "";
     if(row["archivos"]){
       const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+      
+      imagenesHTML = '<div class="thumbnail-container">';
       urls.forEach(url => {
-        imagenesHTML += `<span class="icono"><img src="https://cdn-icons-png.flaticon.com/512/711/711191.png" onclick="abrirImagen('${url}')" title="Ver imagen"></span>`;
+        const urlMiniatura = crearURLVisualizacion(url);
+        const urlCompleta = crearURLCompleta(url);
+        
+        imagenesHTML += `
+          <img class="thumbnail" 
+               src="${urlMiniatura}" 
+               onclick="abrirImagen('${urlCompleta}')" 
+               onerror="this.onerror=null; this.src='https://via.placeholder.com/60?text=Error'"
+               title="Click para ampliar"
+               loading="lazy">
+        `;
       });
+      imagenesHTML += '</div>';
     }
 
     const numeroGlobal = datosOriginales.findIndex(item => item === row) + 1;
@@ -381,11 +507,11 @@ function mostrarPagina(pagina) {
       <td class="descripcion">${row["descripcion"] || ""}</td>
       <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
       <td class="reporta">${row["nombre"] || ""}</td>
-      <td class="imagenes-cell">${imagenesHTML}</td>
+      <td class="imagenes-cell">${imagenesHTML || '<span style="color:#999;">Sin imágenes</span>'}</td>
       <td>${row["estado"] || ""}</td>
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
-        <input type="text" class="accion-input" value="${row['guardar'] || ''}">
+        <input type="text" class="accion-input" value="${row['guardar'] || ''}" data-original="${row['guardar'] || ''}">
         <button class="accion-btn" data-row="${numeroGlobal}">Guardar</button>
       </td>
     `;
@@ -409,7 +535,7 @@ function renderizarPaginacion() {
   btnPrev.addEventListener("click", () => mostrarPagina(paginaActual - 1));
   pagDiv.appendChild(btnPrev);
 
-  // Números de página (mostrar máximo 5)
+  // Números de página
   let inicio = Math.max(1, paginaActual - 2);
   let fin = Math.min(totalPaginas, inicio + 4);
   
@@ -461,7 +587,9 @@ function renderizarPaginacion() {
   // Info de registros
   const info = document.createElement("span");
   info.style.marginLeft = "15px";
-  info.textContent = `Mostrando ${datosFiltrados.length} registros`;
+  const desde = inicio + 1;
+  const hasta = Math.min(fin, datosFiltrados.length);
+  info.textContent = `Mostrando ${desde}-${hasta} de ${datosFiltrados.length} registros`;
   pagDiv.appendChild(info);
 }
 
@@ -471,28 +599,41 @@ document.addEventListener('click', async function(e){
     const rowIndex = e.target.dataset.row;
     const input = e.target.previousElementSibling;
     const valor = input.value;
+    const valorOriginal = input.dataset.original;
+
+    // Si no cambió, no hacer nada
+    if(valor === valorOriginal) {
+      alert('ℹ️ No hay cambios para guardar');
+      return;
+    }
 
     try {
       e.target.disabled = true;
-      e.target.textContent = "Guardando...";
+      e.target.textContent = "⏳";
       
       const formData = new FormData();
       formData.append('row', parseInt(rowIndex) + 1);
       formData.append('accion', valor);
       
-      await fetch(SCRIPT_URL, {method:'POST', body:formData});
+      const response = await fetch(SCRIPT_URL, {method:'POST', body:formData});
+      const result = await response.json();
       
-      e.target.textContent = "✓ Guardado";
-      e.target.style.backgroundColor = "#28a745";
-      
-      setTimeout(() => {
-        e.target.textContent = "Guardar";
-        e.target.style.backgroundColor = "#0056A6";
-        e.target.disabled = false;
-      }, 2000);
+      if(result.status === "ok") {
+        e.target.textContent = "✓";
+        e.target.style.backgroundColor = "#28a745";
+        input.dataset.original = valor; // Actualizar valor original
+        
+        setTimeout(() => {
+          e.target.textContent = "Guardar";
+          e.target.style.backgroundColor = "#0056A6";
+          e.target.disabled = false;
+        }, 1500);
+      } else {
+        throw new Error(result.error || "Error desconocido");
+      }
       
     } catch(err){
-      alert('Error al guardar ❌ '+err);
+      alert('❌ Error al guardar: ' + err.message);
       e.target.disabled = false;
       e.target.textContent = "Guardar";
     }
@@ -503,12 +644,60 @@ document.addEventListener('click', async function(e){
 function abrirImagen(url) {
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImage");
+  const loading = document.getElementById("modalLoading");
+  
   modal.style.display = "block";
-  modalImg.src = url;
+  loading.style.display = "block";
+  modalImg.style.display = "none";
+  modalImg.src = "";
+  
+  // Crear nueva imagen para precargar
+  const img = new Image();
+  
+  img.onload = function() {
+    modalImg.src = url;
+    modalImg.style.display = "block";
+    loading.style.display = "none";
+  };
+  
+  img.onerror = function() {
+    // Intentar con URL alternativa si falla
+    const id = extraerIdDrive(url);
+    if(id) {
+      const urlAlternativa = `https://lh3.googleusercontent.com/d/${id}`;
+      const img2 = new Image();
+      
+      img2.onload = function() {
+        modalImg.src = urlAlternativa;
+        modalImg.style.display = "block";
+        loading.style.display = "none";
+      };
+      
+      img2.onerror = function() {
+        loading.innerHTML = "❌ Error al cargar la imagen<br><small>Verifica que el archivo sea público</small>";
+        setTimeout(() => cerrarModal(), 3000);
+      };
+      
+      img2.src = urlAlternativa;
+    } else {
+      loading.innerHTML = "❌ Error al cargar la imagen<br><small>URL no válida</small>";
+      setTimeout(() => cerrarModal(), 3000);
+    }
+  };
+  
+  img.src = url;
 }
 
 function cerrarModal() {
-  document.getElementById("imageModal").style.display = "none";
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImage");
+  const loading = document.getElementById("modalLoading");
+  
+  modal.style.display = "none";
+  modalImg.src = "";
+  modalImg.style.display = "none";
+  loading.style.display = "block";
+  loading.innerHTML = "Cargando imagen...";
 }
 
 // Cerrar modal al hacer clic fuera de la imagen
@@ -530,4 +719,3 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
-
