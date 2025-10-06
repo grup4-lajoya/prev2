@@ -612,11 +612,11 @@ function mostrarPagina(pagina) {
       imagenesHTML += '</div>';
     }
 
-    const numeroGlobal = datosOriginales.findIndex(item => item === row) + 1;
+    const indiceOriginal = datosOriginales.indexOf(row);
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${numeroGlobal}</td>
+      <td>${inicio + index + 1}</td>
       <td>${formatearFecha(row["marca temporal"])}</td>
       <td class="asunto">${row["informe"] || ""}</td>
       <td class="lugar">${row["lugar"] || ""}</td>
@@ -628,8 +628,8 @@ function mostrarPagina(pagina) {
       <td class="acciones">${row["accion tomada"] || ""}</td>
       <td>
         <div class="action-icons">
-          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${numeroGlobal})" title="Editar">✏️</button>
-          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${numeroGlobal})" title="Eliminar">🗑️</button>
+          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${indiceOriginal})" title="Editar">✏️</button>
+          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${indiceOriginal})" title="Eliminar">🗑️</button>
         </div>
       </td>
     `;
@@ -707,15 +707,15 @@ function renderizarPaginacion() {
   pagDiv.appendChild(info);
 }
 
-function abrirModalEdicion(numeroFila) {
-  const registro = datosOriginales[numeroFila - 1];
+function abrirModalEdicion(indiceOriginal) {
+  const registro = datosOriginales[indiceOriginal];
   
   if(!registro) {
     alert("Error: Registro no encontrado");
     return;
   }
 
-  filaEditando = numeroFila;
+  filaEditando = indiceOriginal;
   
   document.getElementById("editEstado").value = registro["estado"] || "Abierto";
   document.getElementById("editAcciones").value = registro["accion tomada"] || "";
@@ -729,7 +729,7 @@ function cerrarModalEdicion() {
 }
 
 async function guardarEdicion() {
-  if(!filaEditando) return;
+  if(filaEditando === null || filaEditando === undefined) return;
 
   const estado = document.getElementById("editEstado").value;
   const acciones = document.getElementById("editAcciones").value;
@@ -741,7 +741,7 @@ async function guardarEdicion() {
   try {
     const formData = new FormData();
     formData.append('action', 'update');
-    formData.append('row', filaEditando + 1);
+    formData.append('row', filaEditando + 2);
     formData.append('estado', estado);
     formData.append('accionTomada', acciones);
     
@@ -768,8 +768,17 @@ async function guardarEdicion() {
   }
 }
 
-async function eliminarRegistro(numeroFila) {
-  if(!confirm("¿Está seguro de que desea eliminar este registro? Esta acción no se puede deshacer.")) {
+async function eliminarRegistro(indiceOriginal) {
+  const registro = datosOriginales[indiceOriginal];
+  
+  if(!registro) {
+    alert("Error: Registro no encontrado");
+    return;
+  }
+
+  const mensaje = `¿Está seguro de que desea eliminar este registro?\n\nAsunto: ${registro["informe"]}\nLugar: ${registro["lugar"]}\n\nEsta acción no se puede deshacer.`;
+  
+  if(!confirm(mensaje)) {
     return;
   }
 
@@ -778,7 +787,7 @@ async function eliminarRegistro(numeroFila) {
   try {
     const formData = new FormData();
     formData.append('action', 'delete');
-    formData.append('row', numeroFila + 1);
+    formData.append('row', indiceOriginal + 2);
     
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -881,3 +890,5 @@ window.onload = cargarDatos;
 </script>
 </body>
 </html>
+
+
