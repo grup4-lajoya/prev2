@@ -147,24 +147,26 @@
   }
 </style>
 </head>
-<body onload="mostrar('dashboard')">
+<body onload="mostrar('resumen')">
 
 <div id="loading-overlay">Cargando datos, por favor espere...</div>
 
 <nav>
   <ul>
-    <!-- Panorama Accidentes con submenú -->
+    <!-- Panorama de Accidentes con submenú -->
     <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Panorama Accidentes</a>
+      <a href="#" class="dropdown-toggle">Panorama de Accidentes</a>
       <div class="dropdown-menu">
-        <a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Accidentes de Aviación</a>
+        <a href="#" id="menu-resumen" onclick="mostrar('resumen')">Resumen General</a>
+        <a href="#" id="menu-aviacion" onclick="mostrar('aviacion')">Aviación</a>
+        <a href="#" id="menu-consultas" onclick="mostrar('consultas')">Consultas</a>
       </div>
     </li>
 
     <!-- IPPI´s -->
     <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
 
-    <!-- Investigación de Accidentes (antes Registro) -->
+    <!-- Investigación de Accidentes -->
     <li class="dropdown">
       <a href="#" class="dropdown-toggle">Investigación de Accidentes</a>
       <div class="dropdown-menu">
@@ -178,8 +180,14 @@
 </nav>
 
 <div id="contenido">
-  <!-- Dashboard -->
-  <iframe id="dashboard" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+  <!-- Resumen General (Dashboard actual) -->
+  <iframe id="resumen" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+
+  <!-- Aviación (nuevo dashboard) -->
+  <iframe id="aviacion" src=""></iframe>
+
+  <!-- Consultas -->
+  <iframe id="consultas" src=""></iframe>
 
   <!-- IPPI´s -->
   <iframe id="ippi" src=""></iframe>
@@ -224,7 +232,25 @@
 
     const iframe = document.getElementById(id);
 
-    if(id === "ippi"){
+    if(id === "resumen"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "aviacion"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = ""; // Aquí pondrás tu nuevo dashboard de aviación cuando lo crees
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "consultas"){
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "consultas.html"; 
+      }
+      iframe.style.display = "block";
+      
+    } else if(id === "ippi"){
       if(!iframe.src || iframe.src === window.location.href){
         iframe.src = "ippi.html"; 
         mostrarOverlay(true);
@@ -234,12 +260,6 @@
           clearTimeout(overlayTimeout);
           mostrarOverlay(false);
         };
-      }
-      iframe.style.display = "block";
-
-    } else if(id === "dashboard"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
       }
       iframe.style.display = "block";
       
@@ -272,5 +292,4 @@
 
 </body>
 </html>
-
  
