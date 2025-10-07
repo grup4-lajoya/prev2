@@ -147,28 +147,16 @@
   }
 </style>
 </head>
-<body>
+<body onload="mostrar('dashboard')">
 
 <div id="loading-overlay">Cargando datos, por favor espere...</div>
 
 <nav>
   <ul>
-    <!-- Panorama de Accidentes con submenú -->
-    <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Panorama de Accidentes</a>
-      <div class="dropdown-menu">
-        <a href="#" id="menu-general" onclick="mostrar('general')">General</a>
-        <a href="#" id="menu-aviacion" onclick="mostrar('aviacion')">Aviación</a>
-        <a href="#" id="menu-consultas" onclick="mostrar('consultas')">Consultas</a>
-      </div>
-    </li>
-
-    <!-- IPPI´s -->
+    <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
     <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
-
-    <!-- Investigación de Accidentes -->
     <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Investigación de Accidentes</a>
+      <a href="#" class="dropdown-toggle">Registro</a>
       <div class="dropdown-menu">
         <a href="#" id="menu-jiat" onclick="mostrar('jiat')">JIAT</a>
         <a href="#" id="menu-jiu" onclick="mostrar('jiu')">JIU</a>
@@ -180,14 +168,8 @@
 </nav>
 
 <div id="contenido">
-  <!-- General -->
-  <iframe id="general" src=""></iframe>
-  
-  <!-- Aviación -->
-  <iframe id="aviacion" src=""></iframe>
-
-  <!-- Consultas -->
-  <iframe id="consultas" src=""></iframe>
+  <!-- Dashboard -->
+  <iframe id="dashboard" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
 
   <!-- IPPI´s -->
   <iframe id="ippi" src=""></iframe>
@@ -232,11 +214,11 @@
 
     const iframe = document.getElementById(id);
 
-    // IPPI con overlay
     if(id === "ippi"){
       if(!iframe.src || iframe.src === window.location.href){
         iframe.src = "ippi.html"; 
         mostrarOverlay(true);
+
         let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
         iframe.onload = function() {
           clearTimeout(overlayTimeout);
@@ -245,30 +227,28 @@
       }
       iframe.style.display = "block";
 
-    } else if(id === "general"){
+    } else if(id === "dashboard"){
       if(!iframe.src || iframe.src === window.location.href){
         iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
       }
       iframe.style.display = "block";
-
-    } else if(id === "aviacion"){
-      iframe.src = ""; // vacío (crearás tu formulario)
-      iframe.style.display = "block";
-
-    } else if(id === "consultas"){
-      iframe.src = ""; // vacío (crearás tu formulario)
-      iframe.style.display = "block";
-
+      
     } else if(id === "jiat"){
-      iframe.src = "jiat.html"; 
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jiat.html"; // Cambia por tu URL
+      }
       iframe.style.display = "block";
-
+      
     } else if(id === "jiu"){
-      iframe.src = "jiu.html"; 
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jiu.html"; // Cambia por tu URL
+      }
       iframe.style.display = "block";
-
+      
     } else if(id === "jia"){
-      iframe.src = "jia.html"; 
+      if(!iframe.src || iframe.src === window.location.href){
+        iframe.src = "jia.html"; // Cambia por tu URL
+      }
       iframe.style.display = "block";
     }
 
@@ -282,6 +262,5 @@
 
 </body>
 </html>
-
 
  
