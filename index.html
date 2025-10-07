@@ -153,10 +153,20 @@
 
 <nav>
   <ul>
-    <li><a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Panorama Accidentes</a></li>
-    <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
+    <!-- Panorama Accidentes con submenú -->
     <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Registro</a>
+      <a href="#" class="dropdown-toggle">Panorama Accidentes</a>
+      <div class="dropdown-menu">
+        <a href="#" id="menu-dashboard" onclick="mostrar('dashboard')">Accidentes de Aviación</a>
+      </div>
+    </li>
+
+    <!-- IPPI´s -->
+    <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
+
+    <!-- Investigación de Accidentes (antes Registro) -->
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle">Investigación de Accidentes</a>
       <div class="dropdown-menu">
         <a href="#" id="menu-jiat" onclick="mostrar('jiat')">JIAT</a>
         <a href="#" id="menu-jiu" onclick="mostrar('jiu')">JIU</a>
@@ -235,19 +245,19 @@
       
     } else if(id === "jiat"){
       if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jiat.html"; // Cambia por tu URL
+        iframe.src = "jiat.html"; 
       }
       iframe.style.display = "block";
       
     } else if(id === "jiu"){
       if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jiu.html"; // Cambia por tu URL
+        iframe.src = "jiu.html"; 
       }
       iframe.style.display = "block";
       
     } else if(id === "jia"){
       if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jia.html"; // Cambia por tu URL
+        iframe.src = "jia.html"; 
       }
       iframe.style.display = "block";
     }
