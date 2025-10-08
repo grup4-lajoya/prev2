@@ -207,6 +207,204 @@
     color: #0056A6;
     font-size: 1.2rem;
   }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 3% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: slideDown 0.3s;
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-header {
+    background-color: #002147;
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .close {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .close:hover {
+    color: #ddd;
+  }
+
+  .modal-body {
+    padding: 30px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: Arial, sans-serif;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #0056A6;
+    box-shadow: 0 0 5px rgba(0,86,166,0.3);
+  }
+
+  .involucrados-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .involucrado-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .involucrado-item input {
+    flex: 1;
+  }
+
+  .btn-agregar-involucrado {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .btn-agregar-involucrado:hover {
+    background-color: #218838;
+  }
+
+  .btn-quitar {
+    padding: 8px 12px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .btn-quitar:hover {
+    background-color: #c82333;
+  }
+
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .btn-guardar,
+  .btn-cancelar {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+  }
+
+  .btn-guardar {
+    background-color: #0056A6;
+    color: white;
+  }
+
+  .btn-guardar:hover {
+    background-color: #003366;
+  }
+
+  .btn-guardar:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .btn-cancelar {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .btn-cancelar:hover {
+    background-color: #5a6268;
+  }
+
+  .required {
+    color: red;
+  }
 </style>
 </head>
 <body>
@@ -242,23 +440,138 @@
 
 <button class="btn-flotante" onclick="nuevoRegistro()" title="Nuevo Registro">+</button>
 
+<!-- Modal Nuevo Registro -->
+<div id="modalNuevo" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Nuevo Registro JIAT</h2>
+      <span class="close" onclick="cerrarModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevo">
+        <div class="form-group">
+          <label>Número <span class="required">*</span></label>
+          <input type="number" id="numero" min="1" required>
+        </div>
+
+        <div class="form-group">
+          <label>Periodo <span class="required">*</span></label>
+          <select id="periodo" required onchange="actualizarRangoFechas()">
+            <option value="">Seleccione un año</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha <span class="required">*</span></label>
+          <input type="date" id="fecha" required>
+        </div>
+
+        <div class="form-group">
+          <label>Lugar <span class="required">*</span></label>
+          <input type="text" id="lugar" required>
+        </div>
+
+        <div class="form-group">
+          <label>Involucrado(s) <span class="required">*</span></label>
+          <div id="involucradosContainer" class="involucrados-container">
+            <div class="involucrado-item">
+              <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+            </div>
+          </div>
+          <button type="button" class="btn-agregar-involucrado" onclick="agregarInvolucrado()">+ Agregar Involucrado</button>
+        </div>
+
+        <div class="form-group">
+          <label>Fatal <span class="required">*</span></label>
+          <select id="fatal" required>
+            <option value="">Seleccione</option>
+            <option value="SÍ">SÍ</option>
+            <option value="NO">NO</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Cant. Fatalidades <span class="required">*</span></label>
+          <input type="number" id="cantfall" min="0" value="0" required>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción del Accidente <span class="required">*</span></label>
+          <textarea id="descripcion" required></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn-guardar" onclick="guardarRegistro()" id="btnGuardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
+  
   let datosCompletos = [];
   let datosFiltrados = [];
   let paginaActual = 1;
   const registrosPorPagina = 10;
 
-  // Cargar datos del Excel al cargar la página
+  // Obtener datos del usuario desde localStorage
+  const usuario = localStorage.getItem("usuario") || "";
+  const unidad = localStorage.getItem("unidad") || "";
+
+  // Validar sesión
+  if (!usuario) {
+    window.location.replace("login.html");
+  }
+
+  // Cargar años en el selector de periodo
   window.onload = function() {
+    cargarPeriodos();
     cargarDatosExcel();
   };
 
+  function cargarPeriodos() {
+    const select = document.getElementById('periodo');
+    const añoActual = new Date().getFullYear();
+    
+    for (let i = añoActual; i >= añoActual - 30; i--) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      select.appendChild(option);
+    }
+  }
+
+  function actualizarRangoFechas() {
+    const periodo = document.getElementById('periodo').value;
+    const inputFecha = document.getElementById('fecha');
+    
+    if (periodo) {
+      inputFecha.min = `${periodo}-01-01`;
+      inputFecha.max = `${periodo}-12-31`;
+      inputFecha.value = '';
+    }
+  }
+
+  function agregarInvolucrado() {
+    const container = document.getElementById('involucradosContainer');
+    const nuevoItem = document.createElement('div');
+    nuevoItem.className = 'involucrado-item';
+    nuevoItem.innerHTML = `
+      <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+      <button type="button" class="btn-quitar" onclick="quitarInvolucrado(this)">×</button>
+    `;
+    container.appendChild(nuevoItem);
+  }
+
+  function quitarInvolucrado(btn) {
+    btn.parentElement.remove();
+  }
+
   async function cargarDatosExcel() {
     try {
-      // URL de tu Web App de Apps Script
-      const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
-      
-      const response = await fetch(URL_APPS_SCRIPT + '?action=obtenerJIAT');
+      const response = await fetch(API_URL + '?action=obtenerJIAT');
       const datos = await response.json();
       
       if (datos.error) {
@@ -276,7 +589,7 @@
     } catch (error) {
       console.error('Error al cargar los datos:', error);
       document.getElementById('loading').innerHTML = 
-        'Error al cargar los datos. Por favor, verifica la conexión con Apps Script.';
+        'Error al cargar los datos. Por favor, verifica la conexión.';
     }
   }
 
@@ -295,12 +608,11 @@
         <td>${numeroGlobal}</td>
         <td>${registro.UNIDAD || '-'}</td>
         <td>${registro.CODIGO || '-'}</td>
-        <td>${formatearFecha(registro.FECHA)}</td>
+        <td>${registro.FECHA || '-'}</td>
         <td>${registro.FATAL || '-'}</td>
         <td>
           <div class="acciones">
             <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver detalle">👁</button>
-            <button class="btn-icono btn-registrar" onclick="registrarDetalle(${inicio + index})" title="Registrar detalle">📝</button>
             <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
             <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
           </div>
@@ -313,32 +625,17 @@
     actualizarInfoRegistros();
   }
 
-  function formatearFecha(fecha) {
-    if (!fecha) return '-';
-    
-    // Si es un número de serie de Excel
-    if (typeof fecha === 'number') {
-      const fechaExcel = new Date((fecha - 25569) * 86400 * 1000);
-      return fechaExcel.toLocaleDateString('es-PE');
-    }
-    
-    // Si ya es una fecha válida
-    return new Date(fecha).toLocaleDateString('es-PE');
-  }
-
   function actualizarPaginacion() {
     const totalPaginas = Math.ceil(datosFiltrados.length / registrosPorPagina);
     const paginacion = document.getElementById('paginacion');
     paginacion.innerHTML = '';
     
-    // Botón Anterior
     const btnAnterior = document.createElement('button');
     btnAnterior.textContent = '← Anterior';
     btnAnterior.disabled = paginaActual === 1;
     btnAnterior.onclick = () => cambiarPagina(paginaActual - 1);
     paginacion.appendChild(btnAnterior);
     
-    // Páginas
     const inicio = Math.max(1, paginaActual - 2);
     const fin = Math.min(totalPaginas, paginaActual + 2);
     
@@ -350,7 +647,6 @@
       paginacion.appendChild(btnPagina);
     }
     
-    // Botón Siguiente
     const btnSiguiente = document.createElement('button');
     btnSiguiente.textContent = 'Siguiente →';
     btnSiguiente.disabled = paginaActual === totalPaginas;
@@ -368,14 +664,13 @@
     info.textContent = `Mostrando ${datosFiltrados.length} registros`;
   }
 
-  // Buscador
   document.getElementById('buscar').addEventListener('input', function(e) {
     const termino = e.target.value.toLowerCase();
     
     datosFiltrados = datosCompletos.filter(registro => {
       const unidad = (registro.UNIDAD || '').toString().toLowerCase();
       const codigo = (registro.CODIGO || '').toString().toLowerCase();
-      const fecha = formatearFecha(registro.FECHA).toLowerCase();
+      const fecha = (registro.FECHA || '').toString().toLowerCase();
       
       return unidad.includes(termino) || 
              codigo.includes(termino) || 
@@ -386,15 +681,111 @@
     actualizarTabla();
   });
 
-  // Funciones de acción
+  function nuevoRegistro() {
+    document.getElementById('modalNuevo').style.display = 'block';
+    document.getElementById('formNuevo').reset();
+    
+    // Limpiar involucrados extra
+    const container = document.getElementById('involucradosContainer');
+    container.innerHTML = `
+      <div class="involucrado-item">
+        <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+      </div>
+    `;
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalNuevo').style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('modalNuevo');
+    if (event.target == modal) {
+      cerrarModal();
+    }
+  }
+
+  async function guardarRegistro() {
+    const form = document.getElementById('formNuevo');
+    
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const btnGuardar = document.getElementById('btnGuardar');
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = 'Guardando...';
+
+    try {
+      const numero = document.getElementById('numero').value;
+      const periodo = document.getElementById('periodo').value;
+      const fecha = document.getElementById('fecha').value;
+      const lugar = document.getElementById('lugar').value;
+      const fatal = document.getElementById('fatal').value;
+      const cantfall = document.getElementById('cantfall').value;
+      const descripcion = document.getElementById('descripcion').value;
+
+      // Obtener todos los involucrados
+      const involucradosInputs = document.querySelectorAll('.involucrado-input');
+      const involucrados = Array.from(involucradosInputs)
+        .map(input => input.value.trim())
+        .filter(val => val !== '')
+        .join(', ');
+
+      if (!involucrados) {
+        alert('Debe agregar al menos un involucrado');
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = 'Guardar';
+        return;
+      }
+
+      // Generar código automático
+      const numeroFormateado = numero.padStart(3, '0');
+      const codigo = `JIAT-${numeroFormateado}-${periodo}`;
+
+      const datos = {
+        action: 'crearJIAT',
+        USUARIOREG: usuario,
+        TIPO: 'JIAT',
+        NUMERO: numero,
+        PERIODO: periodo,
+        CODIGO: codigo,
+        UNIDAD: unidad,
+        FECHA: fecha,
+        LUGAR: lugar,
+        INVOLUCRADO: involucrados,
+        FATAL: fatal,
+        CANTFALL: cantfall,
+        DESCRIPCION: descripcion
+      };
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Registro creado exitosamente');
+        cerrarModal();
+        cargarDatosExcel();
+      } else {
+        alert('Error al crear el registro: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al guardar el registro');
+    } finally {
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = 'Guardar';
+    }
+  }
+
   function verDetalle(index) {
     const registro = datosFiltrados[index];
     alert('Ver detalle de: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
-  }
-
-  function registrarDetalle(index) {
-    const registro = datosFiltrados[index];
-    alert('Registrar detalle para: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
   }
 
   function editarRegistro(index) {
@@ -405,20 +796,18 @@
   function eliminarRegistro(index) {
     const registro = datosFiltrados[index];
     if (confirm('¿Estás seguro de eliminar el registro ' + registro.CODIGO + '?')) {
-      const URL_APPS_SCRIPT = 'TU_URL_DE_WEB_APP_AQUI';
-      
-      fetch(URL_APPS_SCRIPT, {
+      fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({
           action: 'eliminarJIAT',
-          codigo: registro.CODIGO
+          CODIGO: registro.CODIGO
         })
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
           alert('Registro eliminado exitosamente');
-          cargarDatosExcel(); // Recargar datos
+          cargarDatosExcel();
         } else {
           alert('Error al eliminar: ' + data.error);
         }
@@ -428,10 +817,6 @@
         console.error(error);
       });
     }
-  }
-
-  function nuevoRegistro() {
-    alert('Abrir formulario de nuevo registro\n\nEsta funcionalidad se implementará próximamente.');
   }
 </script>
 
