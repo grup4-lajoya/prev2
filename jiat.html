@@ -630,7 +630,13 @@
         throw new Error(datos.error);
       }
       
-      datosCompletos = datos;
+      // Ordenar por fecha de más reciente a más antigua
+      datosCompletos = datos.sort((a, b) => {
+        const fechaA = convertirFecha(a.FECHA);
+        const fechaB = convertirFecha(b.FECHA);
+        return fechaB - fechaA; // Descendente (más reciente primero)
+      });
+      
       datosFiltrados = [...datosCompletos];
       
       document.getElementById('loading').style.display = 'none';
@@ -643,6 +649,21 @@
       document.getElementById('loading').innerHTML = 
         'Error al cargar los datos. Por favor, verifica la conexión.';
     }
+  }
+
+  function convertirFecha(fechaStr) {
+    if (!fechaStr) return new Date(0);
+    
+    // Si viene en formato dd/MM/yyyy
+    if (fechaStr.includes('/')) {
+      const partes = fechaStr.split('/');
+      if (partes.length === 3) {
+        return new Date(partes[2], partes[1] - 1, partes[0]);
+      }
+    }
+    
+    // Si viene en otro formato, intentar parsearlo directamente
+    return new Date(fechaStr);
   }
 
   function actualizarTabla() {
