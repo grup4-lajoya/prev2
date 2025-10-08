@@ -145,7 +145,7 @@
     z-index:9999;
     display:none;
   }
-  #userInfo {
+#userInfo {
   position: absolute;
   left: 20px;
   top: 50%;
@@ -157,6 +157,7 @@
   padding: 8px 16px;
   border-radius: 6px;
   z-index: 1001;
+  display: none; /* ← AGREGAR ESTA LÍNEA */
 }
 </style>
 </head>
@@ -181,7 +182,7 @@
   if(!localStorage.getItem("usuario")) {
     window.location.replace("login.html");
   }
-  // Mostrar información del usuario
+// Mostrar información del usuario
 const unidad = localStorage.getItem("unidad") || "";
 const datos = localStorage.getItem("datos") || "";
 const userInfoDiv = document.getElementById("userInfo");
@@ -194,6 +195,9 @@ if (userInfoDiv) {
   } else if (datos) {
     userInfoDiv.textContent = datos;
   }
+  
+  // Mostrar el div después de cargar los datos
+  userInfoDiv.style.display = "block";
 }
 
   const rol = localStorage.getItem("rol");
