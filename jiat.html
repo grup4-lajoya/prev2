@@ -33,7 +33,6 @@
     font-size: 2rem;
   }
 
-  /* Botón flotante */
   .btn-flotante {
     position: fixed;
     bottom: 30px;
@@ -56,7 +55,6 @@
     transform: scale(1.1);
   }
 
-  /* Tabla */
   .tabla-container {
     overflow-x: auto;
     margin-bottom: 20px;
@@ -89,7 +87,6 @@
     background-color: #f0f4ff;
   }
 
-  /* Iconos de acción */
   .acciones {
     display: flex;
     gap: 10px;
@@ -114,12 +111,12 @@
     background-color: #138496;
   }
 
-  .btn-registrar {
+  .btn-acciones {
     background-color: #28a745;
     color: white;
   }
 
-  .btn-registrar:hover {
+  .btn-acciones:hover {
     background-color: #218838;
   }
 
@@ -141,7 +138,6 @@
     background-color: #c82333;
   }
 
-  /* Paginación */
   .paginacion {
     display: flex;
     justify-content: center;
@@ -175,11 +171,6 @@
     color: white;
   }
 
-  .paginacion span {
-    color: #666;
-  }
-
-  /* Buscador */
   .buscador {
     margin-bottom: 20px;
     display: flex;
@@ -200,7 +191,6 @@
     font-size: 0.9rem;
   }
 
-  /* Loading */
   .loading {
     text-align: center;
     padding: 40px;
@@ -208,7 +198,6 @@
     font-size: 1.2rem;
   }
 
-  /* Modal */
   .modal {
     display: none;
     position: fixed;
@@ -229,11 +218,14 @@
 
   .modal-content {
     background-color: #fefefe;
-    margin: 3% auto;
+    margin: 2% auto;
     padding: 0;
     border-radius: 8px;
-    width: 90%;
-    max-width: 700px;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     animation: slideDown 0.3s;
   }
@@ -278,8 +270,23 @@
 
   .modal-body {
     padding: 30px;
-    max-height: 70vh;
     overflow-y: auto;
+    flex: 1;
+  }
+
+  .seccion {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-left: 4px solid #0056A6;
+  }
+
+  .seccion-titulo {
+    font-size: 1.3rem;
+    color: #002147;
+    margin-bottom: 20px;
+    font-weight: 600;
   }
 
   .form-group {
@@ -315,6 +322,12 @@
     outline: none;
     border-color: #0056A6;
     box-shadow: 0 0 5px rgba(0,86,166,0.3);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
 
   .involucrados-container {
@@ -359,6 +372,37 @@
 
   .btn-quitar:hover {
     background-color: #c82333;
+  }
+
+  .detalle-item {
+    background-color: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+  }
+
+  .detalle-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .btn-agregar-detalle {
+    width: 100%;
+    padding: 12px;
+    background-color: #0056A6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 10px;
+  }
+
+  .btn-agregar-detalle:hover {
+    background-color: #003366;
   }
 
   .modal-footer {
@@ -406,7 +450,6 @@
     color: red;
   }
 
-  /* Overlay de carga */
   .overlay-carga {
     display: none;
     position: fixed;
@@ -484,7 +527,6 @@
 
 <button class="btn-flotante" onclick="nuevoRegistro()" title="Nuevo Registro">+</button>
 
-<!-- Overlay de carga -->
 <div id="overlayGlobal" class="overlay-carga">
   <div class="overlay-content">
     <div class="spinner"></div>
@@ -492,7 +534,6 @@
   </div>
 </div>
 
-<!-- Modal Nuevo Registro -->
 <div id="modalNuevo" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -501,61 +542,81 @@
     </div>
     <div class="modal-body">
       <form id="formNuevo">
-        <div class="form-group">
-          <label>Número <span class="required">*</span></label>
-          <input type="number" id="numero" min="1" required>
-        </div>
+        <!-- SECCIÓN 1: DATOS PRINCIPALES -->
+        <div class="seccion">
+          <div class="seccion-titulo">📋 Datos Principales del Accidente</div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Número <span class="required">*</span></label>
+              <input type="number" id="numero" min="1" required>
+            </div>
 
-        <div class="form-group">
-          <label>Periodo <span class="required">*</span></label>
-          <select id="periodo" required onchange="actualizarRangoFechas()">
-            <option value="">Seleccione un año</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Fecha <span class="required">*</span></label>
-          <input type="date" id="fecha" required>
-        </div>
-
-        <div class="form-group">
-          <label>Lugar <span class="required">*</span></label>
-          <input type="text" id="lugar" required>
-        </div>
-
-        <div class="form-group">
-          <label>Involucrado(s) <span class="required">*</span></label>
-          <div id="involucradosContainer" class="involucrados-container">
-            <div class="involucrado-item">
-              <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+            <div class="form-group">
+              <label>Periodo <span class="required">*</span></label>
+              <select id="periodo" required onchange="actualizarRangoFechas()">
+                <option value="">Seleccione un año</option>
+              </select>
             </div>
           </div>
-          <button type="button" class="btn-agregar-involucrado" onclick="agregarInvolucrado()">+ Agregar Involucrado</button>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha <span class="required">*</span></label>
+              <input type="date" id="fecha" required>
+            </div>
+
+            <div class="form-group">
+              <label>Lugar <span class="required">*</span></label>
+              <input type="text" id="lugar" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Involucrado(s) <span class="required">*</span></label>
+            <div id="involucradosContainer" class="involucrados-container">
+              <div class="involucrado-item">
+                <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+              </div>
+            </div>
+            <button type="button" class="btn-agregar-involucrado" onclick="agregarInvolucrado()">+ Agregar Involucrado</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fatal <span class="required">*</span></label>
+              <select id="fatal" required>
+                <option value="">Seleccione</option>
+                <option value="SÍ">SÍ</option>
+                <option value="NO">NO</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Cant. Fatalidades <span class="required">*</span></label>
+              <input type="number" id="cantfall" min="0" value="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción del Accidente <span class="required">*</span></label>
+            <textarea id="descripcion" required></textarea>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Fatal <span class="required">*</span></label>
-          <select id="fatal" required>
-            <option value="">Seleccione</option>
-            <option value="SÍ">SÍ</option>
-            <option value="NO">NO</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Cant. Fatalidades <span class="required">*</span></label>
-          <input type="number" id="cantfall" min="0" value="0" required>
-        </div>
-
-        <div class="form-group">
-          <label>Descripción del Accidente <span class="required">*</span></label>
-          <textarea id="descripcion" required></textarea>
+        <!-- SECCIÓN 2: DETALLES (CONCLUSIONES, CAUSAS, RECOMENDACIONES) -->
+        <div class="seccion">
+          <div class="seccion-titulo">📝 Detalles: Conclusiones, Causas y Recomendaciones</div>
+          
+          <div id="detallesContainer"></div>
+          
+          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalle()">+ Agregar Conclusión / Causa / Recomendación</button>
         </div>
       </form>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-      <button type="button" class="btn-guardar" onclick="guardarRegistro()" id="btnGuardar">Guardar</button>
+      <button type="button" class="btn-guardar" onclick="guardarRegistro()" id="btnGuardar">Guardar JIAT Completa</button>
     </div>
   </div>
 </div>
@@ -567,17 +628,15 @@
   let datosFiltrados = [];
   let paginaActual = 1;
   const registrosPorPagina = 10;
+  let contadorDetalles = 0;
 
-  // Obtener datos del usuario desde localStorage
   const usuario = localStorage.getItem("usuario") || "";
   const unidad = localStorage.getItem("unidad") || "";
 
-  // Validar sesión
   if (!usuario) {
     window.location.replace("login.html");
   }
 
-  // Cargar años en el selector de periodo
   window.onload = function() {
     cargarPeriodos();
     cargarDatosExcel();
@@ -621,6 +680,57 @@
     btn.parentElement.remove();
   }
 
+  function agregarDetalle() {
+    contadorDetalles++;
+    const container = document.getElementById('detallesContainer');
+    const detalleDiv = document.createElement('div');
+    detalleDiv.className = 'detalle-item';
+    detalleDiv.id = `detalle-${contadorDetalles}`;
+    detalleDiv.innerHTML = `
+      <div class="detalle-item-header">
+        <strong>Detalle #${contadorDetalles}</strong>
+        <button type="button" class="btn-quitar" onclick="quitarDetalle(${contadorDetalles})">× Quitar</button>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Asunto <span class="required">*</span></label>
+          <select class="detalle-subtipo" required>
+            <option value="">Seleccione</option>
+            <option value="CONCLUSIÓN">CONCLUSIÓN</option>
+            <option value="CAUSA">CAUSA</option>
+            <option value="RECOMENDACIÓN">RECOMENDACIÓN</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Carácter <span class="required">*</span></label>
+          <select class="detalle-caracter" required>
+            <option value="">Seleccione</option>
+            <option value="PSICOFÍSICO">PSICOFÍSICO</option>
+            <option value="TÉCNICO">TÉCNICO</option>
+            <option value="OPERATIVO">OPERATIVO</option>
+            <option value="PSICOLÓGICO">PSICOLÓGICO</option>
+            <option value="SALUD">SALUD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción <span class="required">*</span></label>
+        <textarea class="detalle-descripcion" required placeholder="Describa la conclusión, causa o recomendación..."></textarea>
+      </div>
+    `;
+    container.appendChild(detalleDiv);
+  }
+
+  function quitarDetalle(id) {
+    const elemento = document.getElementById(`detalle-${id}`);
+    if (elemento) {
+      elemento.remove();
+    }
+  }
+
   async function cargarDatosExcel() {
     try {
       const response = await fetch(API_URL + '?action=obtenerJIAT');
@@ -630,11 +740,10 @@
         throw new Error(datos.error);
       }
       
-      // Ordenar por fecha de más reciente a más antigua
       datosCompletos = datos.sort((a, b) => {
         const fechaA = convertirFecha(a.FECHA);
         const fechaB = convertirFecha(b.FECHA);
-        return fechaB - fechaA; // Descendente (más reciente primero)
+        return fechaB - fechaA;
       });
       
       datosFiltrados = [...datosCompletos];
@@ -654,7 +763,6 @@
   function convertirFecha(fechaStr) {
     if (!fechaStr) return new Date(0);
     
-    // Si viene en formato dd/MM/yyyy
     if (fechaStr.includes('/')) {
       const partes = fechaStr.split('/');
       if (partes.length === 3) {
@@ -662,7 +770,6 @@
       }
     }
     
-    // Si viene en otro formato, intentar parsearlo directamente
     return new Date(fechaStr);
   }
 
@@ -686,6 +793,7 @@
         <td>
           <div class="acciones">
             <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver detalle">👁</button>
+            <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Registrar Acciones Tomadas">📋</button>
             <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
             <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
           </div>
@@ -757,14 +865,15 @@
   function nuevoRegistro() {
     document.getElementById('modalNuevo').style.display = 'block';
     document.getElementById('formNuevo').reset();
+    contadorDetalles = 0;
     
-    // Limpiar involucrados extra
-    const container = document.getElementById('involucradosContainer');
-    container.innerHTML = `
+    document.getElementById('involucradosContainer').innerHTML = `
       <div class="involucrado-item">
         <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
       </div>
     `;
+    
+    document.getElementById('detallesContainer').innerHTML = '';
   }
 
   function cerrarModal() {
@@ -799,8 +908,7 @@
     btnGuardar.disabled = true;
     btnGuardar.textContent = 'Guardando...';
 
-    // Mostrar overlay
-    mostrarOverlay('Guardando registro...');
+    mostrarOverlay('Guardando JIAT...');
 
     try {
       const numero = document.getElementById('numero').value;
@@ -811,7 +919,6 @@
       const cantfall = document.getElementById('cantfall').value;
       const descripcion = document.getElementById('descripcion').value;
 
-      // Obtener todos los involucrados
       const involucradosInputs = document.querySelectorAll('.involucrado-input');
       const involucrados = Array.from(involucradosInputs)
         .map(input => input.value.trim())
@@ -822,7 +929,7 @@
         ocultarOverlay();
         alert('Debe agregar al menos un involucrado');
         btnGuardar.disabled = false;
-        btnGuardar.textContent = 'Guardar';
+        btnGuardar.textContent = 'Guardar JIAT Completa';
         return;
       }
 
@@ -830,55 +937,91 @@
       const numeroFormateado = numero.padStart(3, '0');
       const codigo = `JIAT-${numeroFormateado}-${periodo}`;
 
-      const datos = {
-        action: 'crearJIAT',
-        USUARIOREG: usuario,
-        TIPO: 'JIAT',
-        NUMERO: numero,
-        PERIODO: periodo,
-        CODIGO: codigo,
-        UNIDAD: unidad,
-        FECHA: fecha,
-        LUGAR: lugar,
-        INVOLUCRADO: involucrados,
-        FATAL: fatal,
-        CANTFALL: cantfall,
-        DESCRIPCION: descripcion
+      // Recopilar detalles
+      const detalles = [];
+      const detalleItems = document.querySelectorAll('.detalle-item');
+      
+      detalleItems.forEach(item => {
+        const subtipo = item.querySelector('.detalle-subtipo').value;
+        const caracter = item.querySelector('.detalle-caracter').value;
+        const descripcionDetalle = item.querySelector('.detalle-descripcion').value;
+        
+        if (subtipo && caracter && descripcionDetalle) {
+          detalles.push({
+            subtipo: subtipo,
+            caracter: caracter,
+            descripcion: descripcionDetalle
+          });
+        }
+      });
+
+      // Datos principales JIAT
+      const datosJIAT = {
+        action: 'crearJIATCompleta',
+        jiat: {
+          USUARIOREG: usuario,
+          TIPO: 'JIAT',
+          NUMERO: numero,
+          PERIODO: periodo,
+          CODIGO: codigo,
+          UNIDAD: unidad,
+          FECHA: fecha,
+          LUGAR: lugar,
+          INVOLUCRADO: involucrados,
+          FATAL: fatal,
+          CANTFALL: cantfall,
+          DESCRIPCION: descripcion
+        },
+        detalles: detalles.map(det => ({
+          USUARIOREG: usuario,
+          UNIDAD: unidad,
+          TIPO: 'JIAT',
+          CODIGO: codigo,
+          SUBTIPO: det.subtipo,
+          FECHA: fecha,
+          PERIODO: periodo,
+          CARACTER: det.caracter,
+          DESCRIPCION: det.descripcion
+        }))
       };
 
       const response = await fetch(API_URL, {
         method: 'POST',
-        body: JSON.stringify(datos)
+        body: JSON.stringify(datosJIAT)
       });
 
       const result = await response.json();
 
       if (result.success) {
-        mostrarOverlay('Registro guardado. Actualizando tabla...');
+        mostrarOverlay('JIAT guardada. Actualizando tabla...');
         
-        // Esperar un momento antes de recargar
         await cargarDatosExcel();
         
         ocultarOverlay();
-        alert('Registro creado exitosamente');
+        alert('JIAT creada exitosamente con todos sus detalles');
         cerrarModal();
       } else {
         ocultarOverlay();
-        alert('Error al crear el registro: ' + result.error);
+        alert('Error al crear la JIAT: ' + result.error);
       }
     } catch (error) {
       console.error('Error:', error);
       ocultarOverlay();
-      alert('Error al guardar el registro');
+      alert('Error al guardar la JIAT');
     } finally {
       btnGuardar.disabled = false;
-      btnGuardar.textContent = 'Guardar';
+      btnGuardar.textContent = 'Guardar JIAT Completa';
     }
   }
 
   function verDetalle(index) {
     const registro = datosFiltrados[index];
     alert('Ver detalle de: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
+  }
+
+  function registrarAcciones(index) {
+    const registro = datosFiltrados[index];
+    alert('Registrar Acciones Tomadas para: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
   }
 
   function editarRegistro(index) {
@@ -889,6 +1032,8 @@
   function eliminarRegistro(index) {
     const registro = datosFiltrados[index];
     if (confirm('¿Estás seguro de eliminar el registro ' + registro.CODIGO + '?')) {
+      mostrarOverlay('Eliminando registro...');
+      
       fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({
@@ -899,13 +1044,17 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert('Registro eliminado exitosamente');
-          cargarDatosExcel();
+          cargarDatosExcel().then(() => {
+            ocultarOverlay();
+            alert('Registro eliminado exitosamente');
+          });
         } else {
+          ocultarOverlay();
           alert('Error al eliminar: ' + data.error);
         }
       })
       .catch(error => {
+        ocultarOverlay();
         alert('Error al eliminar el registro');
         console.error(error);
       });
