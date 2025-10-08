@@ -405,6 +405,50 @@
   .required {
     color: red;
   }
+
+  /* Overlay de carga */
+  .overlay-carga {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .overlay-content {
+    background-color: white;
+    padding: 30px 50px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0056A6;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .overlay-content p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 500;
+  }
 </style>
 </head>
 <body>
@@ -439,6 +483,14 @@
 </div>
 
 <button class="btn-flotante" onclick="nuevoRegistro()" title="Nuevo Registro">+</button>
+
+<!-- Overlay de carga -->
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Guardando registro...</p>
+  </div>
+</div>
 
 <!-- Modal Nuevo Registro -->
 <div id="modalNuevo" class="modal">
@@ -698,6 +750,15 @@
     document.getElementById('modalNuevo').style.display = 'none';
   }
 
+  function mostrarOverlay(mensaje) {
+    document.getElementById('mensajeCarga').textContent = mensaje;
+    document.getElementById('overlayGlobal').style.display = 'flex';
+  }
+
+  function ocultarOverlay() {
+    document.getElementById('overlayGlobal').style.display = 'none';
+  }
+
   window.onclick = function(event) {
     const modal = document.getElementById('modalNuevo');
     if (event.target == modal) {
@@ -717,6 +778,9 @@
     btnGuardar.disabled = true;
     btnGuardar.textContent = 'Guardando...';
 
+    // Mostrar overlay
+    mostrarOverlay('Guardando registro...');
+
     try {
       const numero = document.getElementById('numero').value;
       const periodo = document.getElementById('periodo').value;
@@ -734,6 +798,7 @@
         .join(', ');
 
       if (!involucrados) {
+        ocultarOverlay();
         alert('Debe agregar al menos un involucrado');
         btnGuardar.disabled = false;
         btnGuardar.textContent = 'Guardar';
@@ -768,14 +833,21 @@
       const result = await response.json();
 
       if (result.success) {
+        mostrarOverlay('Registro guardado. Actualizando tabla...');
+        
+        // Esperar un momento antes de recargar
+        await cargarDatosExcel();
+        
+        ocultarOverlay();
         alert('Registro creado exitosamente');
         cerrarModal();
-        cargarDatosExcel();
       } else {
+        ocultarOverlay();
         alert('Error al crear el registro: ' + result.error);
       }
     } catch (error) {
       console.error('Error:', error);
+      ocultarOverlay();
       alert('Error al guardar el registro');
     } finally {
       btnGuardar.disabled = false;
