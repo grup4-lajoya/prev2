@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JIAT - Gestión de Registros</title>
+<title>JIAT - Información de las Juntas de Investigación de Accidentes Terrestres</title>
 <style>
   * {
     margin: 0;
@@ -256,7 +256,7 @@
   async function cargarDatosExcel() {
     try {
       // URL de tu Web App de Apps Script
-      const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxDKt4b13wVtvMSlrOV-hMiSS0vycgN3wrwE-yrTpGSKDY6RcfnJoWTojUUoAIF7N9w/exec';
+      const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
       
       const response = await fetch(URL_APPS_SCRIPT + '?action=obtenerJIAT');
       const datos = await response.json();
