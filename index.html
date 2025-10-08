@@ -129,6 +129,21 @@
   }
   #logoutButton:hover { background:#003366; }
 
+  #userInfo {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: rgba(0, 33, 71, 0.8);
+    padding: 8px 16px;
+    border-radius: 6px;
+    z-index: 1001;
+    display: none;
+  }
+
   /* Overlay de carga */
   #loading-overlay {
     position: fixed;
@@ -145,20 +160,6 @@
     z-index:9999;
     display:none;
   }
-#userInfo {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  background-color: rgba(0, 33, 71, 0.8);
-  padding: 8px 16px;
-  border-radius: 6px;
-  z-index: 1001;
-  display: none; /* ← AGREGAR ESTA LÍNEA */
-}
 </style>
 </head>
 <body>
@@ -182,23 +183,6 @@
   if(!localStorage.getItem("usuario")) {
     window.location.replace("login.html");
   }
-// Mostrar información del usuario
-const unidad = localStorage.getItem("unidad") || "";
-const datos = localStorage.getItem("datos") || "";
-const userInfoDiv = document.getElementById("userInfo");
-
-if (userInfoDiv) {
-  if (unidad && datos) {
-    userInfoDiv.textContent = `${unidad} - ${datos}`;
-  } else if (unidad) {
-    userInfoDiv.textContent = unidad;
-  } else if (datos) {
-    userInfoDiv.textContent = datos;
-  }
-  
-  // Mostrar el div después de cargar los datos
-  userInfoDiv.style.display = "block";
-}
 
   const rol = localStorage.getItem("rol");
   const urlScript = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
@@ -216,6 +200,7 @@ if (userInfoDiv) {
         menusData = result.menus;
         construirMenu();
         crearIframes();
+        mostrarInfoUsuario(); // ← Mostrar info del usuario DESPUÉS de cargar menús
         if(primeraVista) {
           mostrar(primeraVista);
         }
@@ -225,6 +210,24 @@ if (userInfoDiv) {
     } catch(err) {
       console.error("Error al cargar menús:", err);
       alert("Error de conexión al cargar menús");
+    }
+  }
+
+  // Función para mostrar información del usuario
+  function mostrarInfoUsuario() {
+    const unidad = localStorage.getItem("unidad") || "";
+    const datos = localStorage.getItem("datos") || "";
+    const userInfoDiv = document.getElementById("userInfo");
+    
+    if (userInfoDiv) {
+      if (unidad && datos) {
+        userInfoDiv.textContent = `${unidad} - ${datos}`;
+      } else if (unidad) {
+        userInfoDiv.textContent = unidad;
+      } else if (datos) {
+        userInfoDiv.textContent = datos;
+      }
+      userInfoDiv.style.display = "block";
     }
   }
 
