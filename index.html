@@ -129,7 +129,7 @@
   }
   #logoutButton:hover { background:#003366; }
 
-  /* Overlay de carga solo para IPPI´s */
+  /* Overlay de carga */
   #loading-overlay {
     position: fixed;
     top:0;
@@ -147,65 +147,130 @@
   }
 </style>
 </head>
-<body onload="mostrar('resumen')">
+<body>
 
 <div id="loading-overlay">Cargando datos, por favor espere...</div>
 
 <nav>
-  <ul>
-    <!-- Panorama de Accidentes con submenú -->
-    <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Panorama de Accidentes</a>
-      <div class="dropdown-menu">
-        <a href="#" id="menu-resumen" onclick="mostrar('resumen')">Resumen General</a>
-        <a href="#" id="menu-aviacion" onclick="mostrar('aviacion')">Aviación</a>
-        <a href="#" id="menu-consultas" onclick="mostrar('consultas')">Consultas</a>
-      </div>
-    </li>
-
-    <!-- IPPI´s -->
-    <li><a href="#" id="menu-ippi" onclick="mostrar('ippi')">IPPI´s</a></li>
-
-    <!-- Investigación de Accidentes -->
-    <li class="dropdown">
-      <a href="#" class="dropdown-toggle">Investigación de Accidentes</a>
-      <div class="dropdown-menu">
-        <a href="#" id="menu-jiat" onclick="mostrar('jiat')">JIAT</a>
-        <a href="#" id="menu-jiu" onclick="mostrar('jiu')">JIU</a>
-        <a href="#" id="menu-jia" onclick="mostrar('jia')">JIA</a>
-      </div>
-    </li>
+  <ul id="menuContainer">
+    <!-- El menú se generará dinámicamente aquí -->
   </ul>
   <button id="logoutButton" onclick="cerrarSesion()">Cerrar sesión</button>
 </nav>
 
 <div id="contenido">
-  <!-- Resumen General (Dashboard actual) -->
-  <iframe id="resumen" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
-
-  <!-- Aviación (nuevo dashboard) -->
-  <iframe id="aviacion" src=""></iframe>
-
-  <!-- Consultas -->
-  <iframe id="consultas" src=""></iframe>
-
-  <!-- IPPI´s -->
-  <iframe id="ippi" src=""></iframe>
-  
-  <!-- JIAT -->
-  <iframe id="jiat" src=""></iframe>
-  
-  <!-- JIU -->
-  <iframe id="jiu" src=""></iframe>
-  
-  <!-- JIA -->
-  <iframe id="jia" src=""></iframe>
+  <!-- Los iframes se crearán dinámicamente según los permisos -->
 </div>
 
 <script>
   // Validación de sesión
   if(!localStorage.getItem("usuario")) {
-    window.location.replace("inicio de sesión.html");
+    window.location.replace("login.html");
+  }
+
+  const rol = localStorage.getItem("rol");
+  const urlScript = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
+  
+  let menusData = {};
+  let primeraVista = null;
+
+  // Cargar menús al iniciar
+  async function cargarMenus() {
+    try {
+      const response = await fetch(`${urlScript}?action=getMenusByRole&rol=${encodeURIComponent(rol)}`);
+      const result = await response.json();
+      
+      if(result.success) {
+        menusData = result.menus;
+        construirMenu();
+        crearIframes();
+        if(primeraVista) {
+          mostrar(primeraVista);
+        }
+      } else {
+        alert("Error al cargar los menús: " + (result.message || "Error desconocido"));
+      }
+    } catch(err) {
+      console.error("Error al cargar menús:", err);
+      alert("Error de conexión al cargar menús");
+    }
+  }
+
+  function construirMenu() {
+    const menuContainer = document.getElementById("menuContainer");
+    menuContainer.innerHTML = "";
+    
+    for(const menu in menusData) {
+      const submenus = menusData[menu];
+      
+      if(submenus.length === 1 && !submenus[0].submenu) {
+        // Menú simple sin submenús
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = "#";
+        a.textContent = menu;
+        const id = generarId(menu);
+        a.id = `menu-${id}`;
+        a.onclick = () => mostrar(id);
+        li.appendChild(a);
+        menuContainer.appendChild(li);
+        
+        if(!primeraVista) primeraVista = id;
+        
+      } else {
+        // Menú con submenús
+        const li = document.createElement("li");
+        li.className = "dropdown";
+        
+        const toggle = document.createElement("a");
+        toggle.href = "#";
+        toggle.className = "dropdown-toggle";
+        toggle.textContent = menu;
+        
+        const dropdownMenu = document.createElement("div");
+        dropdownMenu.className = "dropdown-menu";
+        
+        submenus.forEach(item => {
+          const subA = document.createElement("a");
+          subA.href = "#";
+          subA.textContent = item.submenu || menu;
+          const id = generarId(item.submenu || menu);
+          subA.id = `menu-${id}`;
+          subA.onclick = () => mostrar(id);
+          dropdownMenu.appendChild(subA);
+          
+          if(!primeraVista) primeraVista = id;
+        });
+        
+        li.appendChild(toggle);
+        li.appendChild(dropdownMenu);
+        menuContainer.appendChild(li);
+      }
+    }
+  }
+
+  function crearIframes() {
+    const contenido = document.getElementById("contenido");
+    contenido.innerHTML = "";
+    
+    for(const menu in menusData) {
+      const submenus = menusData[menu];
+      
+      submenus.forEach(item => {
+        const iframe = document.createElement("iframe");
+        const id = generarId(item.submenu || menu);
+        iframe.id = id;
+        iframe.setAttribute("allowfullscreen", "");
+        iframe.setAttribute("sandbox", "allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox");
+        contenido.appendChild(iframe);
+      });
+    }
+  }
+
+  function generarId(texto) {
+    return texto.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
   }
 
   function cerrarSesion() {
@@ -231,65 +296,50 @@
     document.querySelectorAll("#contenido iframe").forEach(el => el.style.display="none");
 
     const iframe = document.getElementById(id);
+    if(!iframe) return;
 
-    if(id === "resumen"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "https://lookerstudio.google.com/embed/reporting/602a617d-1555-48d5-a104-342f3194e256/page/ddmZF";
+    // Buscar la URL correspondiente
+    let urlDestino = "";
+    for(const menu in menusData) {
+      const submenus = menusData[menu];
+      for(const item of submenus) {
+        const itemId = generarId(item.submenu || menu);
+        if(itemId === id) {
+          urlDestino = item.url;
+          break;
+        }
       }
-      iframe.style.display = "block";
+      if(urlDestino) break;
+    }
+
+    // Cargar iframe si tiene URL y no está cargado
+    if(urlDestino && (!iframe.src || iframe.src === window.location.href)) {
+      iframe.src = urlDestino;
       
-    } else if(id === "aviacion"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = ""; // Aquí pondrás tu nuevo dashboard de aviación cuando lo crees
-      }
-      iframe.style.display = "block";
-      
-    } else if(id === "consultas"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "consultas.html"; 
-      }
-      iframe.style.display = "block";
-      
-    } else if(id === "ippi"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "ippi.html"; 
+      // Mostrar overlay si es página que tarda en cargar
+      if(urlDestino.includes("ippi.html")) {
         mostrarOverlay(true);
-
         let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
         iframe.onload = function() {
           clearTimeout(overlayTimeout);
           mostrarOverlay(false);
         };
       }
-      iframe.style.display = "block";
-      
-    } else if(id === "jiat"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jiat.html"; 
-      }
-      iframe.style.display = "block";
-      
-    } else if(id === "jiu"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jiu.html"; 
-      }
-      iframe.style.display = "block";
-      
-    } else if(id === "jia"){
-      if(!iframe.src || iframe.src === window.location.href){
-        iframe.src = "jia.html"; 
-      }
-      iframe.style.display = "block";
     }
+
+    iframe.style.display = "block";
 
     // Activar menú
     document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-    if(document.getElementById('menu-'+id)) {
-      document.getElementById('menu-'+id).classList.add('active');
+    const menuLink = document.getElementById(`menu-${id}`);
+    if(menuLink) {
+      menuLink.classList.add('active');
     }
   }
+
+  // Iniciar carga de menús
+  cargarMenus();
 </script>
 
 </body>
 </html>
- 
