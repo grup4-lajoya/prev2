@@ -126,7 +126,9 @@
     background:#0056A6; 
     color:#fff; 
     cursor:pointer; 
-    display: none;
+    font-weight: 500;
+    transition: background 0.3s;
+    /* REMOVIDO: display: none; */
   }
   #logoutButton:hover { background:#003366; }
 
@@ -142,7 +144,7 @@
     padding: 8px 16px;
     border-radius: 6px;
     z-index: 1001;
-    display: none;
+    /* REMOVIDO: display: none; */
   }
 
   /* Overlay de carga */
@@ -153,13 +155,12 @@
     width:100%;
     height:100%;
     background: rgba(255,255,255,0.7);
-    display:flex;
+    display:none;
     justify-content:center;
     align-items:center;
     font-size:1.2rem;
     color:#003366;
     z-index:9999;
-    display:none;
   }
 </style>
 </head>
@@ -201,7 +202,7 @@
         menusData = result.menus;
         construirMenu();
         crearIframes();
-        mostrarInfoUsuario(); // ← Mostrar info del usuario DESPUÉS de cargar menús
+        mostrarInfoUsuario();
         if(primeraVista) {
           mostrar(primeraVista);
         }
@@ -216,19 +217,27 @@
 
   // Función para mostrar información del usuario
   function mostrarInfoUsuario() {
+    const usuario = localStorage.getItem("usuario") || "";
     const unidad = localStorage.getItem("unidad") || "";
     const datos = localStorage.getItem("datos") || "";
     const userInfoDiv = document.getElementById("userInfo");
     
     if (userInfoDiv) {
-      if (unidad && datos) {
-        userInfoDiv.textContent = `${unidad} - ${datos}`;
-      } else if (unidad) {
-        userInfoDiv.textContent = unidad;
-      } else if (datos) {
-        userInfoDiv.textContent = datos;
+      let textoInfo = "";
+      
+      if (usuario) {
+        textoInfo = `👤 ${usuario}`;
       }
-      userInfoDiv.style.display = "block";
+      
+      if (unidad) {
+        textoInfo += (textoInfo ? " | " : "") + `📍 ${unidad}`;
+      }
+      
+      if (datos) {
+        textoInfo += (textoInfo ? " | " : "") + datos;
+      }
+      
+      userInfoDiv.textContent = textoInfo || "Usuario";
     }
   }
 
@@ -310,8 +319,10 @@
   }
 
   function cerrarSesion() {
-    localStorage.clear();
-    window.location.replace("login.html");
+    if(confirm('¿Está seguro que desea cerrar sesión?')) {
+      localStorage.clear();
+      window.location.replace("login.html");
+    }
   }
 
   if(localStorage.getItem("usuario")){
@@ -353,7 +364,7 @@
       iframe.src = urlDestino;
       
       // Mostrar overlay si es página que tarda en cargar
-      if(urlDestino.includes("ippi.html")) {
+      if(urlDestino.includes("ippi.html") || urlDestino.includes("jiat.html")) {
         mostrarOverlay(true);
         let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
         iframe.onload = function() {
