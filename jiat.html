@@ -623,7 +623,6 @@
     </div>
     <div class="modal-body">
       <form id="formNuevo">
-        <!-- SECCIÓN 1: DATOS PRINCIPALES -->
         <div class="seccion" id="seccionCabecera">
           <div class="seccion-titulo">📋 Paso 1: Datos Principales del Accidente</div>
           
@@ -693,7 +692,6 @@
           </button>
         </div>
 
-        <!-- SECCIÓN 2: DETALLES (BLOQUEADA HASTA GUARDAR CABECERA) -->
         <div class="seccion bloqueada" id="seccionDetalles">
           <div class="seccion-titulo">📝 Paso 2: Detalles - Conclusiones, Causas y Recomendaciones</div>
           
@@ -716,7 +714,7 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
+  const API_URL = 'TU_URL_AQUI';
   
   let datosCompletos = [];
   let datosFiltrados = [];
@@ -725,6 +723,8 @@
   let contadorDetalles = 0;
   let cabeceraGuardada = false;
   let codigoJIATActual = null;
+  let fechaJIATActual = null;
+  let periodoJIATActual = null;
 
   const usuario = localStorage.getItem("usuario") || "";
   const unidad = localStorage.getItem("unidad") || "";
@@ -779,7 +779,6 @@
   async function guardarCabecera() {
     const form = document.getElementById('formNuevo');
     
-    // Validar solo la sección de cabecera
     const numero = document.getElementById('numero').value;
     const periodo = document.getElementById('periodo').value;
     const fecha = document.getElementById('fecha').value;
@@ -814,6 +813,8 @@
       const numeroFormateado = numero.padStart(3, '0');
       const codigo = `JIAT-${numeroFormateado}-${periodo}`;
       codigoJIATActual = codigo;
+      fechaJIATActual = fecha;
+      periodoJIATActual = periodo;
 
       const datosJIAT = {
         action: 'crearJIAT',
@@ -841,22 +842,19 @@
       const result = await response.json();
       console.log("Respuesta del servidor:", result);
 
-      ocultarOverlay(); // ← IMPORTANTE: Siempre ocultar overlay
+      ocultarOverlay();
 
       if (result.success) {
         cabeceraGuardada = true;
         
-        // Marcar sección como guardada
         const seccionCabecera = document.getElementById('seccionCabecera');
         seccionCabecera.classList.add('guardada');
         seccionCabecera.innerHTML += '<span class="badge-guardado">✓ Guardado</span>';
         
-        // Deshabilitar campos de cabecera
         document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
           el.disabled = true;
         });
 
-        // Desbloquear sección de detalles
         const seccionDetalles = document.getElementById('seccionDetalles');
         seccionDetalles.classList.remove('bloqueada');
         document.getElementById('mensajeBloqueo').style.display = 'none';
@@ -870,7 +868,7 @@
       }
     } catch (error) {
       console.error('Error:', error);
-      ocultarOverlay(); // ← IMPORTANTE: También ocultar en caso de error
+      ocultarOverlay();
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar Datos Principales';
       alert('Error al guardar los datos principales: ' + error.message);
@@ -950,9 +948,6 @@
     mostrarOverlay('Guardando detalle...');
 
     try {
-      const fecha = document.getElementById('fecha').value;
-      const periodo = document.getElementById('periodo').value;
-
       const datosDetalle = {
         action: 'crearDetalleJIAT',
         USUARIOREG: usuario,
@@ -960,8 +955,8 @@
         TIPO: 'JIAT',
         CODIGO: codigoJIATActual,
         SUBTIPO: subtipo,
-        FECHA: fecha,
-        PERIODO: periodo,
+        FECHA: fechaJIATActual,
+        PERIODO: periodoJIATActual,
         CARACTER: caracter,
         DESCRIPCION: descripcionDet
       };
@@ -985,13 +980,12 @@
         const titulo = detalleDiv.querySelector('.detalle-titulo');
         titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
         
-        // Deshabilitar campos del detalle guardado
         document.getElementById(`subtipo${id}`).disabled = true;
         document.getElementById(`caracter${id}`).disabled = true;
         document.getElementById(`descripcionDet${id}`).disabled = true;
         btnGuardar.style.display = 'none';
 
-        alert('✓ Detalle guardado correctamente');
+        console.log('✓ Detalle guardado correctamente');
       } else {
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar';
@@ -1011,7 +1005,7 @@
     if (elemento && !elemento.classList.contains('guardado')) {
       elemento.remove();
     } else if (elemento && elemento.classList.contains('guardado')) {
-      alert('No puede eliminar un detalle ya guardado. Use la función de editar si necesita modificarlo.');
+      alert('No puede eliminar un detalle ya guardado.');
     }
   }
 
@@ -1152,8 +1146,9 @@
     contadorDetalles = 0;
     cabeceraGuardada = false;
     codigoJIATActual = null;
+    fechaJIATActual = null;
+    periodoJIATActual = null;
     
-    // Resetear sección de cabecera
     const seccionCabecera = document.getElementById('seccionCabecera');
     seccionCabecera.classList.remove('guardada');
     const badge = seccionCabecera.querySelector('.badge-guardado');
@@ -1165,14 +1160,12 @@
     
     document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar Datos Principales';
     
-    // Resetear involucrados
     document.getElementById('involucradosContainer').innerHTML = `
       <div class="involucrado-item">
         <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
       </div>
     `;
     
-    // Bloquear y limpiar sección de detalles
     const seccionDetalles = document.getElementById('seccionDetalles');
     seccionDetalles.classList.add('bloqueada');
     document.getElementById('mensajeBloqueo').style.display = 'block';
