@@ -615,4 +615,179 @@ tbody tr:hover {
 
 .info-descripcion strong {
   display: block;
-  color: #
+  color: #555;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.info-descripcion p {
+  color: #333;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Listas de detalles */
+#detallesConclusiones ul,
+#detallesCausas ul,
+#detallesRecomendaciones ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 20px 0;
+}
+
+#detallesConclusiones li,
+#detallesCausas li,
+#detallesRecomendaciones li {
+  padding: 10px 15px;
+  background: white;
+  border-left: 3px solid #28a745;
+  margin-bottom: 10px;
+  border-radius: 3px;
+}
+
+#detallesCausas li {
+  border-left-color: #ffc107;
+}
+
+#detallesRecomendaciones li {
+  border-left-color: #17a2b8;
+}
+
+#detallesConclusiones h4,
+#detallesCausas h4,
+#detallesRecomendaciones h4 {
+  color: #333;
+  font-size: 1em;
+  margin-bottom: 10px;
+}
+
+/* Acciones registradas previamente */
+.accion-registrada {
+  padding: 15px;
+  background: #e7f5e7;
+  border-left: 4px solid #28a745;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.accion-registrada-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.accion-registrada-fecha {
+  font-weight: bold;
+  color: #28a745;
+  font-size: 0.95em;
+}
+
+.accion-registrada-caracter {
+  background: #28a745;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 15px;
+  font-size: 0.8em;
+}
+
+.accion-registrada-descripcion {
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Contenedor de acciones a registrar */
+.accion-item {
+  padding: 20px;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.accion-item.guardado {
+  background: #e7f5e7;
+  border-color: #28a745;
+}
+
+.accion-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.accion-titulo {
+  font-size: 1.1em;
+  color: #333;
+}
+
+.badge-guardado-accion {
+  background: #28a745;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  margin-left: 10px;
+}
+
+.btn-guardar-accion {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: all 0.3s;
+}
+
+.btn-guardar-accion:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-guardar-accion:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Estilos para items de detalle en modo solo lectura */
+.detalle-item-readonly {
+  padding: 15px;
+  background: white;
+  border-left: 4px solid #17a2b8;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.detalle-item-readonly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.detalle-item-readonly-tipo {
+  font-weight: bold;
+  color: #17a2b8;
+  font-size: 0.9em;
+}
+
+.detalle-item-readonly-caracter {
+  background: #17a2b8;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 15px;
+  font-size: 0.8em;
+}
+
+.detalle-item-readonly-descripcion {
+  color: #333;
+  line-height: 1.6;
+}
