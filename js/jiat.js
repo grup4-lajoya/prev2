@@ -294,18 +294,31 @@ function quitarDetalle(id) {
   }
 }
 
+// ============================================
+// FUNCIÓN PRINCIPAL: CARGAR DATOS CON FILTRO AUTOMÁTICO
+// ============================================
 async function cargarDatosExcel() {
   const loadingEl = document.getElementById('loading');
   
   try {
     loadingEl.innerHTML = 'Cargando datos... ⏳ (Esto puede tomar unos segundos)';
     
-    console.log('Iniciando carga de datos desde:', API_URL);
+    console.log('=== CARGA DE DATOS CON FILTRO AUTOMÁTICO ===');
+    console.log('Usuario:', usuario);
+    console.log('Rol:', rol);
+    console.log('Unidad:', unidad);
+    console.log('API URL:', API_URL);
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     
-    const response = await fetch(API_URL + '?action=obtenerJIAT', {
+    // ============================================
+    // 🔑 CAMBIO CLAVE: Enviar ROL y UNIDAD automáticamente
+    // ============================================
+    const url = `${API_URL}?action=obtenerJIAT&rol=${encodeURIComponent(rol)}&unidad=${encodeURIComponent(unidad)}`;
+    console.log('URL completa con parámetros:', url);
+    
+    const response = await fetch(url, {
       signal: controller.signal
     });
     
@@ -318,12 +331,13 @@ async function cargarDatosExcel() {
     }
     
     const datos = await response.json();
-    console.log('Datos recibidos:', datos.length, 'registros');
+    console.log('✓ Datos recibidos:', datos.length, 'registros');
     
     if (datos.error) {
       throw new Error(datos.error);
     }
     
+    // Ordenar por fecha (más reciente primero)
     datosCompletos = datos.sort((a, b) => {
       const fechaA = convertirFecha(a.FECHA);
       const fechaB = convertirFecha(b.FECHA);
@@ -337,7 +351,16 @@ async function cargarDatosExcel() {
     document.getElementById('paginacion').style.display = 'flex';
     
     actualizarTabla();
+    
     console.log('✓ Tabla actualizada correctamente');
+    console.log('✓ Mostrando', datosFiltrados.length, 'registros para rol:', rol);
+    
+    if (rol === 'ADMIN' || rol === 'admin') {
+      console.log('✓ Usuario ADMIN: Visualizando TODOS los registros');
+    } else {
+      console.log('✓ Usuario con rol', rol + ': Visualizando solo registros de unidad:', unidad);
+    }
+    
   } catch (error) {
     console.error('Error al cargar los datos:', error);
     
