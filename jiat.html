@@ -231,7 +231,83 @@
   </div>
 </div>
 
+<!-- MODAL VER DETALLE (SOLO LECTURA) -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>👁 Ver Detalle Completo del JIAT</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <!-- INFORMACIÓN DEL JIAT -->
+      <div class="seccion info-jiat">
+        <div class="seccion-titulo">📋 Información del JIAT</div>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Código:</strong>
+            <span id="verCodigo">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Fecha:</strong>
+            <span id="verFecha">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Unidad:</strong>
+            <span id="verUnidad">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Lugar:</strong>
+            <span id="verLugar">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Involucrado(s):</strong>
+            <span id="verInvolucrado">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Fatal:</strong>
+            <span id="verFatal">-</span>
+          </div>
+        </div>
+
+        <div class="info-descripcion">
+          <strong>Descripción del Accidente:</strong>
+          <p id="verDescripcion">-</p>
+        </div>
+      </div>
+
+      <!-- CONCLUSIONES -->
+      <div class="seccion" id="verSeccionConclusiones" style="display:none;">
+        <div class="seccion-titulo">📌 Conclusiones</div>
+        <div id="verListaConclusiones"></div>
+      </div>
+
+      <!-- CAUSAS -->
+      <div class="seccion" id="verSeccionCausas" style="display:none;">
+        <div class="seccion-titulo">⚠️ Causas</div>
+        <div id="verListaCausas"></div>
+      </div>
+
+      <!-- RECOMENDACIONES -->
+      <div class="seccion" id="verSeccionRecomendaciones" style="display:none;">
+        <div class="seccion-titulo">💡 Recomendaciones</div>
+        <div id="verListaRecomendaciones"></div>
+      </div>
+
+      <!-- ACCIONES TOMADAS -->
+      <div class="seccion" id="verSeccionAcciones" style="display:none;">
+        <div class="seccion-titulo">✅ Acciones Tomadas</div>
+        <div id="verListaAcciones"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/jiat.js"></script>
 </body>
 </html>
-
