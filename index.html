@@ -321,7 +321,7 @@
   function cerrarSesion() {
     if(confirm('¿Está seguro que desea cerrar sesión?')) {
       localStorage.clear();
-      window.location.replace("login.html");
+      window.location.replace("login.html?logout=true");
     }
   }
 
