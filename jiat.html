@@ -280,6 +280,30 @@
     border-radius: 8px;
     margin-bottom: 25px;
     border-left: 4px solid #0056A6;
+    position: relative;
+  }
+
+  .seccion.bloqueada {
+    opacity: 0.6;
+    pointer-events: none;
+    border-left-color: #ccc;
+  }
+
+  .seccion.guardada {
+    border-left-color: #28a745;
+    background-color: #f0f9f4;
+  }
+
+  .badge-guardado {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   .seccion-titulo {
@@ -374,12 +398,39 @@
     background-color: #c82333;
   }
 
+  .btn-guardar-cabecera {
+    width: 100%;
+    padding: 12px;
+    background-color: #0056A6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 20px;
+    font-weight: 600;
+  }
+
+  .btn-guardar-cabecera:hover {
+    background-color: #003366;
+  }
+
+  .btn-guardar-cabecera:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
   .detalle-item {
     background-color: white;
     padding: 15px;
     border-radius: 6px;
     margin-bottom: 15px;
-    border: 1px solid #ddd;
+    border: 2px solid #ddd;
+  }
+
+  .detalle-item.guardado {
+    border-color: #28a745;
+    background-color: #f8fff9;
   }
 
   .detalle-item-header {
@@ -389,10 +440,44 @@
     margin-bottom: 15px;
   }
 
+  .detalle-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge-guardado-detalle {
+    background-color: #28a745;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .btn-guardar-detalle {
+    padding: 8px 16px;
+    background-color: #0056A6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .btn-guardar-detalle:hover {
+    background-color: #003366;
+  }
+
+  .btn-guardar-detalle:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
   .btn-agregar-detalle {
     width: 100%;
     padding: 12px;
-    background-color: #0056A6;
+    background-color: #28a745;
     color: white;
     border: none;
     border-radius: 4px;
@@ -402,7 +487,12 @@
   }
 
   .btn-agregar-detalle:hover {
-    background-color: #003366;
+    background-color: #218838;
+  }
+
+  .btn-agregar-detalle:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
 
   .modal-footer {
@@ -413,36 +503,18 @@
     gap: 10px;
   }
 
-  .btn-guardar,
-  .btn-cancelar {
+  .btn-cerrar {
     padding: 10px 24px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
+    background-color: #6c757d;
+    color: white;
     transition: all 0.3s;
   }
 
-  .btn-guardar {
-    background-color: #0056A6;
-    color: white;
-  }
-
-  .btn-guardar:hover {
-    background-color: #003366;
-  }
-
-  .btn-guardar:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-
-  .btn-cancelar {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .btn-cancelar:hover {
+  .btn-cerrar:hover {
     background-color: #5a6268;
   }
 
@@ -491,6 +563,15 @@
     font-size: 1.1rem;
     color: #333;
     font-weight: 500;
+  }
+
+  .mensaje-info {
+    background-color: #e7f3ff;
+    border-left: 4px solid #0056A6;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    color: #004085;
   }
 </style>
 </head>
@@ -543,8 +624,12 @@
     <div class="modal-body">
       <form id="formNuevo">
         <!-- SECCIÓN 1: DATOS PRINCIPALES -->
-        <div class="seccion">
-          <div class="seccion-titulo">📋 Datos Principales del Accidente</div>
+        <div class="seccion" id="seccionCabecera">
+          <div class="seccion-titulo">📋 Paso 1: Datos Principales del Accidente</div>
+          
+          <div class="mensaje-info">
+            💡 <strong>Importante:</strong> Primero guarde los datos principales. Luego podrá agregar conclusiones, causas y recomendaciones.
+          </div>
           
           <div class="form-row">
             <div class="form-group">
@@ -602,21 +687,30 @@
             <label>Descripción del Accidente <span class="required">*</span></label>
             <textarea id="descripcion" required></textarea>
           </div>
+
+          <button type="button" class="btn-guardar-cabecera" onclick="guardarCabecera()" id="btnGuardarCabecera">
+            💾 Guardar Datos Principales
+          </button>
         </div>
 
-        <!-- SECCIÓN 2: DETALLES (CONCLUSIONES, CAUSAS, RECOMENDACIONES) -->
-        <div class="seccion">
-          <div class="seccion-titulo">📝 Detalles: Conclusiones, Causas y Recomendaciones</div>
+        <!-- SECCIÓN 2: DETALLES (BLOQUEADA HASTA GUARDAR CABECERA) -->
+        <div class="seccion bloqueada" id="seccionDetalles">
+          <div class="seccion-titulo">📝 Paso 2: Detalles - Conclusiones, Causas y Recomendaciones</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueo">
+            🔒 Esta sección se habilitará después de guardar los datos principales.
+          </div>
           
           <div id="detallesContainer"></div>
           
-          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalle()">+ Agregar Conclusión / Causa / Recomendación</button>
+          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalle()" id="btnAgregarDetalle" disabled>
+            + Agregar Conclusión / Causa / Recomendación
+          </button>
         </div>
       </form>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-      <button type="button" class="btn-guardar" onclick="guardarRegistro()" id="btnGuardar">Guardar JIAT Completa</button>
+      <button type="button" class="btn-cerrar" onclick="cerrarModalCompleto()">Cerrar y Finalizar</button>
     </div>
   </div>
 </div>
@@ -629,6 +723,8 @@
   let paginaActual = 1;
   const registrosPorPagina = 10;
   let contadorDetalles = 0;
+  let cabeceraGuardada = false;
+  let codigoJIATActual = null;
 
   const usuario = localStorage.getItem("usuario") || "";
   const unidad = localStorage.getItem("unidad") || "";
@@ -680,7 +776,110 @@
     btn.parentElement.remove();
   }
 
+  async function guardarCabecera() {
+    const form = document.getElementById('formNuevo');
+    
+    // Validar solo la sección de cabecera
+    const numero = document.getElementById('numero').value;
+    const periodo = document.getElementById('periodo').value;
+    const fecha = document.getElementById('fecha').value;
+    const lugar = document.getElementById('lugar').value;
+    const fatal = document.getElementById('fatal').value;
+    const cantfall = document.getElementById('cantfall').value;
+    const descripcion = document.getElementById('descripcion').value;
+
+    if (!numero || !periodo || !fecha || !lugar || !fatal || !descripcion) {
+      alert('Por favor complete todos los campos obligatorios');
+      return;
+    }
+
+    const involucradosInputs = document.querySelectorAll('.involucrado-input');
+    const involucrados = Array.from(involucradosInputs)
+      .map(input => input.value.trim())
+      .filter(val => val !== '')
+      .join(', ');
+
+    if (!involucrados) {
+      alert('Debe agregar al menos un involucrado');
+      return;
+    }
+
+    const btnGuardar = document.getElementById('btnGuardarCabecera');
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = 'Guardando...';
+
+    mostrarOverlay('Guardando datos principales...');
+
+    try {
+      const numeroFormateado = numero.padStart(3, '0');
+      const codigo = `JIAT-${numeroFormateado}-${periodo}`;
+      codigoJIATActual = codigo;
+
+      const datosJIAT = {
+        action: 'crearJIAT',
+        USUARIOREG: usuario,
+        TIPO: 'JIAT',
+        NUMERO: numero,
+        PERIODO: periodo,
+        CODIGO: codigo,
+        UNIDAD: unidad,
+        FECHA: fecha,
+        LUGAR: lugar,
+        INVOLUCRADO: involucrados,
+        FATAL: fatal,
+        CANTFALL: cantfall,
+        DESCRIPCION: descripcion
+      };
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(datosJIAT)
+      });
+
+      const result = await response.json();
+
+      ocultarOverlay();
+
+      if (result.success) {
+        cabeceraGuardada = true;
+        
+        // Marcar sección como guardada
+        const seccionCabecera = document.getElementById('seccionCabecera');
+        seccionCabecera.classList.add('guardada');
+        seccionCabecera.innerHTML += '<span class="badge-guardado">✓ Guardado</span>';
+        
+        // Deshabilitar campos de cabecera
+        document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
+          el.disabled = true;
+        });
+
+        // Desbloquear sección de detalles
+        const seccionDetalles = document.getElementById('seccionDetalles');
+        seccionDetalles.classList.remove('bloqueada');
+        document.getElementById('mensajeBloqueo').style.display = 'none';
+        document.getElementById('btnAgregarDetalle').disabled = false;
+
+        alert(`✓ Datos principales guardados correctamente.\nCódigo: ${codigo}\n\nAhora puede agregar conclusiones, causas y recomendaciones.`);
+      } else {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Datos Principales';
+        alert('Error al guardar: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      ocultarOverlay();
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = '💾 Guardar Datos Principales';
+      alert('Error al guardar los datos principales');
+    }
+  }
+
   function agregarDetalle() {
+    if (!cabeceraGuardada) {
+      alert('Primero debe guardar los datos principales');
+      return;
+    }
+
     contadorDetalles++;
     const container = document.getElementById('detallesContainer');
     const detalleDiv = document.createElement('div');
@@ -688,14 +887,21 @@
     detalleDiv.id = `detalle-${contadorDetalles}`;
     detalleDiv.innerHTML = `
       <div class="detalle-item-header">
-        <strong>Detalle #${contadorDetalles}</strong>
-        <button type="button" class="btn-quitar" onclick="quitarDetalle(${contadorDetalles})">× Quitar</button>
+        <div class="detalle-titulo">
+          <strong>Detalle #${contadorDetalles}</strong>
+        </div>
+        <div>
+          <button type="button" class="btn-guardar-detalle" onclick="guardarDetalle(${contadorDetalles})" id="btnGuardarDet${contadorDetalles}">
+            💾 Guardar
+          </button>
+          <button type="button" class="btn-quitar" onclick="quitarDetalle(${contadorDetalles})">× Quitar</button>
+        </div>
       </div>
       
       <div class="form-row">
         <div class="form-group">
           <label>Asunto <span class="required">*</span></label>
-          <select class="detalle-subtipo" required>
+          <select class="detalle-subtipo" id="subtipo${contadorDetalles}" required>
             <option value="">Seleccione</option>
             <option value="CONCLUSIÓN">CONCLUSIÓN</option>
             <option value="CAUSA">CAUSA</option>
@@ -705,7 +911,7 @@
 
         <div class="form-group">
           <label>Carácter <span class="required">*</span></label>
-          <select class="detalle-caracter" required>
+          <select class="detalle-caracter" id="caracter${contadorDetalles}" required>
             <option value="">Seleccione</option>
             <option value="PSICOFÍSICO">PSICOFÍSICO</option>
             <option value="TÉCNICO">TÉCNICO</option>
@@ -718,16 +924,88 @@
 
       <div class="form-group">
         <label>Descripción <span class="required">*</span></label>
-        <textarea class="detalle-descripcion" required placeholder="Describa la conclusión, causa o recomendación..."></textarea>
+        <textarea class="detalle-descripcion" id="descripcionDet${contadorDetalles}" required placeholder="Describa la conclusión, causa o recomendación..."></textarea>
       </div>
     `;
     container.appendChild(detalleDiv);
   }
 
+  async function guardarDetalle(id) {
+    const subtipo = document.getElementById(`subtipo${id}`).value;
+    const caracter = document.getElementById(`caracter${id}`).value;
+    const descripcionDet = document.getElementById(`descripcionDet${id}`).value;
+
+    if (!subtipo || !caracter || !descripcionDet) {
+      alert('Por favor complete todos los campos del detalle');
+      return;
+    }
+
+    const btnGuardar = document.getElementById(`btnGuardarDet${id}`);
+    btnGuardar.disabled = true;
+    btnGuardar.textContent = 'Guardando...';
+
+    mostrarOverlay('Guardando detalle...');
+
+    try {
+      const fecha = document.getElementById('fecha').value;
+      const periodo = document.getElementById('periodo').value;
+
+      const datosDetalle = {
+        action: 'crearDetalleJIAT',
+        USUARIOREG: usuario,
+        UNIDAD: unidad,
+        TIPO: 'JIAT',
+        CODIGO: codigoJIATActual,
+        SUBTIPO: subtipo,
+        FECHA: fecha,
+        PERIODO: periodo,
+        CARACTER: caracter,
+        DESCRIPCION: descripcionDet
+      };
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(datosDetalle)
+      });
+
+      const result = await response.json();
+
+      ocultarOverlay();
+
+      if (result.success) {
+        const detalleDiv = document.getElementById(`detalle-${id}`);
+        detalleDiv.classList.add('guardado');
+        
+        const titulo = detalleDiv.querySelector('.detalle-titulo');
+        titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
+        
+        // Deshabilitar campos del detalle guardado
+        document.getElementById(`subtipo${id}`).disabled = true;
+        document.getElementById(`caracter${id}`).disabled = true;
+        document.getElementById(`descripcionDet${id}`).disabled = true;
+        btnGuardar.style.display = 'none';
+
+        alert('✓ Detalle guardado correctamente');
+      } else {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar';
+        alert('Error al guardar el detalle: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      ocultarOverlay();
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = '💾 Guardar';
+      alert('Error al guardar el detalle');
+    }
+  }
+
   function quitarDetalle(id) {
     const elemento = document.getElementById(`detalle-${id}`);
-    if (elemento) {
+    if (elemento && !elemento.classList.contains('guardado')) {
       elemento.remove();
+    } else if (elemento && elemento.classList.contains('guardado')) {
+      alert('No puede eliminar un detalle ya guardado. Use la función de editar si necesita modificarlo.');
     }
   }
 
@@ -866,18 +1144,57 @@
     document.getElementById('modalNuevo').style.display = 'block';
     document.getElementById('formNuevo').reset();
     contadorDetalles = 0;
+    cabeceraGuardada = false;
+    codigoJIATActual = null;
     
+    // Resetear sección de cabecera
+    const seccionCabecera = document.getElementById('seccionCabecera');
+    seccionCabecera.classList.remove('guardada');
+    const badge = seccionCabecera.querySelector('.badge-guardado');
+    if (badge) badge.remove();
+    
+    document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
+      el.disabled = false;
+    });
+    
+    document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar Datos Principales';
+    
+    // Resetear involucrados
     document.getElementById('involucradosContainer').innerHTML = `
       <div class="involucrado-item">
         <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
       </div>
     `;
     
+    // Bloquear y limpiar sección de detalles
+    const seccionDetalles = document.getElementById('seccionDetalles');
+    seccionDetalles.classList.add('bloqueada');
+    document.getElementById('mensajeBloqueo').style.display = 'block';
     document.getElementById('detallesContainer').innerHTML = '';
+    document.getElementById('btnAgregarDetalle').disabled = true;
   }
 
   function cerrarModal() {
-    document.getElementById('modalNuevo').style.display = 'none';
+    if (cabeceraGuardada) {
+      if (confirm('Ha guardado los datos principales. ¿Desea cerrar sin agregar más detalles?')) {
+        document.getElementById('modalNuevo').style.display = 'none';
+        cargarDatosExcel();
+      }
+    } else {
+      document.getElementById('modalNuevo').style.display = 'none';
+    }
+  }
+
+  function cerrarModalCompleto() {
+    if (cabeceraGuardada) {
+      alert('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
+      document.getElementById('modalNuevo').style.display = 'none';
+      cargarDatosExcel();
+    } else {
+      if (confirm('No ha guardado ningún dato. ¿Desea cerrar de todos modos?')) {
+        document.getElementById('modalNuevo').style.display = 'none';
+      }
+    }
   }
 
   function mostrarOverlay(mensaje) {
@@ -893,124 +1210,6 @@
     const modal = document.getElementById('modalNuevo');
     if (event.target == modal) {
       cerrarModal();
-    }
-  }
-
-  async function guardarRegistro() {
-    const form = document.getElementById('formNuevo');
-    
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-
-    const btnGuardar = document.getElementById('btnGuardar');
-    btnGuardar.disabled = true;
-    btnGuardar.textContent = 'Guardando...';
-
-    mostrarOverlay('Guardando JIAT...');
-
-    try {
-      const numero = document.getElementById('numero').value;
-      const periodo = document.getElementById('periodo').value;
-      const fecha = document.getElementById('fecha').value;
-      const lugar = document.getElementById('lugar').value;
-      const fatal = document.getElementById('fatal').value;
-      const cantfall = document.getElementById('cantfall').value;
-      const descripcion = document.getElementById('descripcion').value;
-
-      const involucradosInputs = document.querySelectorAll('.involucrado-input');
-      const involucrados = Array.from(involucradosInputs)
-        .map(input => input.value.trim())
-        .filter(val => val !== '')
-        .join(', ');
-
-      if (!involucrados) {
-        ocultarOverlay();
-        alert('Debe agregar al menos un involucrado');
-        btnGuardar.disabled = false;
-        btnGuardar.textContent = 'Guardar JIAT Completa';
-        return;
-      }
-
-      // Generar código automático
-      const numeroFormateado = numero.padStart(3, '0');
-      const codigo = `JIAT-${numeroFormateado}-${periodo}`;
-
-      // Recopilar detalles
-      const detalles = [];
-      const detalleItems = document.querySelectorAll('.detalle-item');
-      
-      detalleItems.forEach(item => {
-        const subtipo = item.querySelector('.detalle-subtipo').value;
-        const caracter = item.querySelector('.detalle-caracter').value;
-        const descripcionDetalle = item.querySelector('.detalle-descripcion').value;
-        
-        if (subtipo && caracter && descripcionDetalle) {
-          detalles.push({
-            subtipo: subtipo,
-            caracter: caracter,
-            descripcion: descripcionDetalle
-          });
-        }
-      });
-
-      // Datos principales JIAT
-      const datosJIAT = {
-        action: 'crearJIATCompleta',
-        jiat: {
-          USUARIOREG: usuario,
-          TIPO: 'JIAT',
-          NUMERO: numero,
-          PERIODO: periodo,
-          CODIGO: codigo,
-          UNIDAD: unidad,
-          FECHA: fecha,
-          LUGAR: lugar,
-          INVOLUCRADO: involucrados,
-          FATAL: fatal,
-          CANTFALL: cantfall,
-          DESCRIPCION: descripcion
-        },
-        detalles: detalles.map(det => ({
-          USUARIOREG: usuario,
-          UNIDAD: unidad,
-          TIPO: 'JIAT',
-          CODIGO: codigo,
-          SUBTIPO: det.subtipo,
-          FECHA: fecha,
-          PERIODO: periodo,
-          CARACTER: det.caracter,
-          DESCRIPCION: det.descripcion
-        }))
-      };
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(datosJIAT)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        mostrarOverlay('JIAT guardada. Actualizando tabla...');
-        
-        await cargarDatosExcel();
-        
-        ocultarOverlay();
-        alert('JIAT creada exitosamente con todos sus detalles');
-        cerrarModal();
-      } else {
-        ocultarOverlay();
-        alert('Error al crear la JIAT: ' + result.error);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      ocultarOverlay();
-      alert('Error al guardar la JIAT');
-    } finally {
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = 'Guardar JIAT Completa';
     }
   }
 
