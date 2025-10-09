@@ -535,7 +535,140 @@ function ocultarOverlay() {
 
 function verDetalle(index) {
   const registro = datosFiltrados[index];
-  alert('Ver detalle de: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
+  const codigo = registro.CODIGO;
+  
+  console.log('Abriendo modal ver detalle para:', codigo);
+  
+  mostrarOverlay('Cargando información del JIAT...');
+  
+  fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('Respuesta obtenerDetalleJIAT:', data);
+      
+      ocultarOverlay();
+      
+      if (!data.success) {
+        alert('Error al cargar la información: ' + data.error);
+        return;
+      }
+      
+      mostrarDetalleCompleto(data);
+      document.getElementById('modalVerDetalle').style.display = 'block';
+    })
+    .catch(error => {
+      ocultarOverlay();
+      console.error('Error:', error);
+      alert('Error al cargar la información del JIAT: ' + error.message);
+    });
+}
+
+function mostrarDetalleCompleto(data) {
+  const cabecera = data.cabecera;
+  
+  // Información básica
+  document.getElementById('verCodigo').textContent = cabecera.CODIGO || '-';
+  document.getElementById('verFecha').textContent = cabecera.FECHA || '-';
+  document.getElementById('verUnidad').textContent = cabecera.UNIDAD || '-';
+  document.getElementById('verLugar').textContent = cabecera.LUGAR || '-';
+  document.getElementById('verInvolucrado').textContent = cabecera.INVOLUCRADO || '-';
+  document.getElementById('verFatal').textContent = cabecera.FATAL || '-';
+  document.getElementById('verDescripcion').textContent = cabecera.DESCRIPCION || '-';
+  
+  // Conclusiones
+  const seccionConclusiones = document.getElementById('verSeccionConclusiones');
+  const listaConclusiones = document.getElementById('verListaConclusiones');
+  if (data.conclusiones && data.conclusiones.length > 0) {
+    listaConclusiones.innerHTML = '';
+    data.conclusiones.forEach((c, index) => {
+      const div = document.createElement('div');
+      div.className = 'detalle-item-readonly';
+      div.innerHTML = `
+        <div class="detalle-item-readonly-header">
+          <span class="detalle-item-readonly-tipo">Conclusión #${index + 1}</span>
+          <span class="detalle-item-readonly-caracter">${c.CARACTER}</span>
+        </div>
+        <div class="detalle-item-readonly-descripcion">${c.DESCRIPCION}</div>
+      `;
+      listaConclusiones.appendChild(div);
+    });
+    seccionConclusiones.style.display = 'block';
+  } else {
+    seccionConclusiones.style.display = 'none';
+  }
+  
+  // Causas
+  const seccionCausas = document.getElementById('verSeccionCausas');
+  const listaCausas = document.getElementById('verListaCausas');
+  if (data.causas && data.causas.length > 0) {
+    listaCausas.innerHTML = '';
+    data.causas.forEach((c, index) => {
+      const div = document.createElement('div');
+      div.className = 'detalle-item-readonly';
+      div.style.borderLeftColor = '#ffc107';
+      div.innerHTML = `
+        <div class="detalle-item-readonly-header">
+          <span class="detalle-item-readonly-tipo" style="color: #ffc107;">Causa #${index + 1}</span>
+          <span class="detalle-item-readonly-caracter" style="background: #ffc107;">${c.CARACTER}</span>
+        </div>
+        <div class="detalle-item-readonly-descripcion">${c.DESCRIPCION}</div>
+      `;
+      listaCausas.appendChild(div);
+    });
+    seccionCausas.style.display = 'block';
+  } else {
+    seccionCausas.style.display = 'none';
+  }
+  
+  // Recomendaciones
+  const seccionRecomendaciones = document.getElementById('verSeccionRecomendaciones');
+  const listaRecomendaciones = document.getElementById('verListaRecomendaciones');
+  if (data.recomendaciones && data.recomendaciones.length > 0) {
+    listaRecomendaciones.innerHTML = '';
+    data.recomendaciones.forEach((r, index) => {
+      const div = document.createElement('div');
+      div.className = 'detalle-item-readonly';
+      div.style.borderLeftColor = '#007bff';
+      div.innerHTML = `
+        <div class="detalle-item-readonly-header">
+          <span class="detalle-item-readonly-tipo" style="color: #007bff;">Recomendación #${index + 1}</span>
+          <span class="detalle-item-readonly-caracter" style="background: #007bff;">${r.CARACTER}</span>
+        </div>
+        <div class="detalle-item-readonly-descripcion">${r.DESCRIPCION}</div>
+      `;
+      listaRecomendaciones.appendChild(div);
+    });
+    seccionRecomendaciones.style.display = 'block';
+  } else {
+    seccionRecomendaciones.style.display = 'none';
+  }
+  
+  // Acciones Tomadas
+  const seccionAcciones = document.getElementById('verSeccionAcciones');
+  const listaAcciones = document.getElementById('verListaAcciones');
+  if (data.acciones && data.acciones.length > 0) {
+    listaAcciones.innerHTML = '';
+    data.acciones.forEach((a, index) => {
+      const div = document.createElement('div');
+      div.className = 'detalle-item-readonly';
+      div.style.borderLeftColor = '#28a745';
+      div.innerHTML = `
+        <div class="detalle-item-readonly-header">
+          <span class="detalle-item-readonly-tipo" style="color: #28a745;">Acción Tomada #${index + 1} - 📅 ${a.FECHA}</span>
+          <span class="detalle-item-readonly-caracter" style="background: #28a745;">${a.CARACTER}</span>
+        </div>
+        <div class="detalle-item-readonly-descripcion">${a.DESCRIPCION}</div>
+      `;
+      listaAcciones.appendChild(div);
+    });
+    seccionAcciones.style.display = 'block';
+  } else {
+    seccionAcciones.style.display = 'none';
+  }
+}
+
+function cerrarModalVerDetalle() {
+  document.getElementById('modalVerDetalle').style.display = 'none';
 }
 
 function editarRegistro(index) {
@@ -837,6 +970,7 @@ function cerrarModalAcciones() {
 window.onclick = function(event) {
   const modalNuevo = document.getElementById('modalNuevo');
   const modalAcciones = document.getElementById('modalAcciones');
+  const modalVerDetalle = document.getElementById('modalVerDetalle');
   
   if (event.target == modalNuevo) {
     cerrarModal();
@@ -844,5 +978,9 @@ window.onclick = function(event) {
   
   if (event.target == modalAcciones) {
     cerrarModalAcciones();
+  }
+  
+  if (event.target == modalVerDetalle) {
+    cerrarModalVerDetalle();
   }
 }
