@@ -217,7 +217,6 @@
 
   // Función para mostrar información del usuario
   function mostrarInfoUsuario() {
-    const usuario = localStorage.getItem("usuario") || "";
     const unidad = localStorage.getItem("unidad") || "";
     const datos = localStorage.getItem("datos") || "";
     const userInfoDiv = document.getElementById("userInfo");
@@ -225,19 +224,20 @@
     if (userInfoDiv) {
       let textoInfo = "";
       
-      if (usuario) {
-        textoInfo = `👤 ${usuario}`;
+      // Solo mostrar unidad y datos, NO el usuario
+      if (unidad && datos) {
+        textoInfo = `${unidad} | ${datos}`;
+      } else if (unidad) {
+        textoInfo = unidad;
+      } else if (datos) {
+        textoInfo = datos;
       }
       
-      if (unidad) {
-        textoInfo += (textoInfo ? " | " : "") + `📍 ${unidad}`;
+      if (textoInfo) {
+        userInfoDiv.textContent = textoInfo;
+      } else {
+        userInfoDiv.style.display = "none"; // Ocultar si no hay info
       }
-      
-      if (datos) {
-        textoInfo += (textoInfo ? " | " : "") + datos;
-      }
-      
-      userInfoDiv.textContent = textoInfo || "Usuario";
     }
   }
 
