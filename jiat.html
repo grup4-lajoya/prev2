@@ -831,14 +831,17 @@
         DESCRIPCION: descripcion
       };
 
+      console.log("Enviando datos JIAT:", datosJIAT);
+
       const response = await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify(datosJIAT)
       });
 
       const result = await response.json();
+      console.log("Respuesta del servidor:", result);
 
-      ocultarOverlay();
+      ocultarOverlay(); // ← IMPORTANTE: Siempre ocultar overlay
 
       if (result.success) {
         cabeceraGuardada = true;
@@ -867,10 +870,10 @@
       }
     } catch (error) {
       console.error('Error:', error);
-      ocultarOverlay();
+      ocultarOverlay(); // ← IMPORTANTE: También ocultar en caso de error
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar Datos Principales';
-      alert('Error al guardar los datos principales');
+      alert('Error al guardar los datos principales: ' + error.message);
     }
   }
 
