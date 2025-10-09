@@ -566,3 +566,53 @@ tbody tr:hover {
   margin-bottom: 20px;
   color: #004085;
 }
+
+/* ============================================ */
+/* ESTILOS PARA MODAL DE ACCIONES TOMADAS */
+/* ============================================ */
+
+/* Sección de información del JIAT */
+.info-jiat {
+  background: #f8f9fa;
+  border-left: 4px solid #007bff;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+}
+
+.info-item strong {
+  display: block;
+  color: #555;
+  font-size: 0.85em;
+  margin-bottom: 5px;
+}
+
+.info-item span {
+  display: block;
+  color: #333;
+  font-size: 1em;
+  font-weight: 500;
+}
+
+.info-descripcion {
+  padding: 15px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.info-descripcion strong {
+  display: block;
+  color: #
