@@ -966,12 +966,15 @@
         DESCRIPCION: descripcionDet
       };
 
+      console.log("Enviando detalle:", datosDetalle);
+
       const response = await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify(datosDetalle)
       });
 
       const result = await response.json();
+      console.log("Respuesta del servidor:", result);
 
       ocultarOverlay();
 
@@ -999,7 +1002,7 @@
       ocultarOverlay();
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar';
-      alert('Error al guardar el detalle');
+      alert('Error al guardar el detalle: ' + error.message);
     }
   }
 
