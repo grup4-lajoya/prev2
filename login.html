@@ -39,6 +39,17 @@
   #mensajeProcesando span:nth-child(2) { animation-delay: 0.2s; }
   #mensajeProcesando span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes blink { 0%,20%,50%,80%,100%{opacity:0;}10%,30%,60%,90%{opacity:1;} }
+  
+  .mensaje-logout {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border: 1px solid #c3e6cb;
+  }
+  
   @media (max-width: 400px) {
     #loginForm { padding: 20px; width: 90%; }
     input, button { font-size: 14px; padding: 8px; }
@@ -49,14 +60,35 @@
 <body>
 <form id="loginForm">
   <h2>Iniciar Sesión</h2>
+  <div id="mensajeLogout" class="mensaje-logout" style="display:none;"></div>
   <input type="text" id="usuario" placeholder="Usuario" required>
   <input type="password" id="clave" placeholder="Clave" required>
   <button type="submit">Ingresar</button>
   <div id="mensajeProcesando">Procesando<span>.</span><span>.</span><span>.</span></div>
 </form>
 <script>
-  // Si ya hay sesión activa, redirige al dashboard reemplazando historial
-  if(localStorage.getItem("usuario")) {
+  // Verificar si viene de un logout (parámetro en URL)
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromLogout = urlParams.get('logout');
+  
+  if(fromLogout === 'true') {
+    // Limpiar sesión
+    localStorage.clear();
+    
+    // Mostrar mensaje de cierre de sesión exitoso
+    const mensajeLogout = document.getElementById('mensajeLogout');
+    mensajeLogout.textContent = '✓ Sesión cerrada exitosamente';
+    mensajeLogout.style.display = 'block';
+    
+    // Limpiar URL sin recargar
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Ocultar mensaje después de 3 segundos
+    setTimeout(() => {
+      mensajeLogout.style.display = 'none';
+    }, 3000);
+  } else if(localStorage.getItem("usuario")) {
+    // Si ya hay sesión activa y NO viene de logout, redirige al dashboard
     window.location.replace("index.html");
   }
   
