@@ -154,13 +154,33 @@
     left:0;
     width:100%;
     height:100%;
-    background: rgba(255,255,255,0.7);
-    display:none;
+    background: rgba(0, 33, 71, 0.95);
+    display:flex;
     justify-content:center;
     align-items:center;
     font-size:1.2rem;
-    color:#003366;
+    color:#fff;
     z-index:9999;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  #loading-overlay.hidden {
+    display: none;
   }
 </style>
 </head>
@@ -226,7 +246,7 @@
       
       // Solo mostrar unidad y datos, NO el usuario
       if (unidad && datos) {
-        textoInfo = `${unidad} | ${datos}`;
+        textoInfo = `${unidad} - ${datos}`;
       } else if (unidad) {
         textoInfo = unidad;
       } else if (datos) {
