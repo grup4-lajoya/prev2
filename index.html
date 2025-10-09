@@ -24,7 +24,15 @@
     top:0; 
     width:100%; 
     z-index:1000; 
-    box-shadow:0 2px 6px rgba(0,0,0,0.2); 
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+  }
+  
+  nav.visible {
+    opacity: 1;
+    visibility: visible;
   }
   nav ul { 
     list-style:none; 
@@ -186,7 +194,10 @@
 </head>
 <body>
 
-<div id="loading-overlay">Cargando datos, por favor espere...</div>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div>Cargando menús, por favor espere...</div>
+</div>
 
 <nav>
   <div id="userInfo"></div>
@@ -226,12 +237,19 @@
         if(primeraVista) {
           mostrar(primeraVista);
         }
+        
+        // Ocultar overlay después de cargar todo
+        setTimeout(() => {
+          document.getElementById("loading-overlay").classList.add("hidden");
+        }, 300);
       } else {
         alert("Error al cargar los menús: " + (result.message || "Error desconocido"));
+        document.getElementById("loading-overlay").classList.add("hidden");
       }
     } catch(err) {
       console.error("Error al cargar menús:", err);
       alert("Error de conexión al cargar menús");
+      document.getElementById("loading-overlay").classList.add("hidden");
     }
   }
 
@@ -355,7 +373,12 @@
   }
 
   function mostrarOverlay(show) {
-    document.getElementById("loading-overlay").style.display = show ? "flex" : "none";
+    const overlay = document.getElementById("loading-overlay");
+    if (show) {
+      overlay.classList.remove("hidden");
+    } else {
+      overlay.classList.add("hidden");
+    }
   }
 
   function mostrar(id) {
