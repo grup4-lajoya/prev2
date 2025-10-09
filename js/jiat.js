@@ -299,9 +299,6 @@ function quitarDetalle(id) {
   }
 }
 
-// ============================================
-// FUNCIÓN PRINCIPAL: CARGAR DATOS CON FILTRO AUTOMÁTICO
-// ============================================
 async function cargarDatosExcel() {
   const loadingEl = document.getElementById('loading');
   
@@ -317,9 +314,6 @@ async function cargarDatosExcel() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     
-    // ============================================
-    // 🔑 CAMBIO CLAVE: Enviar ROL y UNIDAD automáticamente
-    // ============================================
     const url = `${API_URL}?action=obtenerJIAT&rol=${encodeURIComponent(rol)}&unidad=${encodeURIComponent(unidad)}`;
     console.log('URL completa con parámetros:', url);
     
@@ -342,7 +336,6 @@ async function cargarDatosExcel() {
       throw new Error(datos.error);
     }
     
-    // Ordenar por fecha (más reciente primero)
     datosCompletos = datos.sort((a, b) => {
       const fechaA = convertirFecha(a.FECHA);
       const fechaB = convertirFecha(b.FECHA);
@@ -359,12 +352,6 @@ async function cargarDatosExcel() {
     
     console.log('✓ Tabla actualizada correctamente');
     console.log('✓ Mostrando', datosFiltrados.length, 'registros para rol:', rol);
-    
-    if (rol === 'ADMIN' || rol === 'admin') {
-      console.log('✓ Usuario ADMIN: Visualizando TODOS los registros');
-    } else {
-      console.log('✓ Usuario con rol', rol + ': Visualizando solo registros de unidad:', unidad);
-    }
     
   } catch (error) {
     console.error('Error al cargar los datos:', error);
@@ -592,21 +579,22 @@ function eliminarRegistro(index) {
 // FUNCIONES PARA ACCIONES TOMADAS
 // ============================================
 
-// Función principal para abrir el modal de acciones tomadas
 async function registrarAcciones(index) {
   const registro = datosFiltrados[index];
   codigoJIATAcciones = registro.CODIGO;
   
   console.log('Abriendo modal de acciones para:', codigoJIATAcciones);
   
-  // Mostrar overlay de carga
   mostrarOverlay('Cargando información del JIAT...');
   
   try {
-    // Obtener el detalle completo del JIAT
     const url = `${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}`;
+    console.log('URL para obtener detalle:', url);
+    
     const response = await fetch(url);
     const data = await response.json();
+    
+    console.log('Respuesta obtenerDetalleJIAT:', data);
     
     ocultarOverlay();
     
@@ -615,19 +603,246 @@ async function registrarAcciones(index) {
       return;
     }
     
-    // Llenar la información del JIAT
     mostrarInformacionJIAT(data);
     
-    // Resetear el formulario de acciones
     contadorAcciones = 0;
     document.getElementById('accionesContainer').innerHTML = '';
     
-    // Mostrar el modal
     document.getElementById('modalAcciones').style.display = 'block';
     
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    alert('Error al cargar la información del JIAT');
+    alert('Error al cargar la información del JIAT: ' + error.message);
+  }
+}
+
+function mostrarInformacionJIAT(data) {
+  const cabecera = data.cabecera;
+  
+  document.getElementById('infoCodigo').textContent = cabecera.CODIGO || '-';
+  document.getElementById('infoFecha').textContent = cabecera.FECHA || '-';
+  document.getElementById('infoUnidad').textContent = cabecera.UNIDAD || '-';
+  document.getElementById('infoLugar').textContent = cabecera.LUGAR || '-';
+  document.getElementById('infoInvolucrado').textContent = cabecera.INVOLUCRADO || '-';
+  document.getElementById('infoFatal').textContent = cabecera.FATAL || '-';
+  document.getElementById('infoDescripcion').textContent = cabecera.DESCRIPCION || '-';
+  
+  periodoJIATAcciones = cabecera.PERIODO || new Date().getFullYear();
+  
+  const seccionConclusiones = document.getElementById('detallesConclusiones');
+  const listaConclusiones = document.getElementById('listaConclusiones');
+  if (data.conclusiones && data.conclusiones.length > 0) {
+    listaConclusiones.innerHTML = '';
+    data.conclusiones.forEach(c => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${c.CARACTER}:</strong> ${c.DESCRIPCION}`;
+      listaConclusiones.appendChild(li);
+    });
+    seccionConclusiones.style.display = 'block';
+  } else {
+    seccionConclusiones.style.display = 'none';
+  }
+  
+  const seccionCausas = document.getElementById('detallesCausas');
+  const listaCausas = document.getElementById('listaCausas');
+  if (data.causas && data.causas.length > 0) {
+    listaCausas.innerHTML = '';
+    data.causas.forEach(c => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${c.CARACTER}:</strong> ${c.DESCRIPCION}`;
+      listaCausas.appendChild(li);
+    });
+    seccionCausas.style.display = 'block';
+  } else {
+    seccionCausas.style.display = 'none';
+  }
+  
+  const seccionRecomendaciones = document.getElementById('detallesRecomendaciones');
+  const listaRecomendaciones = document.getElementById('listaRecomendaciones');
+  if (data.recomendaciones && data.recomendaciones.length > 0) {
+    listaRecomendaciones.innerHTML = '';
+    data.recomendaciones.forEach(r => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${r.CARACTER}:</strong> ${r.DESCRIPCION}`;
+      listaRecomendaciones.appendChild(li);
+    });
+    seccionRecomendaciones.style.display = 'block';
+  } else {
+    seccionRecomendaciones.style.display = 'none';
+  }
+  
+  const seccionAccionesReg = document.getElementById('seccionAccionesRegistradas');
+  const listaAccionesReg = document.getElementById('listaAccionesRegistradas');
+  if (data.acciones && data.acciones.length > 0) {
+    listaAccionesReg.innerHTML = '';
+    data.acciones.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'accion-registrada';
+      div.innerHTML = `
+        <div class="accion-registrada-header">
+          <span class="accion-registrada-fecha">📅 ${a.FECHA}</span>
+          <span class="accion-registrada-caracter">${a.CARACTER}</span>
+        </div>
+        <div class="accion-registrada-descripcion">${a.DESCRIPCION}</div>
+      `;
+      listaAccionesReg.appendChild(div);
+    });
+    seccionAccionesReg.style.display = 'block';
+  } else {
+    seccionAccionesReg.style.display = 'none';
+  }
+}
+
+function agregarAccionTomada() {
+  contadorAcciones++;
+  const container = document.getElementById('accionesContainer');
+  const accionDiv = document.createElement('div');
+  accionDiv.className = 'accion-item';
+  accionDiv.id = `accion-${contadorAcciones}`;
+  
+  const hoy = new Date().toISOString().split('T')[0];
+  
+  accionDiv.innerHTML = `
+    <div class="accion-item-header">
+      <div class="accion-titulo">
+        <strong>Acción Tomada #${contadorAcciones}</strong>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-accion" onclick="guardarAccionTomada(${contadorAcciones})" id="btnGuardarAccion${contadorAcciones}">
+          💾 Guardar
+        </button>
+        <button type="button" class="btn-quitar" onclick="quitarAccionTomada(${contadorAcciones})">× Quitar</button>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de la Acción <span class="required">*</span></label>
+        <input type="date" class="accion-fecha" id="fechaAccion${contadorAcciones}" value="${hoy}" required>
+      </div>
+
+      <div class="form-group">
+        <label>Carácter <span class="required">*</span></label>
+        <select class="accion-caracter" id="caracterAccion${contadorAcciones}" required>
+          <option value="">Seleccione</option>
+          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
+          <option value="TÉCNICO">TÉCNICO</option>
+          <option value="OPERATIVO">OPERATIVO</option>
+          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
+          <option value="SALUD">SALUD</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descripción de la Acción Tomada <span class="required">*</span></label>
+      <textarea class="accion-descripcion" id="descripcionAccion${contadorAcciones}" required placeholder="Describa detalladamente la acción que se tomó..."></textarea>
+    </div>
+  `;
+  container.appendChild(accionDiv);
+}
+
+async function guardarAccionTomada(id) {
+  const fecha = document.getElementById(`fechaAccion${id}`).value;
+  const caracter = document.getElementById(`caracterAccion${id}`).value;
+  const descripcion = document.getElementById(`descripcionAccion${id}`).value;
+
+  if (!fecha || !caracter || !descripcion) {
+    alert('Por favor complete todos los campos de la acción');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarAccion${id}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Guardando acción tomada...');
+
+  try {
+    const periodo = new Date(fecha).getFullYear();
+    
+    const datosAccion = {
+      action: 'crearDetalleJIAT',
+      USUARIOREG: usuario,
+      UNIDAD: unidad,
+      TIPO: 'JIAT',
+      CODIGO: codigoJIATAcciones,
+      SUBTIPO: 'ACCIÓN TOMADA',
+      FECHA: fecha,
+      PERIODO: periodo,
+      CARACTER: caracter,
+      DESCRIPCION: descripcion
+    };
+
+    console.log("Enviando acción tomada:", datosAccion);
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(datosAccion)
+    });
+
+    const result = await response.json();
+    console.log("Respuesta del servidor:", result);
+
+    ocultarOverlay();
+
+    if (result.success) {
+      const accionDiv = document.getElementById(`accion-${id}`);
+      accionDiv.classList.add('guardado');
+      
+      const titulo = accionDiv.querySelector('.accion-titulo');
+      titulo.innerHTML += ' <span class="badge-guardado-accion">✓ Guardado</span>';
+      
+      document.getElementById(`fechaAccion${id}`).disabled = true;
+      document.getElementById(`caracterAccion${id}`).disabled = true;
+      document.getElementById(`descripcionAccion${id}`).disabled = true;
+      btnGuardar.style.display = 'none';
+
+      alert('✓ Acción tomada registrada correctamente');
+      
+      const indexRegistro = datosFiltrados.findIndex(r => r.CODIGO === codigoJIATAcciones);
+      if (indexRegistro !== -1) {
+        await registrarAcciones(indexRegistro);
+      }
+      
+    } else {
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = '💾 Guardar';
+      alert('Error al guardar la acción: ' + result.error);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    alert('Error al guardar la acción tomada: ' + error.message);
+  }
+}
+
+function quitarAccionTomada(id) {
+  const elemento = document.getElementById(`accion-${id}`);
+  if (elemento && !elemento.classList.contains('guardado')) {
+    elemento.remove();
+  } else if (elemento && elemento.classList.contains('guardado')) {
+    alert('No puede eliminar una acción ya guardada.');
+  }
+}
+
+function cerrarModalAcciones() {
+  document.getElementById('modalAcciones').style.display = 'none';
+  cargarDatosExcel();
+}
+
+window.onclick = function(event) {
+  const modalNuevo = document.getElementById('modalNuevo');
+  const modalAcciones = document.getElementById('modalAcciones');
+  
+  if (event.target == modalNuevo) {
+    cerrarModal();
+  }
+  
+  if (event.target == modalAcciones) {
+    cerrarModalAcciones();
   }
 }
