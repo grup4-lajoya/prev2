@@ -10,6 +10,11 @@ let codigoJIATActual = null;
 let fechaJIATActual = null;
 let periodoJIATActual = null;
 
+// Variables para acciones tomadas
+let contadorAcciones = 0;
+let codigoJIATAcciones = null;
+let periodoJIATAcciones = null;
+
 const usuario = localStorage.getItem("usuario") || "";
 const unidad = localStorage.getItem("unidad") || "";
 const rol = localStorage.getItem("rol") || "";
@@ -541,21 +546,9 @@ function ocultarOverlay() {
   document.getElementById('overlayGlobal').style.display = 'none';
 }
 
-window.onclick = function(event) {
-  const modal = document.getElementById('modalNuevo');
-  if (event.target == modal) {
-    cerrarModal();
-  }
-}
-
 function verDetalle(index) {
   const registro = datosFiltrados[index];
   alert('Ver detalle de: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
-}
-
-function registrarAcciones(index) {
-  const registro = datosFiltrados[index];
-  alert('Registrar Acciones Tomadas para: ' + registro.CODIGO + '\n\nEsta funcionalidad se implementará próximamente.');
 }
 
 function editarRegistro(index) {
@@ -592,5 +585,49 @@ function eliminarRegistro(index) {
       alert('Error al eliminar el registro');
       console.error(error);
     });
+  }
+}
+
+// ============================================
+// FUNCIONES PARA ACCIONES TOMADAS
+// ============================================
+
+// Función principal para abrir el modal de acciones tomadas
+async function registrarAcciones(index) {
+  const registro = datosFiltrados[index];
+  codigoJIATAcciones = registro.CODIGO;
+  
+  console.log('Abriendo modal de acciones para:', codigoJIATAcciones);
+  
+  // Mostrar overlay de carga
+  mostrarOverlay('Cargando información del JIAT...');
+  
+  try {
+    // Obtener el detalle completo del JIAT
+    const url = `${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    ocultarOverlay();
+    
+    if (!data.success) {
+      alert('Error al cargar la información: ' + data.error);
+      return;
+    }
+    
+    // Llenar la información del JIAT
+    mostrarInformacionJIAT(data);
+    
+    // Resetear el formulario de acciones
+    contadorAcciones = 0;
+    document.getElementById('accionesContainer').innerHTML = '';
+    
+    // Mostrar el modal
+    document.getElementById('modalAcciones').style.display = 'block';
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    alert('Error al cargar la información del JIAT');
   }
 }
