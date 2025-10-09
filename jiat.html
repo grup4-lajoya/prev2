@@ -46,6 +46,7 @@
   </div>
 </div>
 
+<!-- MODAL NUEVO REGISTRO JIAT -->
 <div id="modalNuevo" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -140,6 +141,92 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-cerrar" onclick="cerrarModalCompleto()">Cerrar y Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACCIONES TOMADAS -->
+<div id="modalAcciones" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>Registrar Acciones Tomadas</h2>
+      <span class="close" onclick="cerrarModalAcciones()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <!-- SECCIÓN 1: INFORMACIÓN DEL JIAT (Solo lectura) -->
+      <div class="seccion info-jiat">
+        <div class="seccion-titulo">📋 Información del JIAT</div>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Código:</strong>
+            <span id="infoCodigo">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Fecha:</strong>
+            <span id="infoFecha">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Unidad:</strong>
+            <span id="infoUnidad">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Lugar:</strong>
+            <span id="infoLugar">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Involucrado(s):</strong>
+            <span id="infoInvolucrado">-</span>
+          </div>
+          <div class="info-item">
+            <strong>Fatal:</strong>
+            <span id="infoFatal">-</span>
+          </div>
+        </div>
+
+        <div class="info-descripcion">
+          <strong>Descripción del Accidente:</strong>
+          <p id="infoDescripcion">-</p>
+        </div>
+
+        <!-- Conclusiones, Causas y Recomendaciones -->
+        <div id="detallesConclusiones" style="display:none;">
+          <h4>📌 Conclusiones:</h4>
+          <ul id="listaConclusiones"></ul>
+        </div>
+
+        <div id="detallesCausas" style="display:none;">
+          <h4>⚠️ Causas:</h4>
+          <ul id="listaCausas"></ul>
+        </div>
+
+        <div id="detallesRecomendaciones" style="display:none;">
+          <h4>💡 Recomendaciones:</h4>
+          <ul id="listaRecomendaciones"></ul>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: ACCIONES TOMADAS REGISTRADAS -->
+      <div class="seccion" id="seccionAccionesRegistradas" style="display:none;">
+        <div class="seccion-titulo">✅ Acciones Tomadas Previamente Registradas</div>
+        <div id="listaAccionesRegistradas"></div>
+      </div>
+
+      <!-- SECCIÓN 3: REGISTRAR NUEVAS ACCIONES -->
+      <div class="seccion">
+        <div class="seccion-titulo">➕ Registrar Nueva Acción Tomada</div>
+        
+        <div id="accionesContainer"></div>
+        
+        <button type="button" class="btn-agregar-detalle" onclick="agregarAccionTomada()">
+          + Agregar Acción Tomada
+        </button>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalAcciones()">Cerrar</button>
     </div>
   </div>
 </div>
