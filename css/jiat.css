@@ -567,45 +567,11 @@ tbody tr:hover {
   color: #004085;
 }
 
-.mensaje-advertencia {
-  background-color: #fff3cd;
-  border-left: 4px solid #ffc107;
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  color: #856404;
-}
+/* ============================================ */
+/* ESTILOS PARA MODAL DE ACCIONES TOMADAS */
+/* ============================================ */
 
-.mensaje-advertencia strong {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 1.1em;
-  color: #d39e00;
-}
-
-.mensaje-advertencia p {
-  margin: 5px 0;
-  line-height: 1.6;
-}
-
-.campo-sensible {
-  background-color: #fff9e6 !important;
-  border: 2px solid #ffc107 !important;
-}
-
-.campo-sensible:focus {
-  border-color: #ff9800 !important;
-  box-shadow: 0 0 8px rgba(255, 193, 7, 0.5) !important;
-}
-
-.texto-ayuda {
-  display: block;
-  margin-top: 5px;
-  font-size: 0.85em;
-  color: #d39e00;
-  font-weight: normal;
-}
-
+/* Sección de información del JIAT */
 .info-jiat {
   background: #f8f9fa;
   border-left: 4px solid #007bff;
@@ -660,6 +626,7 @@ tbody tr:hover {
   margin: 0;
 }
 
+/* Listas de detalles */
 #detallesConclusiones ul,
 #detallesCausas ul,
 #detallesRecomendaciones ul {
@@ -694,6 +661,7 @@ tbody tr:hover {
   margin-bottom: 10px;
 }
 
+/* Acciones registradas previamente */
 .accion-registrada {
   padding: 15px;
   background: #e7f5e7;
@@ -728,6 +696,7 @@ tbody tr:hover {
   line-height: 1.6;
 }
 
+/* Contenedor de acciones a registrar */
 .accion-item {
   padding: 20px;
   background: #f8f9fa;
@@ -787,6 +756,7 @@ tbody tr:hover {
   transform: none;
 }
 
+/* Estilos para items de detalle en modo solo lectura */
 .detalle-item-readonly {
   padding: 15px;
   background: white;
@@ -822,6 +792,7 @@ tbody tr:hover {
   line-height: 1.6;
 }
 
+/* Estilos para items editables en modal de edición */
 .detalle-item-editable {
   padding: 20px;
   background: white;
