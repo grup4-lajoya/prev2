@@ -3,7 +3,6 @@
 // ============================================
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
-
 let datosUsuario = {};
 let registrosJIAT = [];
 let registrosFiltrados = [];
