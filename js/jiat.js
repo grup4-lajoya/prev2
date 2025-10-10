@@ -1,5 +1,5 @@
 // ============================================
-// JIAT.JS - VERSIÓN MEJORADA
+// JIAT.JS - VERSIÓN CON FLUJO POR PASOS
 // CON ACTUALIZACIÓN EN CASCADA DEL CODIGO
 // ============================================
 
@@ -21,13 +21,9 @@ let codigoJIATAcciones = null;
 let periodoJIATAcciones = null;
 
 // Variables para edición
-let detallesEditados = [];
-let detallesNuevos = [];
-let detallesEliminados = [];
-let accionesEditadas = [];
-let accionesEliminadas = [];
 let contadorDetallesEdicion = 0;
-let codigoOriginalEdicion = null;
+let cabeceraEdicionGuardada = false;
+let codigoActualEdicion = null;
 
 const usuario = localStorage.getItem("usuario") || "";
 const unidad = localStorage.getItem("unidad") || "";
@@ -337,19 +333,12 @@ async function cargarDatosExcel() {
   const loadingEl = document.getElementById('loading');
   
   try {
-    loadingEl.innerHTML = 'Cargando datos... ⏳ (Esto puede tomar unos segundos)';
-    
-    console.log('=== CARGA DE DATOS CON FILTRO AUTOMÁTICO ===');
-    console.log('Usuario:', usuario);
-    console.log('Rol:', rol);
-    console.log('Unidad:', unidad);
-    console.log('API URL:', API_URL);
+    loadingEl.innerHTML = 'Cargando datos... ⏳';
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     const url = `${API_URL}?action=obtenerJIAT&rol=${encodeURIComponent(rol)}&unidad=${encodeURIComponent(unidad)}`;
-    console.log('URL completa con parámetros:', url);
     
     const response = await fetch(url, {
       signal: controller.signal
@@ -357,14 +346,11 @@ async function cargarDatosExcel() {
     
     clearTimeout(timeoutId);
     
-    console.log('Respuesta recibida, status:', response.status);
-    
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);
     }
     
     const datos = await response.json();
-    console.log('✓ Datos recibidos:', datos.length, 'registros');
     
     if (datos.error) {
       throw new Error(datos.error);
@@ -384,18 +370,13 @@ async function cargarDatosExcel() {
     
     actualizarTabla();
     
-    console.log('✓ Tabla actualizada correctamente');
-    console.log('✓ Mostrando', datosFiltrados.length, 'registros para rol:', rol);
-    
   } catch (error) {
     console.error('Error al cargar los datos:', error);
     
     if (error.name === 'AbortError') {
-      loadingEl.innerHTML = 
-        '⏱️ Tiempo de espera agotado.<br>La API está tardando demasiado en responder.<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>';
+      loadingEl.innerHTML = '⏱️ Tiempo de espera agotado.<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>';
     } else {
-      loadingEl.innerHTML = 
-        `❌ Error al cargar los datos: ${error.message}<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
+      loadingEl.innerHTML = `❌ Error: ${error.message}<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
     }
   }
 }
@@ -493,9 +474,7 @@ document.getElementById('buscar').addEventListener('input', function(e) {
     const codigo = (registro.CODIGO || '').toString().toLowerCase();
     const fecha = (registro.FECHA || '').toString().toLowerCase();
     
-    return unidad.includes(termino) || 
-           codigo.includes(termino) || 
-           fecha.includes(termino);
+    return unidad.includes(termino) || codigo.includes(termino) || fecha.includes(termino);
   });
   
   paginaActual = 1;
@@ -570,15 +549,11 @@ function verDetalle(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
   
-  console.log('Abriendo modal ver detalle para:', codigo);
-  
-  mostrarOverlay('Cargando información del JIAT...');
+  mostrarOverlay('Cargando información...');
   
   fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`)
     .then(response => response.json())
     .then(data => {
-      console.log('Respuesta obtenerDetalleJIAT:', data);
-      
       ocultarOverlay();
       
       if (!data.success) {
@@ -607,71 +582,35 @@ function mostrarDetalleCompleto(data) {
   document.getElementById('verFatal').textContent = cabecera.FATAL || '-';
   document.getElementById('verDescripcion').textContent = cabecera.DESCRIPCION || '-';
   
-  const seccionConclusiones = document.getElementById('verSeccionConclusiones');
-  const listaConclusiones = document.getElementById('verListaConclusiones');
-  if (data.conclusiones && data.conclusiones.length > 0) {
-    listaConclusiones.innerHTML = '';
-    data.conclusiones.forEach((c, index) => {
-      const div = document.createElement('div');
-      div.className = 'detalle-item-readonly';
-      div.innerHTML = `
-        <div class="detalle-item-readonly-header">
-          <span class="detalle-item-readonly-tipo">Conclusión #${index + 1}</span>
-          <span class="detalle-item-readonly-caracter">${c.CARACTER}</span>
-        </div>
-        <div class="detalle-item-readonly-descripcion">${c.DESCRIPCION}</div>
-      `;
-      listaConclusiones.appendChild(div);
-    });
-    seccionConclusiones.style.display = 'block';
-  } else {
-    seccionConclusiones.style.display = 'none';
-  }
+  const mostrarSeccion = (seccionId, listaId, datos, tipo, color) => {
+    const seccion = document.getElementById(seccionId);
+    const lista = document.getElementById(listaId);
+    if (datos && datos.length > 0) {
+      lista.innerHTML = '';
+      datos.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'detalle-item-readonly';
+        if (color) div.style.borderLeftColor = color;
+        div.innerHTML = `
+          <div class="detalle-item-readonly-header">
+            <span class="detalle-item-readonly-tipo" style="color: ${color || '#17a2b8'};">${tipo} #${index + 1}</span>
+            <span class="detalle-item-readonly-caracter" style="background: ${color || '#17a2b8'};">${item.CARACTER}</span>
+          </div>
+          <div class="detalle-item-readonly-descripcion">${item.DESCRIPCION}</div>
+        `;
+        lista.appendChild(div);
+      });
+      seccion.style.display = 'block';
+    } else {
+      seccion.style.display = 'none';
+    }
+  };
   
-  const seccionCausas = document.getElementById('verSeccionCausas');
-  const listaCausas = document.getElementById('verListaCausas');
-  if (data.causas && data.causas.length > 0) {
-    listaCausas.innerHTML = '';
-    data.causas.forEach((c, index) => {
-      const div = document.createElement('div');
-      div.className = 'detalle-item-readonly';
-      div.style.borderLeftColor = '#ffc107';
-      div.innerHTML = `
-        <div class="detalle-item-readonly-header">
-          <span class="detalle-item-readonly-tipo" style="color: #ffc107;">Causa #${index + 1}</span>
-          <span class="detalle-item-readonly-caracter" style="background: #ffc107;">${c.CARACTER}</span>
-        </div>
-        <div class="detalle-item-readonly-descripcion">${c.DESCRIPCION}</div>
-      `;
-      listaCausas.appendChild(div);
-    });
-    seccionCausas.style.display = 'block';
-  } else {
-    seccionCausas.style.display = 'none';
-  }
+  mostrarSeccion('verSeccionConclusiones', 'verListaConclusiones', data.conclusiones, 'Conclusión', '#17a2b8');
+  mostrarSeccion('verSeccionCausas', 'verListaCausas', data.causas, 'Causa', '#ffc107');
+  mostrarSeccion('verSeccionRecomendaciones', 'verListaRecomendaciones', data.recomendaciones, 'Recomendación', '#007bff');
   
-  const seccionRecomendaciones = document.getElementById('verSeccionRecomendaciones');
-  const listaRecomendaciones = document.getElementById('verListaRecomendaciones');
-  if (data.recomendaciones && data.recomendaciones.length > 0) {
-    listaRecomendaciones.innerHTML = '';
-    data.recomendaciones.forEach((r, index) => {
-      const div = document.createElement('div');
-      div.className = 'detalle-item-readonly';
-      div.style.borderLeftColor = '#007bff';
-      div.innerHTML = `
-        <div class="detalle-item-readonly-header">
-          <span class="detalle-item-readonly-tipo" style="color: #007bff;">Recomendación #${index + 1}</span>
-          <span class="detalle-item-readonly-caracter" style="background: #007bff;">${r.CARACTER}</span>
-        </div>
-        <div class="detalle-item-readonly-descripcion">${r.DESCRIPCION}</div>
-      `;
-      listaRecomendaciones.appendChild(div);
-    });
-    seccionRecomendaciones.style.display = 'block';
-  } else {
-    seccionRecomendaciones.style.display = 'none';
-  }
-  
+  // Acciones con fecha
   const seccionAcciones = document.getElementById('verSeccionAcciones');
   const listaAcciones = document.getElementById('verListaAcciones');
   if (data.acciones && data.acciones.length > 0) {
@@ -682,7 +621,7 @@ function mostrarDetalleCompleto(data) {
       div.style.borderLeftColor = '#28a745';
       div.innerHTML = `
         <div class="detalle-item-readonly-header">
-          <span class="detalle-item-readonly-tipo" style="color: #28a745;">Acción Tomada #${index + 1} - 📅 ${a.FECHA}</span>
+          <span class="detalle-item-readonly-tipo" style="color: #28a745;">Acción #${index + 1} - 📅 ${a.FECHA}</span>
           <span class="detalle-item-readonly-caracter" style="background: #28a745;">${a.CARACTER}</span>
         </div>
         <div class="detalle-item-readonly-descripcion">${a.DESCRIPCION}</div>
@@ -700,51 +639,45 @@ function cerrarModalVerDetalle() {
 }
 
 // ============================================
-// EDITAR REGISTRO CON ACTUALIZACIÓN EN CASCADA
+// EDITAR REGISTRO CON FLUJO POR PASOS
 // ============================================
 
-function editarRegistro(index) {
+async function editarRegistro(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
   
-  console.log('Abriendo modal de edición para:', codigo);
+  mostrarOverlay('Cargando información...');
   
-  mostrarOverlay('Cargando información del JIAT...');
-  
-  fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log('Respuesta obtenerDetalleJIAT:', data);
-      
-      ocultarOverlay();
-      
-      if (!data.success) {
-        alert('Error al cargar la información: ' + data.error);
-        return;
-      }
-      
-      cargarDatosEdicion(data);
-      document.getElementById('modalEditar').style.display = 'block';
-    })
-    .catch(error => {
-      ocultarOverlay();
-      console.error('Error:', error);
-      alert('Error al cargar la información del JIAT: ' + error.message);
-    });
+  try {
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`);
+    const data = await response.json();
+    
+    ocultarOverlay();
+    
+    if (!data.success) {
+      alert('Error al cargar la información: ' + data.error);
+      return;
+    }
+    
+    cargarDatosEdicion(data);
+    document.getElementById('modalEditar').style.display = 'block';
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    alert('Error: ' + error.message);
+  }
 }
 
 function cargarDatosEdicion(data) {
   const cabecera = data.cabecera;
   
-  detallesEditados = [];
-  detallesNuevos = [];
-  detallesEliminados = [];
-  accionesEditadas = [];
-  accionesEliminadas = [];
+  // Resetear estado
   contadorDetallesEdicion = 0;
+  cabeceraEdicionGuardada = false;
+  codigoActualEdicion = cabecera.CODIGO;
   
-  codigoOriginalEdicion = cabecera.CODIGO;
-  
+  // Cargar periodos
   const selectPeriodo = document.getElementById('editPeriodo');
   selectPeriodo.innerHTML = '<option value="">Seleccione un año</option>';
   const añoActual = new Date().getFullYear();
@@ -755,7 +688,8 @@ function cargarDatosEdicion(data) {
     selectPeriodo.appendChild(option);
   }
   
-  document.getElementById('editCodigo').value = cabecera.CODIGO || '';
+  // Llenar cabecera
+  document.getElementById('editCodigoActual').value = cabecera.CODIGO || '';
   document.getElementById('editNumero').value = cabecera.NUMERO || '';
   document.getElementById('editPeriodo').value = cabecera.PERIODO || '';
   
@@ -774,265 +708,87 @@ function cargarDatosEdicion(data) {
   document.getElementById('editCantfall').value = cabecera.CANTFALL || '0';
   document.getElementById('editDescripcion').value = cabecera.DESCRIPCION || '';
   
-  const containerDetalles = document.getElementById('editDetallesContainer');
-  containerDetalles.innerHTML = '';
+  // Ocultar advertencia
+  document.getElementById('editAdvertenciaCodigo').style.display = 'none';
   
-  const todosLosDetalles = [
-    ...(data.conclusiones || []),
-    ...(data.causas || []),
-    ...(data.recomendaciones || [])
-  ];
+  // Marcar cabecera como no guardada y habilitar botón
+  const seccionCabecera = document.getElementById('editSeccionCabecera');
+  seccionCabecera.classList.remove('guardada');
+  const badge = seccionCabecera.querySelector('.badge-guardado');
+  if (badge) badge.remove();
+  document.getElementById('btnGuardarCabeceraEdit').disabled = false;
+  document.getElementById('btnGuardarCabeceraEdit').textContent = '💾 Guardar Cambios de Cabecera';
   
-  todosLosDetalles.forEach((detalle, index) => {
-    agregarDetalleEdicionExistente(detalle, index);
-  });
+  // Bloquear secciones de detalles y acciones
+  const seccionDetalles = document.getElementById('editSeccionDetalles');
+  const seccionAcciones = document.getElementById('editSeccionAcciones');
+  seccionDetalles.classList.add('bloqueada');
+  seccionAcciones.classList.add('bloqueada');
+  document.getElementById('editMensajeBloqueo').style.display = 'block';
+  document.getElementById('btnAgregarDetalleEdit').disabled = true;
   
-  const containerAcciones = document.getElementById('editAccionesContainer');
-  containerAcciones.innerHTML = '';
+  // Limpiar containers
+  document.getElementById('editDetallesContainer').innerHTML = '';
+  document.getElementById('editAccionesContainer').innerHTML = '';
   
-  if (data.acciones && data.acciones.length > 0) {
-    data.acciones.forEach((accion, index) => {
-      agregarAccionEdicionExistente(accion, index);
-    });
+  // Guardar detalles y acciones para cargar después
+  window.datosEdicionTemp = {
+    detalles: [
+      ...(data.conclusiones || []),
+      ...(data.causas || []),
+      ...(data.recomendaciones || [])
+    ],
+    acciones: data.acciones || []
+  };
+}
+
+function mostrarAdvertenciaCodigoEdicion() {
+  const codigoActual = document.getElementById('editCodigoActual').value;
+  const numeroNuevo = document.getElementById('editNumero').value;
+  const periodoNuevo = document.getElementById('editPeriodo').value;
+  
+  if (!numeroNuevo || !periodoNuevo) return;
+  
+  const numeroFormateado = numeroNuevo.toString().padStart(3, '0');
+  const codigoNuevo = `JIAT-${numeroFormateado}-${periodoNuevo}`;
+  
+  const advertenciaDiv = document.getElementById('editAdvertenciaCodigo');
+  const textoDiv = document.getElementById('editTextoAdvertencia');
+  
+  if (codigoActual !== codigoNuevo) {
+    textoDiv.innerHTML = `
+      Al cambiar el <strong>Número</strong> o <strong>Periodo</strong> se generará un nuevo código:<br><br>
+      <strong>Código actual:</strong> ${codigoActual}<br>
+      <strong>Código nuevo:</strong> ${codigoNuevo}<br><br>
+      Esto actualizará el código en <strong>TODOS los detalles y acciones</strong> asociados automáticamente.
+    `;
+    advertenciaDiv.style.display = 'block';
   } else {
-    containerAcciones.innerHTML = '<p style="color: #666; padding: 15px;">No hay acciones tomadas registradas.</p>';
+    advertenciaDiv.style.display = 'none';
   }
 }
 
-function agregarDetalleEdicionExistente(detalle, index) {
-  contadorDetallesEdicion++;
-  const container = document.getElementById('editDetallesContainer');
-  const detalleDiv = document.createElement('div');
-  detalleDiv.className = 'detalle-item-editable';
-  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
-  detalleDiv.setAttribute('data-id-detalle', detalle.ID_DETALLE);
-  detalleDiv.setAttribute('data-tipo', 'existente');
-  
-  detalleDiv.innerHTML = `
-    <div class="detalle-item-editable-header">
-      <div class="detalle-item-editable-titulo">
-        ${detalle.SUBTIPO} #${index + 1}
-      </div>
-      <button type="button" class="btn-eliminar-detalle" onclick="marcarDetalleParaEliminar(${contadorDetallesEdicion})">
-        🗑️ Eliminar
-      </button>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group">
-        <label>Asunto <span class="required">*</span></label>
-        <select class="edit-detalle-subtipo" required>
-          <option value="">Seleccione</option>
-          <option value="CONCLUSIÓN" ${detalle.SUBTIPO === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
-          <option value="CAUSA" ${detalle.SUBTIPO === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
-          <option value="RECOMENDACIÓN" ${detalle.SUBTIPO === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Carácter <span class="required">*</span></label>
-        <select class="edit-detalle-caracter" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO" ${detalle.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-          <option value="TÉCNICO" ${detalle.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-          <option value="OPERATIVO" ${detalle.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-          <option value="PSICOLÓGICO" ${detalle.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-          <option value="SALUD" ${detalle.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Descripción <span class="required">*</span></label>
-      <textarea class="edit-detalle-descripcion" required>${detalle.DESCRIPCION || ''}</textarea>
-    </div>
-  `;
-  container.appendChild(detalleDiv);
-}
-
-function agregarAccionEdicionExistente(accion, index) {
-  const container = document.getElementById('editAccionesContainer');
-  const accionDiv = document.createElement('div');
-  accionDiv.className = 'detalle-item-editable';
-  accionDiv.style.borderColor = '#28a745';
-  accionDiv.id = `editAccion-${index}`;
-  accionDiv.setAttribute('data-id-detalle', accion.ID_DETALLE);
-  accionDiv.setAttribute('data-tipo', 'existente');
-  
-  let fechaInput = '';
-  if (accion.FECHA) {
-    const partes = accion.FECHA.split('/');
-    if (partes.length === 3) {
-      fechaInput = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-    }
-  }
-  
-  accionDiv.innerHTML = `
-    <div class="detalle-item-editable-header">
-      <div class="detalle-item-editable-titulo" style="color: #28a745;">
-        Acción Tomada #${index + 1}
-      </div>
-      <button type="button" class="btn-eliminar-detalle" onclick="marcarAccionParaEliminar(${index})">
-        🗑️ Eliminar
-      </button>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha de la Acción <span class="required">*</span></label>
-        <input type="date" class="edit-accion-fecha" value="${fechaInput}" required>
-      </div>
-
-      <div class="form-group">
-        <label>Carácter <span class="required">*</span></label>
-        <select class="edit-accion-caracter" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO" ${accion.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-          <option value="TÉCNICO" ${accion.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-          <option value="OPERATIVO" ${accion.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-          <option value="PSICOLÓGICO" ${accion.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-          <option value="SALUD" ${accion.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Descripción de la Acción Tomada <span class="required">*</span></label>
-      <textarea class="edit-accion-descripcion" required>${accion.DESCRIPCION || ''}</textarea>
-    </div>
-  `;
-  container.appendChild(accionDiv);
-}
-
-function agregarDetalleEdicion() {
-  contadorDetallesEdicion++;
-  const container = document.getElementById('editDetallesContainer');
-  const detalleDiv = document.createElement('div');
-  detalleDiv.className = 'detalle-item-editable detalle-nuevo';
-  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
-  detalleDiv.setAttribute('data-tipo', 'nuevo');
-  
-  detalleDiv.innerHTML = `
-    <div class="detalle-item-editable-header">
-      <div class="detalle-item-editable-titulo">
-        Nuevo Detalle <span class="badge-nuevo">NUEVO</span>
-      </div>
-      <button type="button" class="btn-eliminar-detalle" onclick="quitarDetalleNuevo(${contadorDetallesEdicion})">
-        🗑️ Quitar
-      </button>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group">
-        <label>Asunto <span class="required">*</span></label>
-        <select class="edit-detalle-subtipo" required>
-          <option value="">Seleccione</option>
-          <option value="CONCLUSIÓN">CONCLUSIÓN</option>
-          <option value="CAUSA">CAUSA</option>
-          <option value="RECOMENDACIÓN">RECOMENDACIÓN</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Carácter <span class="required">*</span></label>
-        <select class="edit-detalle-caracter" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Descripción <span class="required">*</span></label>
-      <textarea class="edit-detalle-descripcion" required placeholder="Describa la conclusión, causa o recomendación..."></textarea>
-    </div>
-  `;
-  container.appendChild(detalleDiv);
-}
-
-function marcarDetalleParaEliminar(id) {
-  const elemento = document.getElementById(`editDetalle-${id}`);
-  if (!elemento) return;
-  
-  if (elemento.classList.contains('eliminado')) {
-    elemento.classList.remove('eliminado');
-    const badge = elemento.querySelector('.badge-eliminado');
-    if (badge) badge.remove();
-    
-    const idDetalle = elemento.getAttribute('data-id-detalle');
-    detallesEliminados = detallesEliminados.filter(id => id !== idDetalle);
-  } else {
-    elemento.classList.add('eliminado');
-    const titulo = elemento.querySelector('.detalle-item-editable-titulo');
-    titulo.innerHTML += ' <span class="badge-eliminado">SERÁ ELIMINADO</span>';
-    
-    const idDetalle = elemento.getAttribute('data-id-detalle');
-    if (idDetalle && !detallesEliminados.includes(idDetalle)) {
-      detallesEliminados.push(idDetalle);
-    }
-  }
-}
-
-function marcarAccionParaEliminar(index) {
-  const elemento = document.getElementById(`editAccion-${index}`);
-  if (!elemento) return;
-  
-  if (elemento.classList.contains('eliminado')) {
-    elemento.classList.remove('eliminado');
-    const badge = elemento.querySelector('.badge-eliminado');
-    if (badge) badge.remove();
-    
-    const idDetalle = elemento.getAttribute('data-id-detalle');
-    accionesEliminadas = accionesEliminadas.filter(id => id !== idDetalle);
-  } else {
-    elemento.classList.add('eliminado');
-    const titulo = elemento.querySelector('.detalle-item-editable-titulo');
-    titulo.innerHTML += ' <span class="badge-eliminado">SERÁ ELIMINADO</span>';
-    
-    const idDetalle = elemento.getAttribute('data-id-detalle');
-    if (idDetalle && !accionesEliminadas.includes(idDetalle)) {
-      accionesEliminadas.push(idDetalle);
-    }
-  }
-}
-
-function quitarDetalleNuevo(id) {
-  const elemento = document.getElementById(`editDetalle-${id}`);
-  if (elemento && elemento.getAttribute('data-tipo') === 'nuevo') {
-    elemento.remove();
-  }
-}
-
-// ============================================
-// GUARDAR EDICIÓN COMPLETA CON ACTUALIZACIÓN EN CASCADA
-// ============================================
-
-async function guardarEdicionCompleta() {
-  const numero = document.getElementById('editNumero').value;
-  const periodo = document.getElementById('editPeriodo').value;
+async function guardarCabeceraEdicion() {
+  const codigoActual = document.getElementById('editCodigoActual').value;
+  const numeroNuevo = document.getElementById('editNumero').value.trim();
+  const periodoNuevo = document.getElementById('editPeriodo').value;
   const fecha = document.getElementById('editFecha').value;
-  const lugar = document.getElementById('editLugar').value;
-  const involucrado = document.getElementById('editInvolucrado').value;
+  const lugar = document.getElementById('editLugar').value.trim();
+  const involucrado = document.getElementById('editInvolucrado').value.trim();
   const fatal = document.getElementById('editFatal').value;
   const cantfall = document.getElementById('editCantfall').value;
-  const descripcion = document.getElementById('editDescripcion').value;
-  const codigoActual = document.getElementById('editCodigo').value;
+  const descripcion = document.getElementById('editDescripcion').value.trim();
   
-  if (!numero || !periodo || !fecha || !lugar || !involucrado || !fatal || !descripcion) {
-    alert('Por favor complete todos los campos obligatorios de la cabecera');
+  if (!numeroNuevo || !periodoNuevo || !fecha || !lugar || !involucrado || !fatal || !descripcion) {
+    alert('⚠️ Por favor complete todos los campos obligatorios');
     return;
   }
   
-  // Generar el nuevo código
-  const numeroFormateado = numero.toString().padStart(3, '0');
-  const codigoNuevo = `JIAT-${numeroFormateado}-${periodo}`;
+  const numeroFormateado = numeroNuevo.toString().padStart(3, '0');
+  const codigoNuevo = `JIAT-${numeroFormateado}-${periodoNuevo}`;
   const cambioEnCodigo = codigoActual !== codigoNuevo;
   
-  // Si cambió el código, validar que no exista
+  // Validar código si cambió
   if (cambioEnCodigo) {
     try {
       const response = await fetch(API_URL, {
@@ -1047,18 +803,18 @@ async function guardarEdicionCompleta() {
       const result = await response.json();
       
       if (result.existe) {
-        alert(`⚠️ Ya existe un JIAT con el número ${numero} y periodo ${periodo}`);
+        alert(`⚠️ Ya existe un JIAT con el número ${numeroNuevo} y periodo ${periodoNuevo}`);
         return;
       }
     } catch (error) {
       console.error('Error al validar código:', error);
-      alert('Error al validar el código: ' + error.message);
+      alert('Error al validar el código');
       return;
     }
     
-    // Mostrar advertencia y confirmar
+    // Confirmar actualización en cascada
     const mensaje = `⚠️ ADVERTENCIA: ACTUALIZACIÓN EN CASCADA
-    
+
 Se actualizará el código de:
   ${codigoActual}  →  ${codigoNuevo}
 
@@ -1074,23 +830,16 @@ Esto actualizará automáticamente:
     }
   }
   
-  const confirmar = window.confirm('¿Está seguro de guardar todos los cambios?');
-  if (!confirmar) {
-    return;
-  }
-  
-  mostrarOverlay('Guardando cambios...');
+  mostrarOverlay('Guardando cabecera...');
   
   try {
-    // 1. ACTUALIZAR CABECERA (CON ACTUALIZACIÓN EN CASCADA SI CAMBIÓ EL CÓDIGO)
-    console.log('1. Actualizando cabecera...');
     const datosCabecera = {
       action: 'editarCabeceraJIAT',
       codigoActual: codigoActual,
       codigoNuevo: codigoNuevo,
       CODIGO: codigoNuevo,
-      NUMERO: numero,
-      PERIODO: periodo,
+      NUMERO: numeroNuevo,
+      PERIODO: periodoNuevo,
       FECHA: fecha,
       LUGAR: lugar,
       INVOLUCRADO: involucrado,
@@ -1099,218 +848,423 @@ Esto actualizará automáticamente:
       DESCRIPCION: descripcion
     };
     
-    const respCabecera = await fetch(API_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify(datosCabecera)
     });
     
-    const resultCabecera = await respCabecera.json();
-    if (!resultCabecera.success) {
-      throw new Error('Error al actualizar cabecera: ' + resultCabecera.error);
-    }
-    console.log('✓ Cabecera actualizada');
+    const result = await response.json();
     
-    if (cambioEnCodigo) {
-      console.log(`✓ Código actualizado en cascada: ${resultCabecera.registrosActualizados} detalles/acciones actualizados`);
-    }
+    ocultarOverlay();
     
-    // 2. ELIMINAR DETALLES MARCADOS
-    if (detallesEliminados.length > 0) {
-      console.log('2. Eliminando detalles:', detallesEliminados);
-      for (const idDetalle of detallesEliminados) {
-        const respEliminar = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'eliminarDetalleJIAT',
-            ID_DETALLE: idDetalle
-          })
+    if (result.success) {
+      cabeceraEdicionGuardada = true;
+      codigoActualEdicion = codigoNuevo;
+      
+      // Actualizar código oculto
+      document.getElementById('editCodigoActual').value = codigoNuevo;
+      
+      // Marcar como guardada
+      const seccionCabecera = document.getElementById('editSeccionCabecera');
+      seccionCabecera.classList.add('guardada');
+      
+      const badge = document.createElement('span');
+      badge.className = 'badge-guardado';
+      badge.textContent = '✓ Guardado';
+      seccionCabecera.appendChild(badge);
+      
+      // Deshabilitar botón
+      document.getElementById('btnGuardarCabeceraEdit').disabled = true;
+      
+      // Desbloquear secciones
+      const seccionDetalles = document.getElementById('editSeccionDetalles');
+      const seccionAcciones = document.getElementById('editSeccionAcciones');
+      seccionDetalles.classList.remove('bloqueada');
+      seccionAcciones.classList.remove('bloqueada');
+      document.getElementById('editMensajeBloqueo').style.display = 'none';
+      document.getElementById('btnAgregarDetalleEdit').disabled = false;
+      
+      // Cargar detalles y acciones existentes
+      if (window.datosEdicionTemp) {
+        window.datosEdicionTemp.detalles.forEach((detalle, index) => {
+          agregarDetalleEdicionExistente(detalle, index);
         });
-        const resultEliminar = await respEliminar.json();
-        if (!resultEliminar.success) {
-          console.error('Error al eliminar detalle:', idDetalle);
+        
+        const containerAcciones = document.getElementById('editAccionesContainer');
+        if (window.datosEdicionTemp.acciones.length > 0) {
+          window.datosEdicionTemp.acciones.forEach((accion, index) => {
+            agregarAccionEdicionExistente(accion, index);
+          });
+        } else {
+          containerAcciones.innerHTML = '<p style="color:#666;padding:15px;">No hay acciones registradas.</p>';
         }
       }
-      console.log('✓ Detalles eliminados');
+      
+      let mensaje = '✅ Cabecera actualizada correctamente.';
+      if (cambioEnCodigo) {
+        mensaje += `\n\n📝 Código actualizado: ${codigoActual} → ${codigoNuevo}`;
+        mensaje += `\n✅ ${result.registrosActualizados} detalles/acciones actualizados automáticamente`;
+      }
+      mensaje += '\n\nAhora puede editar los detalles y acciones.';
+      
+      alert(mensaje);
+      
+    } else {
+      alert('⚠️ Error: ' + (result.error || 'Error desconocido'));
     }
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    alert('⚠️ Error al guardar: ' + error.message);
+  }
+}
+
+function agregarDetalleEdicionExistente(detalle, index) {
+  contadorDetallesEdicion++;
+  const container = document.getElementById('editDetallesContainer');
+  const detalleDiv = document.createElement('div');
+  detalleDiv.className = 'detalle-item';
+  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
+  detalleDiv.setAttribute('data-id-detalle', detalle.ID_DETALLE);
+  
+  detalleDiv.innerHTML = `
+    <div class="detalle-item-header">
+      <div class="detalle-titulo">
+        <strong>${detalle.SUBTIPO} #${index + 1}</strong>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEditado(${contadorDetallesEdicion})" id="btnGuardarDetEdit${contadorDetallesEdicion}">
+          💾 Guardar
+        </button>
+        <button type="button" class="btn-quitar" onclick="eliminarDetalleEditado(${contadorDetallesEdicion})">🗑️ Eliminar</button>
+      </div>
+    </div>
     
-    // 3. ELIMINAR ACCIONES MARCADAS
-    if (accionesEliminadas.length > 0) {
-      console.log('3. Eliminando acciones:', accionesEliminadas);
-      for (const idDetalle of accionesEliminadas) {
-        const respEliminar = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'eliminarDetalleJIAT',
-            ID_DETALLE: idDetalle
-          })
-        });
-        const resultEliminar = await respEliminar.json();
-        if (!resultEliminar.success) {
-          console.error('Error al eliminar acción:', idDetalle);
-        }
-      }
-      console.log('✓ Acciones eliminadas');
+    <div class="form-row">
+      <div class="form-group">
+        <label>Asunto</label>
+        <select class="edit-detalle-subtipo" id="editSubtipo${contadorDetallesEdicion}">
+          <option value="CONCLUSIÓN" ${detalle.SUBTIPO === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
+          <option value="CAUSA" ${detalle.SUBTIPO === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
+          <option value="RECOMENDACIÓN" ${detalle.SUBTIPO === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Carácter</label>
+        <select class="edit-detalle-caracter" id="editCaracter${contadorDetallesEdicion}">
+          <option value="PSICOFÍSICO" ${detalle.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
+          <option value="TÉCNICO" ${detalle.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
+          <option value="OPERATIVO" ${detalle.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
+          <option value="PSICOLÓGICO" ${detalle.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
+          <option value="SALUD" ${detalle.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea class="edit-detalle-descripcion" id="editDescDet${contadorDetallesEdicion}">${detalle.DESCRIPCION || ''}</textarea>
+    </div>
+  `;
+  container.appendChild(detalleDiv);
+}
+
+function agregarAccionEdicionExistente(accion, index) {
+  const container = document.getElementById('editAccionesContainer');
+  const accionDiv = document.createElement('div');
+  accionDiv.className = 'accion-item';
+  accionDiv.id = `editAccion-${index}`;
+  accionDiv.setAttribute('data-id-detalle', accion.ID_DETALLE);
+  
+  let fechaInput = '';
+  if (accion.FECHA) {
+    const partes = accion.FECHA.split('/');
+    if (partes.length === 3) {
+      fechaInput = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
     }
-    
-    // 4. ACTUALIZAR DETALLES EXISTENTES
-    console.log('4. Actualizando detalles existentes...');
-    const detallesExistentes = document.querySelectorAll('#editDetallesContainer .detalle-item-editable[data-tipo="existente"]:not(.eliminado)');
-    for (const detalleDiv of detallesExistentes) {
-      const idDetalle = detalleDiv.getAttribute('data-id-detalle');
-      const subtipo = detalleDiv.querySelector('.edit-detalle-subtipo').value;
-      const caracter = detalleDiv.querySelector('.edit-detalle-caracter').value;
-      const descripcionDet = detalleDiv.querySelector('.edit-detalle-descripcion').value;
-      
-      if (!subtipo || !caracter || !descripcionDet) {
-        alert('Complete todos los campos de los detalles');
-        ocultarOverlay();
-        return;
-      }
-      
-      const datosDetalle = {
-        action: 'actualizarDetalleJIAT',
-        ID_DETALLE: idDetalle,
-        CODIGO: codigoNuevo,
-        SUBTIPO: subtipo,
-        CARACTER: caracter,
-        DESCRIPCION: descripcionDet,
-        FECHA: fecha,
-        PERIODO: periodo
-      };
-      
-      const respActualizar = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(datosDetalle)
-      });
-      
-      const resultActualizar = await respActualizar.json();
-      if (!resultActualizar.success) {
-        console.error('Error al actualizar detalle:', idDetalle);
-      }
-    }
-    console.log('✓ Detalles actualizados');
-    
-    // 5. ACTUALIZAR ACCIONES EXISTENTES
-    console.log('5. Actualizando acciones existentes...');
-    const accionesExistentes = document.querySelectorAll('#editAccionesContainer .detalle-item-editable[data-tipo="existente"]:not(.eliminado)');
-    for (const accionDiv of accionesExistentes) {
-      const idDetalle = accionDiv.getAttribute('data-id-detalle');
-      const fechaAccion = accionDiv.querySelector('.edit-accion-fecha').value;
-      const caracter = accionDiv.querySelector('.edit-accion-caracter').value;
-      const descripcionAccion = accionDiv.querySelector('.edit-accion-descripcion').value;
-      
-      if (!fechaAccion || !caracter || !descripcionAccion) {
-        alert('Complete todos los campos de las acciones');
-        ocultarOverlay();
-        return;
-      }
-      
-      const periodoAccion = new Date(fechaAccion).getFullYear();
-      
-      const datosAccion = {
-        action: 'actualizarDetalleJIAT',
-        ID_DETALLE: idDetalle,
-        CODIGO: codigoNuevo,
-        CARACTER: caracter,
-        DESCRIPCION: descripcionAccion,
-        FECHA: fechaAccion,
-        PERIODO: periodoAccion
-      };
-      
-      const respActualizar = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(datosAccion)
-      });
-      
-      const resultActualizar = await respActualizar.json();
-      if (!resultActualizar.success) {
-        console.error('Error al actualizar acción:', idDetalle);
-      }
-    }
-    console.log('✓ Acciones actualizadas');
-    
-    // 6. CREAR DETALLES NUEVOS
-    console.log('6. Creando detalles nuevos...');
-    const detallesNuevosElements = document.querySelectorAll('#editDetallesContainer .detalle-item-editable[data-tipo="nuevo"]');
-    for (const detalleDiv of detallesNuevosElements) {
-      const subtipo = detalleDiv.querySelector('.edit-detalle-subtipo').value;
-      const caracter = detalleDiv.querySelector('.edit-detalle-caracter').value;
-      const descripcionDet = detalleDiv.querySelector('.edit-detalle-descripcion').value;
-      
-      if (!subtipo || !caracter || !descripcionDet) {
-        continue;
-      }
-      
-      const datosNuevo = {
+  }
+  
+  accionDiv.innerHTML = `
+    <div class="accion-item-header">
+      <div class="accion-titulo">
+        <strong>Acción #${index + 1}</strong>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-accion" onclick="guardarAccionEditada(${index})">💾 Guardar</button>
+        <button type="button" class="btn-quitar" onclick="eliminarAccionEditada(${index})">🗑️ Eliminar</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" class="edit-accion-fecha" id="editFechaAccion${index}" value="${fechaInput}">
+      </div>
+      <div class="form-group">
+        <label>Carácter</label>
+        <select class="edit-accion-caracter" id="editCaracterAccion${index}">
+          <option value="PSICOFÍSICO" ${accion.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
+          <option value="TÉCNICO" ${accion.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
+          <option value="OPERATIVO" ${accion.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
+          <option value="PSICOLÓGICO" ${accion.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
+          <option value="SALUD" ${accion.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea class="edit-accion-descripcion" id="editDescAccion${index}">${accion.DESCRIPCION || ''}</textarea>
+    </div>
+  `;
+  container.appendChild(accionDiv);
+}
+
+function agregarDetalleEdicion() {
+  contadorDetallesEdicion++;
+  const container = document.getElementById('editDetallesContainer');
+  const detalleDiv = document.createElement('div');
+  detalleDiv.className = 'detalle-item';
+  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
+  detalleDiv.setAttribute('data-nuevo', 'true');
+  
+  detalleDiv.innerHTML = `
+    <div class="detalle-item-header">
+      <div class="detalle-titulo">
+        <strong>Nuevo Detalle</strong>
+        <span class="badge-guardado-detalle" style="background:#28a745;">NUEVO</span>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEditado(${contadorDetallesEdicion})">💾 Guardar</button>
+        <button type="button" class="btn-quitar" onclick="quitarDetalleNuevo(${contadorDetallesEdicion})">× Quitar</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Asunto <span class="required">*</span></label>
+        <select class="edit-detalle-subtipo" id="editSubtipo${contadorDetallesEdicion}" required>
+          <option value="">Seleccione</option>
+          <option value="CONCLUSIÓN">CONCLUSIÓN</option>
+          <option value="CAUSA">CAUSA</option>
+          <option value="RECOMENDACIÓN">RECOMENDACIÓN</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Carácter <span class="required">*</span></label>
+        <select class="edit-detalle-caracter" id="editCaracter${contadorDetallesEdicion}" required>
+          <option value="">Seleccione</option>
+          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
+          <option value="TÉCNICO">TÉCNICO</option>
+          <option value="OPERATIVO">OPERATIVO</option>
+          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
+          <option value="SALUD">SALUD</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Descripción <span class="required">*</span></label>
+      <textarea class="edit-detalle-descripcion" id="editDescDet${contadorDetallesEdicion}" required></textarea>
+    </div>
+  `;
+  container.appendChild(detalleDiv);
+}
+
+async function guardarDetalleEditado(id) {
+  const detalleDiv = document.getElementById(`editDetalle-${id}`);
+  const idDetalle = detalleDiv.getAttribute('data-id-detalle');
+  const esNuevo = detalleDiv.getAttribute('data-nuevo') === 'true';
+  
+  const subtipo = document.getElementById(`editSubtipo${id}`).value;
+  const caracter = document.getElementById(`editCaracter${id}`).value;
+  const descripcion = document.getElementById(`editDescDet${id}`).value.trim();
+  
+  if (!subtipo || !caracter || !descripcion) {
+    alert('Complete todos los campos');
+    return;
+  }
+  
+  mostrarOverlay('Guardando...');
+  
+  try {
+    let datos;
+    if (esNuevo) {
+      datos = {
         action: 'crearDetalleJIAT',
         USUARIOREG: usuario,
         UNIDAD: unidad,
         TIPO: 'JIAT',
-        CODIGO: codigoNuevo,
+        CODIGO: codigoActualEdicion,
         SUBTIPO: subtipo,
-        FECHA: fecha,
-        PERIODO: periodo,
+        FECHA: document.getElementById('editFecha').value,
+        PERIODO: document.getElementById('editPeriodo').value,
         CARACTER: caracter,
-        DESCRIPCION: descripcionDet
+        DESCRIPCION: descripcion
       };
-      
-      const respCrear = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(datosNuevo)
-      });
-      
-      const resultCrear = await respCrear.json();
-      if (!resultCrear.success) {
-        console.error('Error al crear detalle nuevo');
-      }
+    } else {
+      datos = {
+        action: 'actualizarDetalleJIAT',
+        ID_DETALLE: idDetalle,
+        CODIGO: codigoActualEdicion,
+        SUBTIPO: subtipo,
+        CARACTER: caracter,
+        DESCRIPCION: descripcion,
+        FECHA: document.getElementById('editFecha').value,
+        PERIODO: document.getElementById('editPeriodo').value
+      };
     }
-    console.log('✓ Detalles nuevos creados');
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(datos)
+    });
+    
+    const result = await response.json();
     
     ocultarOverlay();
     
-    let mensajeExito = '✓ Todos los cambios se guardaron correctamente';
-    if (cambioEnCodigo) {
-      mensajeExito += `\n\n📝 Código actualizado de ${codigoActual} a ${codigoNuevo}`;
-      mensajeExito += `\n✅ ${resultCabecera.registrosActualizados} detalles/acciones actualizados automáticamente`;
+    if (result.success) {
+      detalleDiv.classList.add('guardado');
+      document.getElementById(`editSubtipo${id}`).disabled = true;
+      document.getElementById(`editCaracter${id}`).disabled = true;
+      document.getElementById(`editDescDet${id}`).disabled = true;
+      
+      const btn = document.getElementById(`btnGuardarDetEdit${id}`);
+      if (btn) btn.style.display = 'none';
+      
+      alert('✅ Guardado correctamente');
+    } else {
+      alert('Error: ' + result.error);
     }
-    
-    alert(mensajeExito);
-    
-    document.getElementById('modalEditar').style.display = 'none';
-    detallesEditados = [];
-    detallesNuevos = [];
-    detallesEliminados = [];
-    accionesEditadas = [];
-    accionesEliminadas = [];
-    
-    cargarDatosExcel();
-    
   } catch (error) {
     ocultarOverlay();
-    console.error('Error en guardarEdicionCompleta:', error);
-    alert('Error al guardar los cambios: ' + error.message);
+    alert('Error: ' + error.message);
+  }
+}
+
+async function eliminarDetalleEditado(id) {
+  const detalleDiv = document.getElementById(`editDetalle-${id}`);
+  const idDetalle = detalleDiv.getAttribute('data-id-detalle');
+  
+  if (!confirm('¿Eliminar este detalle?')) return;
+  
+  mostrarOverlay('Eliminando...');
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'eliminarDetalleJIAT',
+        ID_DETALLE: idDetalle
+      })
+    });
+    
+    const result = await response.json();
+    
+    ocultarOverlay();
+    
+    if (result.success) {
+      detalleDiv.remove();
+      alert('✅ Eliminado correctamente');
+    } else {
+      alert('Error: ' + result.error);
+    }
+  } catch (error) {
+    ocultarOverlay();
+    alert('Error: ' + error.message);
+  }
+}
+
+function quitarDetalleNuevo(id) {
+  document.getElementById(`editDetalle-${id}`).remove();
+}
+
+async function guardarAccionEditada(index) {
+  const accionDiv = document.getElementById(`editAccion-${index}`);
+  const idDetalle = accionDiv.getAttribute('data-id-detalle');
+  
+  const fecha = document.getElementById(`editFechaAccion${index}`).value;
+  const caracter = document.getElementById(`editCaracterAccion${index}`).value;
+  const descripcion = document.getElementById(`editDescAccion${index}`).value.trim();
+  
+  if (!fecha || !caracter || !descripcion) {
+    alert('Complete todos los campos');
+    return;
+  }
+  
+  mostrarOverlay('Guardando...');
+  
+  try {
+    const datos = {
+      action: 'actualizarDetalleJIAT',
+      ID_DETALLE: idDetalle,
+      CODIGO: codigoActualEdicion,
+      CARACTER: caracter,
+      DESCRIPCION: descripcion,
+      FECHA: fecha,
+      PERIODO: new Date(fecha).getFullYear()
+    };
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(datos)
+    });
+    
+    const result = await response.json();
+    
+    ocultarOverlay();
+    
+    if (result.success) {
+      accionDiv.classList.add('guardado');
+      alert('✅ Guardado correctamente');
+    } else {
+      alert('Error: ' + result.error);
+    }
+  } catch (error) {
+    ocultarOverlay();
+    alert('Error: ' + error.message);
+  }
+}
+
+async function eliminarAccionEditada(index) {
+  const accionDiv = document.getElementById(`editAccion-${index}`);
+  const idDetalle = accionDiv.getAttribute('data-id-detalle');
+  
+  if (!confirm('¿Eliminar esta acción?')) return;
+  
+  mostrarOverlay('Eliminando...');
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'eliminarDetalleJIAT',
+        ID_DETALLE: idDetalle
+      })
+    });
+    
+    const result = await response.json();
+    
+    ocultarOverlay();
+    
+    if (result.success) {
+      accionDiv.remove();
+      alert('✅ Eliminado correctamente');
+    } else {
+      alert('Error: ' + result.error);
+    }
+  } catch (error) {
+    ocultarOverlay();
+    alert('Error: ' + error.message);
   }
 }
 
 function cerrarModalEditar() {
-  const confirmar = window.confirm('¿Está seguro de cerrar? Los cambios no guardados se perderán.');
-  if (confirmar) {
+  if (cabeceraEdicionGuardada) {
+    alert('✓ Cambios guardados correctamente');
     document.getElementById('modalEditar').style.display = 'none';
-    detallesEditados = [];
-    detallesNuevos = [];
-    detallesEliminados = [];
-    accionesEditadas = [];
-    accionesEliminadas = [];
+    cargarDatosExcel();
+  } else {
+    if (confirm('¿Cerrar sin guardar los cambios de cabecera?')) {
+      document.getElementById('modalEditar').style.display = 'none';
+    }
   }
-}
-
-function cerrarModalEditarForzado() {
-  document.getElementById('modalEditar').style.display = 'none';
-  detallesEditados = [];
-  detallesNuevos = [];
-  detallesEliminados = [];
-  accionesEditadas = [];
-  accionesEliminadas = [];
 }
 
 // ============================================
@@ -1321,37 +1275,27 @@ async function registrarAcciones(index) {
   const registro = datosFiltrados[index];
   codigoJIATAcciones = registro.CODIGO;
   
-  console.log('Abriendo modal de acciones para:', codigoJIATAcciones);
-  
-  mostrarOverlay('Cargando información del JIAT...');
+  mostrarOverlay('Cargando...');
   
   try {
-    const url = `${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}`;
-    console.log('URL para obtener detalle:', url);
-    
-    const response = await fetch(url);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}`);
     const data = await response.json();
-    
-    console.log('Respuesta obtenerDetalleJIAT:', data);
     
     ocultarOverlay();
     
     if (!data.success) {
-      alert('Error al cargar la información: ' + data.error);
+      alert('Error: ' + data.error);
       return;
     }
     
     mostrarInformacionJIAT(data);
-    
     contadorAcciones = 0;
     document.getElementById('accionesContainer').innerHTML = '';
-    
     document.getElementById('modalAcciones').style.display = 'block';
     
   } catch (error) {
     ocultarOverlay();
-    console.error('Error:', error);
-    alert('Error al cargar la información del JIAT: ' + error.message);
+    alert('Error: ' + error.message);
   }
 }
 
@@ -1368,47 +1312,25 @@ function mostrarInformacionJIAT(data) {
   
   periodoJIATAcciones = cabecera.PERIODO || new Date().getFullYear();
   
-  const seccionConclusiones = document.getElementById('detallesConclusiones');
-  const listaConclusiones = document.getElementById('listaConclusiones');
-  if (data.conclusiones && data.conclusiones.length > 0) {
-    listaConclusiones.innerHTML = '';
-    data.conclusiones.forEach(c => {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${c.CARACTER}:</strong> ${c.DESCRIPCION}`;
-      listaConclusiones.appendChild(li);
-    });
-    seccionConclusiones.style.display = 'block';
-  } else {
-    seccionConclusiones.style.display = 'none';
-  }
+  const mostrarListaSimple = (seccionId, listaId, datos) => {
+    const seccion = document.getElementById(seccionId);
+    const lista = document.getElementById(listaId);
+    if (datos && datos.length > 0) {
+      lista.innerHTML = '';
+      datos.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${item.CARACTER}:</strong> ${item.DESCRIPCION}`;
+        lista.appendChild(li);
+      });
+      seccion.style.display = 'block';
+    } else {
+      seccion.style.display = 'none';
+    }
+  };
   
-  const seccionCausas = document.getElementById('detallesCausas');
-  const listaCausas = document.getElementById('listaCausas');
-  if (data.causas && data.causas.length > 0) {
-    listaCausas.innerHTML = '';
-    data.causas.forEach(c => {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${c.CARACTER}:</strong> ${c.DESCRIPCION}`;
-      listaCausas.appendChild(li);
-    });
-    seccionCausas.style.display = 'block';
-  } else {
-    seccionCausas.style.display = 'none';
-  }
-  
-  const seccionRecomendaciones = document.getElementById('detallesRecomendaciones');
-  const listaRecomendaciones = document.getElementById('listaRecomendaciones');
-  if (data.recomendaciones && data.recomendaciones.length > 0) {
-    listaRecomendaciones.innerHTML = '';
-    data.recomendaciones.forEach(r => {
-      const li = document.createElement('li');
-      li.innerHTML = `<strong>${r.CARACTER}:</strong> ${r.DESCRIPCION}`;
-      listaRecomendaciones.appendChild(li);
-    });
-    seccionRecomendaciones.style.display = 'block';
-  } else {
-    seccionRecomendaciones.style.display = 'none';
-  }
+  mostrarListaSimple('detallesConclusiones', 'listaConclusiones', data.conclusiones);
+  mostrarListaSimple('detallesCausas', 'listaCausas', data.causas);
+  mostrarListaSimple('detallesRecomendaciones', 'listaRecomendaciones', data.recomendaciones);
   
   const seccionAccionesReg = document.getElementById('seccionAccionesRegistradas');
   const listaAccionesReg = document.getElementById('listaAccionesRegistradas');
@@ -1444,7 +1366,7 @@ function agregarAccionTomada() {
   accionDiv.innerHTML = `
     <div class="accion-item-header">
       <div class="accion-titulo">
-        <strong>Acción Tomada #${contadorAcciones}</strong>
+        <strong>Acción #${contadorAcciones}</strong>
       </div>
       <div>
         <button type="button" class="btn-guardar-accion" onclick="guardarAccionTomada(${contadorAcciones})" id="btnGuardarAccion${contadorAcciones}">
@@ -1456,13 +1378,12 @@ function agregarAccionTomada() {
     
     <div class="form-row">
       <div class="form-group">
-        <label>Fecha de la Acción <span class="required">*</span></label>
-        <input type="date" class="accion-fecha" id="fechaAccion${contadorAcciones}" value="${hoy}" required>
+        <label>Fecha <span class="required">*</span></label>
+        <input type="date" id="fechaAccion${contadorAcciones}" value="${hoy}" required>
       </div>
-
       <div class="form-group">
         <label>Carácter <span class="required">*</span></label>
-        <select class="accion-caracter" id="caracterAccion${contadorAcciones}" required>
+        <select id="caracterAccion${contadorAcciones}" required>
           <option value="">Seleccione</option>
           <option value="PSICOFÍSICO">PSICOFÍSICO</option>
           <option value="TÉCNICO">TÉCNICO</option>
@@ -1474,8 +1395,8 @@ function agregarAccionTomada() {
     </div>
 
     <div class="form-group">
-      <label>Descripción de la Acción Tomada <span class="required">*</span></label>
-      <textarea class="accion-descripcion" id="descripcionAccion${contadorAcciones}" required placeholder="Describa detalladamente la acción que se tomó..."></textarea>
+      <label>Descripción <span class="required">*</span></label>
+      <textarea id="descripcionAccion${contadorAcciones}" required></textarea>
     </div>
   `;
   container.appendChild(accionDiv);
@@ -1487,7 +1408,7 @@ async function guardarAccionTomada(id) {
   const descripcion = document.getElementById(`descripcionAccion${id}`).value;
 
   if (!fecha || !caracter || !descripcion) {
-    alert('Por favor complete todos los campos de la acción');
+    alert('Complete todos los campos');
     return;
   }
 
@@ -1495,7 +1416,7 @@ async function guardarAccionTomada(id) {
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
 
-  mostrarOverlay('Guardando acción tomada...');
+  mostrarOverlay('Guardando acción...');
 
   try {
     const periodo = new Date(fecha).getFullYear();
@@ -1513,15 +1434,12 @@ async function guardarAccionTomada(id) {
       DESCRIPCION: descripcion
     };
 
-    console.log("Enviando acción tomada:", datosAccion);
-
     const response = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify(datosAccion)
     });
 
     const result = await response.json();
-    console.log("Respuesta del servidor:", result);
 
     ocultarOverlay();
 
@@ -1537,7 +1455,7 @@ async function guardarAccionTomada(id) {
       document.getElementById(`descripcionAccion${id}`).disabled = true;
       btnGuardar.style.display = 'none';
 
-      alert('✓ Acción tomada registrada correctamente');
+      alert('✓ Acción guardada correctamente');
       
       const indexRegistro = datosFiltrados.findIndex(r => r.CODIGO === codigoJIATAcciones);
       if (indexRegistro !== -1) {
@@ -1547,14 +1465,13 @@ async function guardarAccionTomada(id) {
     } else {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar';
-      alert('Error al guardar la acción: ' + result.error);
+      alert('Error: ' + result.error);
     }
   } catch (error) {
-    console.error('Error:', error);
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar';
-    alert('Error al guardar la acción tomada: ' + error.message);
+    alert('Error: ' + error.message);
   }
 }
 
@@ -1562,8 +1479,6 @@ function quitarAccionTomada(id) {
   const elemento = document.getElementById(`accion-${id}`);
   if (elemento && !elemento.classList.contains('guardado')) {
     elemento.remove();
-  } else if (elemento && elemento.classList.contains('guardado')) {
-    alert('No puede eliminar una acción ya guardada.');
   }
 }
 
@@ -1578,8 +1493,8 @@ function cerrarModalAcciones() {
 
 function eliminarRegistro(index) {
   const registro = datosFiltrados[index];
-  if (confirm('¿Estás seguro de eliminar el registro ' + registro.CODIGO + '?')) {
-    mostrarOverlay('Eliminando registro...');
+  if (confirm('¿Eliminar el registro ' + registro.CODIGO + '?')) {
+    mostrarOverlay('Eliminando...');
     
     fetch(API_URL, {
       method: 'POST',
@@ -1593,17 +1508,16 @@ function eliminarRegistro(index) {
       if (data.success) {
         cargarDatosExcel().then(() => {
           ocultarOverlay();
-          alert('Registro eliminado exitosamente');
+          alert('✓ Eliminado correctamente');
         });
       } else {
         ocultarOverlay();
-        alert('Error al eliminar: ' + data.error);
+        alert('Error: ' + data.error);
       }
     })
     .catch(error => {
       ocultarOverlay();
-      alert('Error al eliminar el registro');
-      console.error(error);
+      alert('Error: ' + error.message);
     });
   }
 }
