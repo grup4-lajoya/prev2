@@ -400,7 +400,8 @@ async function guardarEdicionCompleta() {
     return;
   }
   
-  if (!confirm('¿Está seguro de guardar todos los cambios?\n\nEsto actualizará la cabecera y todos los detalles modificados.')) {
+  const confirmar = window.confirm('¿Está seguro de guardar todos los cambios?\n\nEsto actualizará la cabecera y todos los detalles modificados.');
+  if (!confirmar) {
     return;
   }
   
@@ -585,7 +586,15 @@ async function guardarEdicionCompleta() {
     
     ocultarOverlay();
     alert('✓ Todos los cambios se guardaron correctamente');
-    cerrarModalEditar();
+    
+    // Cerrar modal sin confirmación
+    document.getElementById('modalEditar').style.display = 'none';
+    detallesEditados = [];
+    detallesNuevos = [];
+    detallesEliminados = [];
+    accionesEditadas = [];
+    accionesEliminadas = [];
+    
     cargarDatosExcel();
     
   } catch (error) {
@@ -596,7 +605,8 @@ async function guardarEdicionCompleta() {
 }
 
 function cerrarModalEditar() {
-  if (confirm('¿Está seguro de cerrar? Los cambios no guardados se perderán.')) {
+  const confirmar = window.confirm('¿Está seguro de cerrar? Los cambios no guardados se perderán.');
+  if (confirmar) {
     document.getElementById('modalEditar').style.display = 'none';
     detallesEditados = [];
     detallesNuevos = [];
