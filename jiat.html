@@ -308,6 +308,99 @@
   </div>
 </div>
 
+<!-- MODAL EDITAR JIAT COMPLETO -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content" style="max-width: 1000px;">
+    <div class="modal-header">
+      <h2>✏️ Editar JIAT Completo</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formEditar">
+        
+        <!-- SECCIÓN 1: CABECERA EDITABLE -->
+        <div class="seccion">
+          <div class="seccion-titulo">📋 Datos Principales del Accidente</div>
+          
+          <input type="hidden" id="editCodigo">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Número <span class="required">*</span></label>
+              <input type="number" id="editNumero" min="1" required>
+            </div>
+
+            <div class="form-group">
+              <label>Periodo <span class="required">*</span></label>
+              <select id="editPeriodo" required>
+                <option value="">Seleccione un año</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha <span class="required">*</span></label>
+              <input type="date" id="editFecha" required>
+            </div>
+
+            <div class="form-group">
+              <label>Lugar <span class="required">*</span></label>
+              <input type="text" id="editLugar" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Involucrado(s) <span class="required">*</span></label>
+            <textarea id="editInvolucrado" required rows="2"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fatal <span class="required">*</span></label>
+              <select id="editFatal" required>
+                <option value="">Seleccione</option>
+                <option value="SÍ">SÍ</option>
+                <option value="NO">NO</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Cant. Fatalidades <span class="required">*</span></label>
+              <input type="number" id="editCantfall" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción del Accidente <span class="required">*</span></label>
+            <textarea id="editDescripcion" required rows="4"></textarea>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: DETALLES EDITABLES -->
+        <div class="seccion">
+          <div class="seccion-titulo">📝 Conclusiones, Causas y Recomendaciones</div>
+          <div id="editDetallesContainer"></div>
+          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalleEdicion()">
+            + Agregar Nuevo Detalle
+          </button>
+        </div>
+
+        <!-- SECCIÓN 3: ACCIONES TOMADAS EDITABLES -->
+        <div class="seccion">
+          <div class="seccion-titulo">✅ Acciones Tomadas</div>
+          <div id="editAccionesContainer"></div>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cancelar</button>
+      <button type="button" class="btn-guardar-cabecera" onclick="guardarEdicionCompleta()">💾 Guardar Todos los Cambios</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/jiat.js"></script>
 </body>
 </html>
