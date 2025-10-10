@@ -616,6 +616,16 @@ function cerrarModalEditar() {
   }
 }
 
+function cerrarModalEditarForzado() {
+  // Cerrar sin confirmación
+  document.getElementById('modalEditar').style.display = 'none';
+  detallesEditados = [];
+  detallesNuevos = [];
+  detallesEliminados = [];
+  accionesEditadas = [];
+  accionesEliminadas = [];
+}
+
 async function guardarDetalle(id) {
   const subtipo = document.getElementById(`subtipo${id}`).value;
   const caracter = document.getElementById(`caracter${id}`).value;
@@ -1542,7 +1552,5 @@ window.onclick = function(event) {
     cerrarModalVerDetalle();
   }
   
-  if (event.target == modalEditar) {
-    // No cerrar automáticamente el modal de editar
-  }
+  // NO cerrar el modal de editar al hacer clic fuera
 }
