@@ -29,8 +29,7 @@
           <th>ACCIONES</th>
         </tr>
       </thead>
-      <tbody id="cuerpoTabla">
-      </tbody>
+      <tbody id="cuerpoTabla"></tbody>
     </table>
   </div>
 
@@ -67,7 +66,6 @@
               <label>Número <span class="required">*</span></label>
               <input type="number" id="numero" min="1" required>
             </div>
-
             <div class="form-group">
               <label>Periodo <span class="required">*</span></label>
               <select id="periodo" required onchange="actualizarRangoFechas()">
@@ -81,7 +79,6 @@
               <label>Fecha <span class="required">*</span></label>
               <input type="date" id="fecha" required>
             </div>
-
             <div class="form-group">
               <label>Lugar <span class="required">*</span></label>
               <input type="text" id="lugar" required>
@@ -107,7 +104,6 @@
                 <option value="NO">NO</option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Cant. Fatalidades <span class="required">*</span></label>
               <input type="number" id="cantfall" min="0" value="0" required>
@@ -154,35 +150,16 @@
     </div>
     <div class="modal-body">
       
-      <!-- SECCIÓN 1: INFORMACIÓN DEL JIAT (Solo lectura) -->
       <div class="seccion info-jiat">
         <div class="seccion-titulo">📋 Información del JIAT</div>
         
         <div class="info-grid">
-          <div class="info-item">
-            <strong>Código:</strong>
-            <span id="infoCodigo">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Fecha:</strong>
-            <span id="infoFecha">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Unidad:</strong>
-            <span id="infoUnidad">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Lugar:</strong>
-            <span id="infoLugar">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Involucrado(s):</strong>
-            <span id="infoInvolucrado">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Fatal:</strong>
-            <span id="infoFatal">-</span>
-          </div>
+          <div class="info-item"><strong>Código:</strong><span id="infoCodigo">-</span></div>
+          <div class="info-item"><strong>Fecha:</strong><span id="infoFecha">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="infoUnidad">-</span></div>
+          <div class="info-item"><strong>Lugar:</strong><span id="infoLugar">-</span></div>
+          <div class="info-item"><strong>Involucrado(s):</strong><span id="infoInvolucrado">-</span></div>
+          <div class="info-item"><strong>Fatal:</strong><span id="infoFatal">-</span></div>
         </div>
 
         <div class="info-descripcion">
@@ -190,7 +167,6 @@
           <p id="infoDescripcion">-</p>
         </div>
 
-        <!-- Conclusiones, Causas y Recomendaciones -->
         <div id="detallesConclusiones" style="display:none;">
           <h4>📌 Conclusiones:</h4>
           <ul id="listaConclusiones"></ul>
@@ -207,18 +183,14 @@
         </div>
       </div>
 
-      <!-- SECCIÓN 2: ACCIONES TOMADAS REGISTRADAS -->
       <div class="seccion" id="seccionAccionesRegistradas" style="display:none;">
         <div class="seccion-titulo">✅ Acciones Tomadas Previamente Registradas</div>
         <div id="listaAccionesRegistradas"></div>
       </div>
 
-      <!-- SECCIÓN 3: REGISTRAR NUEVAS ACCIONES -->
       <div class="seccion">
         <div class="seccion-titulo">➕ Registrar Nueva Acción Tomada</div>
-        
         <div id="accionesContainer"></div>
-        
         <button type="button" class="btn-agregar-detalle" onclick="agregarAccionTomada()">
           + Agregar Acción Tomada
         </button>
@@ -231,7 +203,7 @@
   </div>
 </div>
 
-<!-- MODAL VER DETALLE (SOLO LECTURA) -->
+<!-- MODAL VER DETALLE -->
 <div id="modalVerDetalle" class="modal">
   <div class="modal-content" style="max-width: 900px;">
     <div class="modal-header">
@@ -240,62 +212,37 @@
     </div>
     <div class="modal-body">
       
-      <!-- INFORMACIÓN DEL JIAT -->
       <div class="seccion info-jiat">
         <div class="seccion-titulo">📋 Información del JIAT</div>
-        
         <div class="info-grid">
-          <div class="info-item">
-            <strong>Código:</strong>
-            <span id="verCodigo">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Fecha:</strong>
-            <span id="verFecha">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Unidad:</strong>
-            <span id="verUnidad">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Lugar:</strong>
-            <span id="verLugar">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Involucrado(s):</strong>
-            <span id="verInvolucrado">-</span>
-          </div>
-          <div class="info-item">
-            <strong>Fatal:</strong>
-            <span id="verFatal">-</span>
-          </div>
+          <div class="info-item"><strong>Código:</strong><span id="verCodigo">-</span></div>
+          <div class="info-item"><strong>Fecha:</strong><span id="verFecha">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="verUnidad">-</span></div>
+          <div class="info-item"><strong>Lugar:</strong><span id="verLugar">-</span></div>
+          <div class="info-item"><strong>Involucrado(s):</strong><span id="verInvolucrado">-</span></div>
+          <div class="info-item"><strong>Fatal:</strong><span id="verFatal">-</span></div>
         </div>
-
         <div class="info-descripcion">
           <strong>Descripción del Accidente:</strong>
           <p id="verDescripcion">-</p>
         </div>
       </div>
 
-      <!-- CONCLUSIONES -->
       <div class="seccion" id="verSeccionConclusiones" style="display:none;">
         <div class="seccion-titulo">📌 Conclusiones</div>
         <div id="verListaConclusiones"></div>
       </div>
 
-      <!-- CAUSAS -->
       <div class="seccion" id="verSeccionCausas" style="display:none;">
         <div class="seccion-titulo">⚠️ Causas</div>
         <div id="verListaCausas"></div>
       </div>
 
-      <!-- RECOMENDACIONES -->
       <div class="seccion" id="verSeccionRecomendaciones" style="display:none;">
         <div class="seccion-titulo">💡 Recomendaciones</div>
         <div id="verListaRecomendaciones"></div>
       </div>
 
-      <!-- ACCIONES TOMADAS -->
       <div class="seccion" id="verSeccionAcciones" style="display:none;">
         <div class="seccion-titulo">✅ Acciones Tomadas</div>
         <div id="verListaAcciones"></div>
@@ -308,95 +255,113 @@
   </div>
 </div>
 
-<!-- MODAL EDITAR JIAT COMPLETO -->
+<!-- MODAL EDITAR JIAT CON NUEVO FLUJO -->
 <div id="modalEditar" class="modal">
   <div class="modal-content" style="max-width: 1000px;">
     <div class="modal-header">
-      <h2>✏️ Editar JIAT Completo</h2>
-      <span class="close" onclick="cerrarModalEditarForzado()">&times;</span>
+      <h2>✏️ Editar JIAT</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
     </div>
     <div class="modal-body">
-      <form id="formEditar">
+      
+      <!-- PASO 1: EDITAR CABECERA -->
+      <div class="seccion" id="editSeccionCabecera">
+        <div class="seccion-titulo">📋 Paso 1: Editar Datos Principales</div>
         
-        <!-- SECCIÓN 1: CABECERA EDITABLE -->
-        <div class="seccion">
-          <div class="seccion-titulo">📋 Datos Principales del Accidente</div>
-          
-          <input type="hidden" id="editCodigo">
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Número <span class="required">*</span></label>
-              <input type="number" id="editNumero" min="1" required>
-            </div>
-
-            <div class="form-group">
-              <label>Periodo <span class="required">*</span></label>
-              <select id="editPeriodo" required>
-                <option value="">Seleccione un año</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Fecha <span class="required">*</span></label>
-              <input type="date" id="editFecha" required>
-            </div>
-
-            <div class="form-group">
-              <label>Lugar <span class="required">*</span></label>
-              <input type="text" id="editLugar" required>
-            </div>
-          </div>
-
+        <div class="mensaje-advertencia" id="advertenciaCodigo" style="display:none;">
+          <strong>⚠️ ATENCIÓN:</strong>
+          <p id="textoAdvertencia"></p>
+        </div>
+        
+        <input type="hidden" id="editCodigoActual">
+        
+        <div class="form-row">
           <div class="form-group">
-            <label>Involucrado(s) <span class="required">*</span></label>
-            <textarea id="editInvolucrado" required rows="2"></textarea>
+            <label>Número <span class="required">*</span></label>
+            <input type="number" id="editNumero" min="1" required class="campo-sensible">
+            <small class="texto-ayuda">⚠️ Cambiar este campo actualizará el código en todo el sistema</small>
           </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Fatal <span class="required">*</span></label>
-              <select id="editFatal" required>
-                <option value="">Seleccione</option>
-                <option value="SÍ">SÍ</option>
-                <option value="NO">NO</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Cant. Fatalidades <span class="required">*</span></label>
-              <input type="number" id="editCantfall" min="0" required>
-            </div>
-          </div>
-
           <div class="form-group">
-            <label>Descripción del Accidente <span class="required">*</span></label>
-            <textarea id="editDescripcion" required rows="4"></textarea>
+            <label>Periodo <span class="required">*</span></label>
+            <select id="editPeriodo" required class="campo-sensible">
+              <option value="">Seleccione un año</option>
+            </select>
+            <small class="texto-ayuda">⚠️ Cambiar este campo actualizará el código en todo el sistema</small>
           </div>
         </div>
 
-        <!-- SECCIÓN 2: DETALLES EDITABLES -->
-        <div class="seccion">
-          <div class="seccion-titulo">📝 Conclusiones, Causas y Recomendaciones</div>
-          <div id="editDetallesContainer"></div>
-          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalleEdicion()">
-            + Agregar Nuevo Detalle
-          </button>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha <span class="required">*</span></label>
+            <input type="date" id="editFecha" required>
+          </div>
+          <div class="form-group">
+            <label>Lugar <span class="required">*</span></label>
+            <input type="text" id="editLugar" required>
+          </div>
         </div>
 
-        <!-- SECCIÓN 3: ACCIONES TOMADAS EDITABLES -->
-        <div class="seccion">
-          <div class="seccion-titulo">✅ Acciones Tomadas</div>
-          <div id="editAccionesContainer"></div>
+        <div class="form-group">
+          <label>Involucrado(s) <span class="required">*</span></label>
+          <textarea id="editInvolucrado" required rows="2"></textarea>
         </div>
 
-      </form>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fatal <span class="required">*</span></label>
+            <select id="editFatal" required>
+              <option value="">Seleccione</option>
+              <option value="SÍ">SÍ</option>
+              <option value="NO">NO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cant. Fatalidades <span class="required">*</span></label>
+            <input type="number" id="editCantfall" min="0" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción del Accidente <span class="required">*</span></label>
+          <textarea id="editDescripcion" required rows="4"></textarea>
+        </div>
+
+        <button type="button" class="btn-guardar-cabecera" onclick="guardarCabeceraEdicion()" id="btnGuardarCabeceraEdit">
+          💾 Guardar Cambios de Cabecera
+        </button>
+      </div>
+
+      <!-- PASO 2: EDITAR DETALLES (BLOQUEADO HASTA GUARDAR CABECERA) -->
+      <div class="seccion bloqueada" id="editSeccionDetalles">
+        <div class="seccion-titulo">📝 Paso 2: Editar Conclusiones, Causas y Recomendaciones</div>
+        
+        <div class="mensaje-info" id="mensajeBloqueoEdit">
+          🔒 Esta sección se habilitará después de guardar los cambios en la cabecera.
+        </div>
+        
+        <div id="editDetallesContainer"></div>
+        
+        <button type="button" class="btn-agregar-detalle" onclick="agregarDetalleEdicion()" id="btnAgregarDetalleEdit" disabled>
+          + Agregar Nuevo Detalle
+        </button>
+      </div>
+
+      <!-- PASO 3: EDITAR ACCIONES (BLOQUEADO HASTA GUARDAR CABECERA) -->
+      <div class="seccion bloqueada" id="editSeccionAcciones">
+        <div class="seccion-titulo">✅ Paso 3: Editar Acciones Tomadas</div>
+        <div id="editAccionesContainer"></div>
+      </div>
+
+      <!-- BOTÓN PARA GUARDAR DETALLES Y ACCIONES -->
+      <div id="contenedorBtnGuardarDetalles" style="display: none; margin-top: 20px;">
+        <button type="button" class="btn-guardar-cabecera" onclick="guardarDetallesYAccionesEditados()">
+          💾 Guardar Cambios en Detalles y Acciones
+        </button>
+      </div>
+
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn-cerrar" onclick="cerrarModalEditarForzado()">Cancelar</button>
-      <button type="button" class="btn-guardar-cabecera" onclick="guardarEdicionCompleta()">💾 Guardar Todos los Cambios</button>
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cerrar y Finalizar</button>
     </div>
   </div>
 </div>
