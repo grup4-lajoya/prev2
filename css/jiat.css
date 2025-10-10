@@ -791,3 +791,74 @@ tbody tr:hover {
   color: #333;
   line-height: 1.6;
 }
+
+/* Estilos para items editables en modal de edición */
+.detalle-item-editable {
+  padding: 20px;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.detalle-item-editable.eliminado {
+  opacity: 0.5;
+  border-color: #dc3545;
+  background: #f8d7da;
+}
+
+.detalle-item-editable-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.detalle-item-editable-titulo {
+  font-size: 1.05em;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.btn-eliminar-detalle {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.btn-eliminar-detalle:hover {
+  background-color: #c82333;
+}
+
+.detalle-nuevo {
+  border-color: #28a745;
+}
+
+.detalle-nuevo .detalle-item-editable-titulo {
+  color: #28a745;
+}
+
+.badge-nuevo {
+  background: #28a745;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-left: 10px;
+}
+
+.badge-eliminado {
+  background: #dc3545;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-left: 10px;
+}
