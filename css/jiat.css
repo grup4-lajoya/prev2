@@ -567,9 +567,26 @@ tbody tr:hover {
   color: #004085;
 }
 
-/* ============================================ */
-/* ESTILOS PARA MODAL DE ACCIONES TOMADAS */
-/* ============================================ */
+.mensaje-advertencia {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  color: #856404;
+}
+
+.texto-ayuda {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 5px;
+  font-weight: normal;
+}
+
+.campo-sensible {
+  border: 2px solid #ffc107 !important;
+}
 
 /* Sección de información del JIAT */
 .info-jiat {
@@ -792,37 +809,7 @@ tbody tr:hover {
   line-height: 1.6;
 }
 
-/* Estilos para items editables en modal de edición */
-.detalle-item-editable {
-  padding: 20px;
-  background: white;
-  border: 2px solid #007bff;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.detalle-item-editable.eliminado {
-  opacity: 0.5;
-  border-color: #dc3545;
-  background: #f8d7da;
-}
-
-.detalle-item-editable-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.detalle-item-editable-titulo {
-  font-size: 1.05em;
-  color: #007bff;
-  font-weight: 600;
-}
-
+/* Botón eliminar detalle */
 .btn-eliminar-detalle {
   padding: 6px 12px;
   background-color: #dc3545;
@@ -831,6 +818,7 @@ tbody tr:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85em;
+  margin-left: 5px;
 }
 
 .btn-eliminar-detalle:hover {
