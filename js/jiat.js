@@ -133,11 +133,17 @@ async function guardarCabecera() {
 
     const resultValidacion = await validacion.json();
 
-    if (resultValidacion.existe) {
+if (resultValidacion.existe) {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
-      // CORRECCIÓN 1: Agregada alerta cuando el número existe
-      alert(`⚠️ ERROR: ${resultValidacion.mensaje}\n\nPor favor, use otro número para esta unidad.`);
+      
+      // Mostrar notificación visual en lugar de alert
+      mostrarNotificacion(`⚠️ ERROR: ${resultValidacion.mensaje}<br><br>Por favor, use otro número para esta unidad.`, 'error');
+      
+      // Resaltar los campos problemáticos
+      document.getElementById('numero').style.borderColor = '#dc3545';
+      document.getElementById('periodo').style.borderColor = '#dc3545';
+      
       return;
     }
 
