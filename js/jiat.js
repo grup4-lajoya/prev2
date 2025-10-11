@@ -759,6 +759,8 @@ function cargarDatosEdicion(data) {
   document.getElementById('editDetallesContainer').innerHTML = '';
   document.getElementById('editAccionesContainer').innerHTML = '';
   
+  // Guardar datos originales para detectar cambios
+  window.datosEdicionOriginales = JSON.parse(JSON.stringify(cabecera));
   window.datosEdicionTemp = {
     detalles: [
       ...(data.conclusiones || []),
@@ -1217,17 +1219,56 @@ async function eliminarAccionEditada(id) {
 }
 
 function cerrarModalEditar() {
+  // Verificar si se hicieron cambios en los campos
+  const camposEditados = verificarCambiosEnEdicion();
+  
   if (cabeceraEdicionGuardada) {
-    alert('✓ Cambios guardados correctamente');
+    // Si ya guardó cambios, cerrar con confirmación de éxito
+    alert('✔ Cambios guardados correctamente');
     document.getElementById('modalEditar').style.display = 'none';
     cargarDatosExcel();
-  } else {
-    if (confirm('¿Cerrar sin guardar los cambios?')) {
+  } else if (camposEditados) {
+    // Si hay cambios sin guardar, pedir confirmación
+    if (confirm('⚠️ Hay cambios sin guardar.\n\n¿Desea cerrar de todos modos?')) {
       document.getElementById('modalEditar').style.display = 'none';
     }
+  } else {
+    // No hay cambios, cerrar directamente
+    document.getElementById('modalEditar').style.display = 'none';
   }
 }
-
+// Función auxiliar para verificar si hay cambios en el modal de edición
+function verificarCambiosEnEdicion() {
+  if (!window.datosEdicionOriginales) {
+    return false; // No hay datos originales para comparar
+  }
+  
+  const orig = window.datosEdicionOriginales;
+  
+  // Comparar cada campo
+  const fechaActual = document.getElementById('editFecha').value;
+  const lugarActual = document.getElementById('editLugar').value.trim();
+  const involucradoActual = document.getElementById('editInvolucrado').value.trim();
+  const fatalActual = document.getElementById('editFatal').value;
+  const cantfallActual = document.getElementById('editCantfall').value;
+  const descripcionActual = document.getElementById('editDescripcion').value.trim();
+  
+  // Convertir fecha original al formato del input
+  let fechaOriginal = '';
+  if (orig.FECHA) {
+    const partes = orig.FECHA.split('/');
+    if (partes.length === 3) {
+      fechaOriginal = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+    }
+  }
+  
+  return fechaActual !== fechaOriginal ||
+         lugarActual !== (orig.LUGAR || '') ||
+         involucradoActual !== (orig.INVOLUCRADO || '') ||
+         fatalActual !== (orig.FATAL || '') ||
+         cantfallActual !== (orig.CANTFALL || '0').toString() ||
+         descripcionActual !== (orig.DESCRIPCION || '');
+}
 // ============================================
 // ACCIONES TOMADAS
 // ============================================
@@ -1516,6 +1557,6 @@ window.onclick = function(event) {
   }
   
   if (event.target == modalEditar) {
-    // No cerrar automáticamente al hacer clic fuera
+    cerrarModalEditar(); // Permitir cerrar al hacer clic fuera
   }
 }
