@@ -1518,4 +1518,4 @@ window.onclick = function(event) {
   if (event.target == modalEditar) {
     // No cerrar automáticamente al hacer clic fuera
   }
-};
+}
