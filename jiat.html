@@ -116,7 +116,7 @@
           </div>
 
           <button type="button" class="btn-guardar-cabecera" onclick="guardarCabecera()" id="btnGuardarCabecera">
-            💾 Guardar Datos Principales
+            💾 Guardar y Continuar
           </button>
         </div>
 
@@ -238,11 +238,6 @@
         <div id="verListaCausas"></div>
       </div>
 
-      <div class="seccion" id="verSeccionRecomendaciones" style="display:none;">
-        <div class="seccion-titulo">💡 Recomendaciones</div>
-        <div id="verListaRecomendaciones"></div>
-      </div>
-
       <div class="seccion" id="verSeccionAcciones" style="display:none;">
         <div class="seccion-titulo">✅ Acciones Tomadas</div>
         <div id="verListaAcciones"></div>
@@ -255,9 +250,7 @@
   </div>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL EDITAR CON FLUJO POR PASOS -->
-<!-- ========================================== -->
+<!-- MODAL EDITAR - SIN EDICIÓN DE NÚMERO Y PERIODO -->
 <div id="modalEditar" class="modal">
   <div class="modal-content" style="max-width: 1000px;">
     <div class="modal-header">
@@ -270,25 +263,26 @@
       <div class="seccion" id="editSeccionCabecera">
         <div class="seccion-titulo">📋 Paso 1: Editar Datos Principales</div>
         
-        <div class="mensaje-advertencia" id="editAdvertenciaCodigo" style="display:none;">
-          <strong>⚠️ ATENCIÓN: ACTUALIZACIÓN EN CASCADA</strong>
-          <p id="editTextoAdvertencia"></p>
+        <div class="mensaje-info">
+          ℹ️ <strong>Nota:</strong> El Número y Periodo no se pueden modificar para mantener la integridad de los datos.
         </div>
         
         <input type="hidden" id="editCodigoActual">
+        <div id="editAdvertenciaCodigo" class="mensaje-advertencia" style="display:none;">
+          <strong>⚠️ ATENCIÓN</strong>
+          <p id="editTextoAdvertencia"></p>
+        </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label>Número <span class="required">*</span></label>
-            <input type="number" id="editNumero" min="1" required class="campo-sensible" onchange="mostrarAdvertenciaCodigoEdicion()">
-            <small class="texto-ayuda">⚠️ Cambiar este campo actualizará el código en todo el sistema</small>
+            <label>Número (solo lectura)</label>
+            <input type="number" id="editNumero" min="1" required readonly style="background-color: #f0f0f0; cursor: not-allowed;">
           </div>
           <div class="form-group">
-            <label>Periodo <span class="required">*</span></label>
-            <select id="editPeriodo" required class="campo-sensible" onchange="mostrarAdvertenciaCodigoEdicion()">
+            <label>Periodo (solo lectura)</label>
+            <select id="editPeriodo" required disabled style="background-color: #f0f0f0; cursor: not-allowed;">
               <option value="">Seleccione un año</option>
             </select>
-            <small class="texto-ayuda">⚠️ Cambiar este campo actualizará el código en todo el sistema</small>
           </div>
         </div>
 
@@ -329,13 +323,13 @@
         </div>
 
         <button type="button" class="btn-guardar-cabecera" onclick="guardarCabeceraEdicion()" id="btnGuardarCabeceraEdit">
-          💾 Guardar Cambios de Cabecera
+          💾 Guardar y Continuar
         </button>
       </div>
 
       <!-- PASO 2: EDITAR DETALLES (BLOQUEADO HASTA GUARDAR CABECERA) -->
       <div class="seccion bloqueada" id="editSeccionDetalles">
-        <div class="seccion-titulo">📝 Paso 2: Editar Detalles</div>
+        <div class="seccion-titulo">📝 Paso 2: Editar Detalles (Conclusiones, Causas, Recomendaciones)</div>
         
         <div class="mensaje-info" id="editMensajeBloqueo">
           🔒 Esta sección se habilitará después de guardar los cambios en la cabecera.
