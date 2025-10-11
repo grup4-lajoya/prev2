@@ -1,6 +1,5 @@
 // ============================================
-// JIAT.JS - VERSIÓN CON FLUJO POR PASOS
-// CON ACTUALIZACIÓN EN CASCADA DEL CODIGO
+// JIAT.JS - VERSIÓN MEJORADA CON VALIDACIONES DE SEGURIDAD
 // ============================================
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
@@ -22,6 +21,7 @@ let periodoJIATAcciones = null;
 
 // Variables para edición
 let contadorDetallesEdicion = 0;
+let contadorAccionesEdicion = 0;
 let cabeceraEdicionGuardada = false;
 let codigoActualEdicion = null;
 
@@ -85,7 +85,7 @@ function quitarInvolucrado(btn) {
 }
 
 // ============================================
-// GUARDAR CABECERA (NUEVO REGISTRO)
+// GUARDAR CABECERA (NUEVO REGISTRO) CON VALIDACIÓN
 // ============================================
 
 async function guardarCabecera() {
@@ -117,8 +117,38 @@ async function guardarCabecera() {
 
   const btnGuardar = document.getElementById('btnGuardarCabecera');
   btnGuardar.disabled = true;
-  btnGuardar.textContent = 'Guardando...';
+  btnGuardar.textContent = 'Validando...';
 
+  // VALIDACIÓN: Verificar que el número sea único en la unidad
+  try {
+    const validacion = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'validarNumeroJIAT',
+        numero: numero,
+        periodo: periodo,
+        unidad: unidad
+      })
+    });
+
+    const resultValidacion = await validacion.json();
+
+    if (resultValidacion.existe) {
+      btnGuardar.disabled = false;
+      btnGuardar.textContent = '💾 Guardar y Continuar';
+      alert(`⚠️ ${resultValidacion.mensaje}`);
+      return;
+    }
+
+  } catch (error) {
+    console.error('Error al validar:', error);
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar y Continuar';
+    alert('Error al validar el número de JIAT');
+    return;
+  }
+
+  btnGuardar.textContent = 'Guardando...';
   mostrarOverlay('Guardando datos principales...');
 
   try {
@@ -175,14 +205,14 @@ async function guardarCabecera() {
       alert(`✓ Datos principales guardados correctamente.\nCódigo: ${codigo}\n\nAhora puede agregar conclusiones, causas y recomendaciones.`);
     } else {
       btnGuardar.disabled = false;
-      btnGuardar.textContent = '💾 Guardar Datos Principales';
+      btnGuardar.textContent = '💾 Guardar y Continuar';
       alert('Error al guardar: ' + result.error);
     }
   } catch (error) {
     console.error('Error:', error);
     ocultarOverlay();
     btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar Datos Principales';
+    btnGuardar.textContent = '💾 Guardar y Continuar';
     alert('Error al guardar los datos principales: ' + error.message);
   }
 }
@@ -503,7 +533,7 @@ function nuevoRegistro() {
     el.disabled = false;
   });
   
-  document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar Datos Principales';
+  document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar y Continuar';
   
   document.getElementById('involucradosContainer').innerHTML = `
     <div class="involucrado-item">
@@ -519,8 +549,9 @@ function nuevoRegistro() {
 }
 
 function cerrarModal() {
+  // Permitir cerrar siempre, sin validar si guardó
   if (cabeceraGuardada) {
-    if (confirm('Ha guardado los datos principales. ¿Desea cerrar sin agregar más detalles?')) {
+    if (confirm('¿Desea cerrar? Ya guardó los datos principales.')) {
       document.getElementById('modalNuevo').style.display = 'none';
       cargarDatosExcel();
     }
@@ -530,6 +561,7 @@ function cerrarModal() {
 }
 
 function cerrarModalCompleto() {
+  // Permitir cerrar siempre
   if (cabeceraGuardada) {
     alert('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
     document.getElementById('modalNuevo').style.display = 'none';
@@ -542,7 +574,7 @@ function cerrarModalCompleto() {
 }
 
 // ============================================
-// VER DETALLE COMPLETO
+// VER DETALLE COMPLETO CON VALIDACIÓN DE UNIDAD
 // ============================================
 
 function verDetalle(index) {
@@ -551,7 +583,7 @@ function verDetalle(index) {
   
   mostrarOverlay('Cargando información...');
   
-  fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`)
+  fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`)
     .then(response => response.json())
     .then(data => {
       ocultarOverlay();
@@ -639,7 +671,7 @@ function cerrarModalVerDetalle() {
 }
 
 // ============================================
-// EDITAR REGISTRO CON FLUJO POR PASOS
+// EDITAR REGISTRO - SIN EDITAR NÚMERO NI PERIODO
 // ============================================
 
 async function editarRegistro(index) {
@@ -649,7 +681,7 @@ async function editarRegistro(index) {
   mostrarOverlay('Cargando información...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}`);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`);
     const data = await response.json();
     
     ocultarOverlay();
@@ -674,6 +706,7 @@ function cargarDatosEdicion(data) {
   
   // Resetear estado
   contadorDetallesEdicion = 0;
+  contadorAccionesEdicion = 0;
   cabeceraEdicionGuardada = false;
   codigoActualEdicion = cabecera.CODIGO;
   
@@ -688,10 +721,13 @@ function cargarDatosEdicion(data) {
     selectPeriodo.appendChild(option);
   }
   
-  // Llenar cabecera
+  // Llenar cabecera - NÚMERO y PERIODO como solo lectura
   document.getElementById('editCodigoActual').value = cabecera.CODIGO || '';
   document.getElementById('editNumero').value = cabecera.NUMERO || '';
+  document.getElementById('editNumero').disabled = true; // DESHABILITAR EDICIÓN
+  
   document.getElementById('editPeriodo').value = cabecera.PERIODO || '';
+  document.getElementById('editPeriodo').disabled = true; // DESHABILITAR EDICIÓN
   
   let fechaInput = '';
   if (cabecera.FECHA) {
@@ -708,7 +744,7 @@ function cargarDatosEdicion(data) {
   document.getElementById('editCantfall').value = cabecera.CANTFALL || '0';
   document.getElementById('editDescripcion').value = cabecera.DESCRIPCION || '';
   
-  // Ocultar advertencia
+  // Ocultar advertencia (ya no aplica porque no se puede cambiar número/periodo)
   document.getElementById('editAdvertenciaCodigo').style.display = 'none';
   
   // Marcar cabecera como no guardada y habilitar botón
@@ -717,7 +753,7 @@ function cargarDatosEdicion(data) {
   const badge = seccionCabecera.querySelector('.badge-guardado');
   if (badge) badge.remove();
   document.getElementById('btnGuardarCabeceraEdit').disabled = false;
-  document.getElementById('btnGuardarCabeceraEdit').textContent = '💾 Guardar Cambios de Cabecera';
+  document.getElementById('btnGuardarCabeceraEdit').textContent = '💾 Guardar y Continuar';
   
   // Bloquear secciones de detalles y acciones
   const seccionDetalles = document.getElementById('editSeccionDetalles');
@@ -742,36 +778,8 @@ function cargarDatosEdicion(data) {
   };
 }
 
-function mostrarAdvertenciaCodigoEdicion() {
-  const codigoActual = document.getElementById('editCodigoActual').value;
-  const numeroNuevo = document.getElementById('editNumero').value;
-  const periodoNuevo = document.getElementById('editPeriodo').value;
-  
-  if (!numeroNuevo || !periodoNuevo) return;
-  
-  const numeroFormateado = numeroNuevo.toString().padStart(3, '0');
-  const codigoNuevo = `JIAT-${numeroFormateado}-${periodoNuevo}`;
-  
-  const advertenciaDiv = document.getElementById('editAdvertenciaCodigo');
-  const textoDiv = document.getElementById('editTextoAdvertencia');
-  
-  if (codigoActual !== codigoNuevo) {
-    textoDiv.innerHTML = `
-      Al cambiar el <strong>Número</strong> o <strong>Periodo</strong> se generará un nuevo código:<br><br>
-      <strong>Código actual:</strong> ${codigoActual}<br>
-      <strong>Código nuevo:</strong> ${codigoNuevo}<br><br>
-      Esto actualizará el código en <strong>TODOS los detalles y acciones</strong> asociados automáticamente.
-    `;
-    advertenciaDiv.style.display = 'block';
-  } else {
-    advertenciaDiv.style.display = 'none';
-  }
-}
-
 async function guardarCabeceraEdicion() {
-  const codigoActual = document.getElementById('editCodigoActual').value;
-  const numeroNuevo = document.getElementById('editNumero').value.trim();
-  const periodoNuevo = document.getElementById('editPeriodo').value;
+  const codigo = document.getElementById('editCodigoActual').value;
   const fecha = document.getElementById('editFecha').value;
   const lugar = document.getElementById('editLugar').value.trim();
   const involucrado = document.getElementById('editInvolucrado').value.trim();
@@ -779,55 +787,9 @@ async function guardarCabeceraEdicion() {
   const cantfall = document.getElementById('editCantfall').value;
   const descripcion = document.getElementById('editDescripcion').value.trim();
   
-  if (!numeroNuevo || !periodoNuevo || !fecha || !lugar || !involucrado || !fatal || !descripcion) {
+  if (!fecha || !lugar || !involucrado || !fatal || !descripcion) {
     alert('⚠️ Por favor complete todos los campos obligatorios');
     return;
-  }
-  
-  const numeroFormateado = numeroNuevo.toString().padStart(3, '0');
-  const codigoNuevo = `JIAT-${numeroFormateado}-${periodoNuevo}`;
-  const cambioEnCodigo = codigoActual !== codigoNuevo;
-  
-  // Validar código si cambió
-  if (cambioEnCodigo) {
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'validarCodigoJIAT',
-          codigoNuevo: codigoNuevo,
-          codigoActual: codigoActual
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (result.existe) {
-        alert(`⚠️ Ya existe un JIAT con el número ${numeroNuevo} y periodo ${periodoNuevo}`);
-        return;
-      }
-    } catch (error) {
-      console.error('Error al validar código:', error);
-      alert('Error al validar el código');
-      return;
-    }
-    
-    // Confirmar actualización en cascada
-    const mensaje = `⚠️ ADVERTENCIA: ACTUALIZACIÓN EN CASCADA
-
-Se actualizará el código de:
-  ${codigoActual}  →  ${codigoNuevo}
-
-Esto actualizará automáticamente:
-• La cabecera del JIAT
-• TODOS los detalles (conclusiones, causas, recomendaciones)
-• TODAS las acciones tomadas
-
-¿Desea continuar?`;
-    
-    if (!confirm(mensaje)) {
-      return;
-    }
   }
   
   mostrarOverlay('Guardando cabecera...');
@@ -835,11 +797,8 @@ Esto actualizará automáticamente:
   try {
     const datosCabecera = {
       action: 'editarCabeceraJIAT',
-      codigoActual: codigoActual,
-      codigoNuevo: codigoNuevo,
-      CODIGO: codigoNuevo,
-      NUMERO: numeroNuevo,
-      PERIODO: periodoNuevo,
+      CODIGO: codigo,
+      UNIDAD_USUARIO: unidad, // Para validación de permisos
       FECHA: fecha,
       LUGAR: lugar,
       INVOLUCRADO: involucrado,
@@ -859,10 +818,6 @@ Esto actualizará automáticamente:
     
     if (result.success) {
       cabeceraEdicionGuardada = true;
-      codigoActualEdicion = codigoNuevo;
-      
-      // Actualizar código oculto
-      document.getElementById('editCodigoActual').value = codigoNuevo;
       
       // Marcar como guardada
       const seccionCabecera = document.getElementById('editSeccionCabecera');
@@ -896,18 +851,11 @@ Esto actualizará automáticamente:
             agregarAccionEdicionExistente(accion, index);
           });
         } else {
-          containerAcciones.innerHTML = '<p style="color:#666;padding:15px;">No hay acciones registradas.</p>';
+          containerAcciones.innerHTML = '<p style="color:#666;padding:15px;">No hay acciones registradas aún.</p>';
         }
       }
       
-      let mensaje = '✅ Cabecera actualizada correctamente.';
-      if (cambioEnCodigo) {
-        mensaje += `\n\n📝 Código actualizado: ${codigoActual} → ${codigoNuevo}`;
-        mensaje += `\n✅ ${result.registrosActualizados} detalles/acciones actualizados automáticamente`;
-      }
-      mensaje += '\n\nAhora puede editar los detalles y acciones.';
-      
-      alert(mensaje);
+      alert('✅ Cabecera actualizada correctamente.\n\nAhora puede editar los detalles y acciones.');
       
     } else {
       alert('⚠️ Error: ' + (result.error || 'Error desconocido'));
@@ -936,7 +884,7 @@ function agregarDetalleEdicionExistente(detalle, index) {
         <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEditado(${contadorDetallesEdicion})" id="btnGuardarDetEdit${contadorDetallesEdicion}">
           💾 Guardar
         </button>
-        <button type="button" class="btn-quitar" onclick="eliminarDetalleEditado(${contadorDetallesEdicion})">🗑️ Eliminar</button>
+        <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleEditado(${contadorDetallesEdicion})">🗑️ Eliminar</button>
       </div>
     </div>
     
@@ -969,10 +917,11 @@ function agregarDetalleEdicionExistente(detalle, index) {
 }
 
 function agregarAccionEdicionExistente(accion, index) {
+  contadorAccionesEdicion++;
   const container = document.getElementById('editAccionesContainer');
   const accionDiv = document.createElement('div');
   accionDiv.className = 'accion-item';
-  accionDiv.id = `editAccion-${index}`;
+  accionDiv.id = `editAccion-${contadorAccionesEdicion}`;
   accionDiv.setAttribute('data-id-detalle', accion.ID_DETALLE);
   
   let fechaInput = '';
@@ -989,18 +938,18 @@ function agregarAccionEdicionExistente(accion, index) {
         <strong>Acción #${index + 1}</strong>
       </div>
       <div>
-        <button type="button" class="btn-guardar-accion" onclick="guardarAccionEditada(${index})">💾 Guardar</button>
-        <button type="button" class="btn-quitar" onclick="eliminarAccionEditada(${index})">🗑️ Eliminar</button>
+        <button type="button" class="btn-guardar-accion" onclick="guardarAccionEditada(${contadorAccionesEdicion})">💾 Guardar</button>
+        <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionEditada(${contadorAccionesEdicion})">🗑️ Eliminar</button>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label>Fecha</label>
-        <input type="date" class="edit-accion-fecha" id="editFechaAccion${index}" value="${fechaInput}">
+        <input type="date" class="edit-accion-fecha" id="editFechaAccion${contadorAccionesEdicion}" value="${fechaInput}">
       </div>
       <div class="form-group">
         <label>Carácter</label>
-        <select class="edit-accion-caracter" id="editCaracterAccion${index}">
+        <select class="edit-accion-caracter" id="editCaracterAccion${contadorAccionesEdicion}">
           <option value="PSICOFÍSICO" ${accion.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
           <option value="TÉCNICO" ${accion.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
           <option value="OPERATIVO" ${accion.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
@@ -1011,7 +960,7 @@ function agregarAccionEdicionExistente(accion, index) {
     </div>
     <div class="form-group">
       <label>Descripción</label>
-      <textarea class="edit-accion-descripcion" id="editDescAccion${index}">${accion.DESCRIPCION || ''}</textarea>
+      <textarea class="edit-accion-descripcion" id="editDescAccion${contadorAccionesEdicion}">${accion.DESCRIPCION || ''}</textarea>
     </div>
   `;
   container.appendChild(accionDiv);
@@ -1101,6 +1050,7 @@ async function guardarDetalleEditado(id) {
       datos = {
         action: 'actualizarDetalleJIAT',
         ID_DETALLE: idDetalle,
+        UNIDAD_USUARIO: unidad, // Para validación
         CODIGO: codigoActualEdicion,
         SUBTIPO: subtipo,
         CARACTER: caracter,
@@ -1151,7 +1101,8 @@ async function eliminarDetalleEditado(id) {
       method: 'POST',
       body: JSON.stringify({
         action: 'eliminarDetalleJIAT',
-        ID_DETALLE: idDetalle
+        ID_DETALLE: idDetalle,
+        UNIDAD: unidad // Para validación
       })
     });
     
@@ -1175,13 +1126,13 @@ function quitarDetalleNuevo(id) {
   document.getElementById(`editDetalle-${id}`).remove();
 }
 
-async function guardarAccionEditada(index) {
-  const accionDiv = document.getElementById(`editAccion-${index}`);
+async function guardarAccionEditada(id) {
+  const accionDiv = document.getElementById(`editAccion-${id}`);
   const idDetalle = accionDiv.getAttribute('data-id-detalle');
   
-  const fecha = document.getElementById(`editFechaAccion${index}`).value;
-  const caracter = document.getElementById(`editCaracterAccion${index}`).value;
-  const descripcion = document.getElementById(`editDescAccion${index}`).value.trim();
+  const fecha = document.getElementById(`editFechaAccion${id}`).value;
+  const caracter = document.getElementById(`editCaracterAccion${id}`).value;
+  const descripcion = document.getElementById(`editDescAccion${id}`).value.trim();
   
   if (!fecha || !caracter || !descripcion) {
     alert('Complete todos los campos');
@@ -1194,6 +1145,7 @@ async function guardarAccionEditada(index) {
     const datos = {
       action: 'actualizarDetalleJIAT',
       ID_DETALLE: idDetalle,
+      UNIDAD_USUARIO: unidad, // Para validación
       CODIGO: codigoActualEdicion,
       CARACTER: caracter,
       DESCRIPCION: descripcion,
@@ -1212,6 +1164,9 @@ async function guardarAccionEditada(index) {
     
     if (result.success) {
       accionDiv.classList.add('guardado');
+      document.getElementById(`editFechaAccion${id}`).disabled = true;
+      document.getElementById(`editCaracterAccion${id}`).disabled = true;
+      document.getElementById(`editDescAccion${id}`).disabled = true;
       alert('✅ Guardado correctamente');
     } else {
       alert('Error: ' + result.error);
@@ -1222,8 +1177,8 @@ async function guardarAccionEditada(index) {
   }
 }
 
-async function eliminarAccionEditada(index) {
-  const accionDiv = document.getElementById(`editAccion-${index}`);
+async function eliminarAccionEditada(id) {
+  const accionDiv = document.getElementById(`editAccion-${id}`);
   const idDetalle = accionDiv.getAttribute('data-id-detalle');
   
   if (!confirm('¿Eliminar esta acción?')) return;
@@ -1235,7 +1190,8 @@ async function eliminarAccionEditada(index) {
       method: 'POST',
       body: JSON.stringify({
         action: 'eliminarDetalleJIAT',
-        ID_DETALLE: idDetalle
+        ID_DETALLE: idDetalle,
+        UNIDAD: unidad // Para validación
       })
     });
     
@@ -1256,19 +1212,20 @@ async function eliminarAccionEditada(index) {
 }
 
 function cerrarModalEditar() {
+  // Permitir cerrar siempre
   if (cabeceraEdicionGuardada) {
     alert('✓ Cambios guardados correctamente');
     document.getElementById('modalEditar').style.display = 'none';
     cargarDatosExcel();
   } else {
-    if (confirm('¿Cerrar sin guardar los cambios de cabecera?')) {
+    if (confirm('¿Cerrar sin guardar los cambios?')) {
       document.getElementById('modalEditar').style.display = 'none';
     }
   }
 }
 
 // ============================================
-// ACCIONES TOMADAS
+// ACCIONES TOMADAS CON VALIDACIÓN DE UNIDAD
 // ============================================
 
 async function registrarAcciones(index) {
@@ -1278,7 +1235,7 @@ async function registrarAcciones(index) {
   mostrarOverlay('Cargando...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}`);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}&unidad=${encodeURIComponent(unidad)}`);
     const data = await response.json();
     
     ocultarOverlay();
@@ -1488,7 +1445,7 @@ function cerrarModalAcciones() {
 }
 
 // ============================================
-// ELIMINAR REGISTRO
+// ELIMINAR REGISTRO CON VALIDACIÓN DE UNIDAD
 // ============================================
 
 function eliminarRegistro(index) {
@@ -1500,7 +1457,8 @@ function eliminarRegistro(index) {
       method: 'POST',
       body: JSON.stringify({
         action: 'eliminarJIAT',
-        CODIGO: registro.CODIGO
+        CODIGO: registro.CODIGO,
+        UNIDAD: unidad // Para validación
       })
     })
     .then(response => response.json())
@@ -1539,6 +1497,7 @@ window.onclick = function(event) {
   const modalNuevo = document.getElementById('modalNuevo');
   const modalAcciones = document.getElementById('modalAcciones');
   const modalVerDetalle = document.getElementById('modalVerDetalle');
+  const modalEditar = document.getElementById('modalEditar');
   
   if (event.target == modalNuevo) {
     cerrarModal();
@@ -1551,4 +1510,8 @@ window.onclick = function(event) {
   if (event.target == modalVerDetalle) {
     cerrarModalVerDetalle();
   }
-}
+  
+  if (event.target == modalEditar) {
+    // No cerrar automáticamente al hacer clic fuera
+  }
+};
