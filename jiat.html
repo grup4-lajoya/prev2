@@ -151,7 +151,7 @@
     <div class="modal-body">
       
       <div class="seccion info-jiat">
-        <div class="seccion-titulo">📋 Información del JIAT</div>
+        <div class="seccion-titulo">📋 Información de la JIAT</div>
         
         <div class="info-grid">
           <div class="info-item"><strong>Código:</strong><span id="infoCodigo">-</span></div>
@@ -207,13 +207,13 @@
 <div id="modalVerDetalle" class="modal">
   <div class="modal-content" style="max-width: 900px;">
     <div class="modal-header">
-      <h2>👁 Ver Detalle Completo del JIAT</h2>
+      <h2>👁 Ver Detalle Completo de la JIAT</h2>
       <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
     </div>
     <div class="modal-body">
       
       <div class="seccion info-jiat">
-        <div class="seccion-titulo">📋 Información del JIAT</div>
+        <div class="seccion-titulo">📋 Información de la JIAT</div>
         <div class="info-grid">
           <div class="info-item"><strong>Código:</strong><span id="verCodigo">-</span></div>
           <div class="info-item"><strong>Fecha:</strong><span id="verFecha">-</span></div>
@@ -236,6 +236,11 @@
       <div class="seccion" id="verSeccionCausas" style="display:none;">
         <div class="seccion-titulo">⚠️ Causas</div>
         <div id="verListaCausas"></div>
+      </div>
+      
+      <div class="seccion" id="verSeccionRecomendaciones" style="display:none;">
+        <div class="seccion-titulo">💡 Recomendaciones</div>
+        <div id="verListaRecomendaciones"></div>
       </div>
 
       <div class="seccion" id="verSeccionAcciones" style="display:none;">
@@ -264,7 +269,7 @@
         <div class="seccion-titulo">📋 Paso 1: Editar Datos Principales</div>
         
         <div class="mensaje-info">
-          ℹ️ <strong>Nota:</strong> El Número y Periodo no se pueden modificar para mantener la integridad de los datos.
+          ℹ️ <strong>Nota:</strong> El Número y Periodo de la JIAT no se pueden modificar.
         </div>
         
         <input type="hidden" id="editCodigoActual">
@@ -332,7 +337,7 @@
         <div class="seccion-titulo">📝 Paso 2: Editar Detalles (Conclusiones, Causas, Recomendaciones)</div>
         
         <div class="mensaje-info" id="editMensajeBloqueo">
-          🔒 Esta sección se habilitará después de guardar los cambios en la cabecera.
+          🔒 Esta sección se habilitará después de guardar los primeros cambios.
         </div>
         
         <div id="editDetallesContainer"></div>
