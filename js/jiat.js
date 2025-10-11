@@ -1,5 +1,5 @@
 // ============================================
-// JIAT.JS - VERSIÓN MEJORADA CON VALIDACIONES DE SEGURIDAD
+// JIAT.JS - VERSIÓN CORREGIDA FINAL
 // ============================================
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
@@ -136,7 +136,8 @@ async function guardarCabecera() {
     if (resultValidacion.existe) {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
-      alert(`⚠️ ${resultValidacion.mensaje}`);
+      // CORRECCIÓN 1: Agregada alerta cuando el número existe
+      alert(`⚠️ ERROR: ${resultValidacion.mensaje}\n\nPor favor, use otro número para esta unidad.`);
       return;
     }
 
@@ -549,7 +550,6 @@ function nuevoRegistro() {
 }
 
 function cerrarModal() {
-  // Permitir cerrar siempre, sin validar si guardó
   if (cabeceraGuardada) {
     if (confirm('¿Desea cerrar? Ya guardó los datos principales.')) {
       document.getElementById('modalNuevo').style.display = 'none';
@@ -561,7 +561,6 @@ function cerrarModal() {
 }
 
 function cerrarModalCompleto() {
-  // Permitir cerrar siempre
   if (cabeceraGuardada) {
     alert('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
     document.getElementById('modalNuevo').style.display = 'none';
@@ -574,33 +573,34 @@ function cerrarModalCompleto() {
 }
 
 // ============================================
-// VER DETALLE COMPLETO CON VALIDACIÓN DE UNIDAD
+// VER DETALLE COMPLETO - CORRECCIÓN 2
 // ============================================
 
-function verDetalle(index) {
+async function verDetalle(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
   
   mostrarOverlay('Cargando información...');
   
-  fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`)
-    .then(response => response.json())
-    .then(data => {
-      ocultarOverlay();
-      
-      if (!data.success) {
-        alert('Error al cargar la información: ' + data.error);
-        return;
-      }
-      
-      mostrarDetalleCompleto(data);
-      document.getElementById('modalVerDetalle').style.display = 'block';
-    })
-    .catch(error => {
-      ocultarOverlay();
-      console.error('Error:', error);
-      alert('Error al cargar la información del JIAT: ' + error.message);
-    });
+  try {
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`);
+    const data = await response.json();
+    
+    ocultarOverlay();
+    
+    if (!data.success) {
+      alert('Error al cargar la información: ' + data.error);
+      return;
+    }
+    
+    mostrarDetalleCompleto(data);
+    document.getElementById('modalVerDetalle').style.display = 'block';
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    alert('Error al cargar la información del JIAT: ' + error.message);
+  }
 }
 
 function mostrarDetalleCompleto(data) {
@@ -642,7 +642,6 @@ function mostrarDetalleCompleto(data) {
   mostrarSeccion('verSeccionCausas', 'verListaCausas', data.causas, 'Causa', '#ffc107');
   mostrarSeccion('verSeccionRecomendaciones', 'verListaRecomendaciones', data.recomendaciones, 'Recomendación', '#007bff');
   
-  // Acciones con fecha
   const seccionAcciones = document.getElementById('verSeccionAcciones');
   const listaAcciones = document.getElementById('verListaAcciones');
   if (data.acciones && data.acciones.length > 0) {
@@ -671,7 +670,7 @@ function cerrarModalVerDetalle() {
 }
 
 // ============================================
-// EDITAR REGISTRO - SIN EDITAR NÚMERO NI PERIODO
+// EDITAR REGISTRO
 // ============================================
 
 async function editarRegistro(index) {
@@ -704,13 +703,11 @@ async function editarRegistro(index) {
 function cargarDatosEdicion(data) {
   const cabecera = data.cabecera;
   
-  // Resetear estado
   contadorDetallesEdicion = 0;
   contadorAccionesEdicion = 0;
   cabeceraEdicionGuardada = false;
   codigoActualEdicion = cabecera.CODIGO;
   
-  // Cargar periodos
   const selectPeriodo = document.getElementById('editPeriodo');
   selectPeriodo.innerHTML = '<option value="">Seleccione un año</option>';
   const añoActual = new Date().getFullYear();
@@ -721,13 +718,12 @@ function cargarDatosEdicion(data) {
     selectPeriodo.appendChild(option);
   }
   
-  // Llenar cabecera - NÚMERO y PERIODO como solo lectura
   document.getElementById('editCodigoActual').value = cabecera.CODIGO || '';
   document.getElementById('editNumero').value = cabecera.NUMERO || '';
-  document.getElementById('editNumero').disabled = true; // DESHABILITAR EDICIÓN
+  document.getElementById('editNumero').disabled = true;
   
   document.getElementById('editPeriodo').value = cabecera.PERIODO || '';
-  document.getElementById('editPeriodo').disabled = true; // DESHABILITAR EDICIÓN
+  document.getElementById('editPeriodo').disabled = true;
   
   let fechaInput = '';
   if (cabecera.FECHA) {
@@ -744,10 +740,8 @@ function cargarDatosEdicion(data) {
   document.getElementById('editCantfall').value = cabecera.CANTFALL || '0';
   document.getElementById('editDescripcion').value = cabecera.DESCRIPCION || '';
   
-  // Ocultar advertencia (ya no aplica porque no se puede cambiar número/periodo)
   document.getElementById('editAdvertenciaCodigo').style.display = 'none';
   
-  // Marcar cabecera como no guardada y habilitar botón
   const seccionCabecera = document.getElementById('editSeccionCabecera');
   seccionCabecera.classList.remove('guardada');
   const badge = seccionCabecera.querySelector('.badge-guardado');
@@ -755,7 +749,6 @@ function cargarDatosEdicion(data) {
   document.getElementById('btnGuardarCabeceraEdit').disabled = false;
   document.getElementById('btnGuardarCabeceraEdit').textContent = '💾 Guardar y Continuar';
   
-  // Bloquear secciones de detalles y acciones
   const seccionDetalles = document.getElementById('editSeccionDetalles');
   const seccionAcciones = document.getElementById('editSeccionAcciones');
   seccionDetalles.classList.add('bloqueada');
@@ -763,11 +756,9 @@ function cargarDatosEdicion(data) {
   document.getElementById('editMensajeBloqueo').style.display = 'block';
   document.getElementById('btnAgregarDetalleEdit').disabled = true;
   
-  // Limpiar containers
   document.getElementById('editDetallesContainer').innerHTML = '';
   document.getElementById('editAccionesContainer').innerHTML = '';
   
-  // Guardar detalles y acciones para cargar después
   window.datosEdicionTemp = {
     detalles: [
       ...(data.conclusiones || []),
@@ -798,7 +789,7 @@ async function guardarCabeceraEdicion() {
     const datosCabecera = {
       action: 'editarCabeceraJIAT',
       CODIGO: codigo,
-      UNIDAD_USUARIO: unidad, // Para validación de permisos
+      UNIDAD_USUARIO: unidad,
       FECHA: fecha,
       LUGAR: lugar,
       INVOLUCRADO: involucrado,
@@ -819,7 +810,6 @@ async function guardarCabeceraEdicion() {
     if (result.success) {
       cabeceraEdicionGuardada = true;
       
-      // Marcar como guardada
       const seccionCabecera = document.getElementById('editSeccionCabecera');
       seccionCabecera.classList.add('guardada');
       
@@ -828,10 +818,8 @@ async function guardarCabeceraEdicion() {
       badge.textContent = '✓ Guardado';
       seccionCabecera.appendChild(badge);
       
-      // Deshabilitar botón
       document.getElementById('btnGuardarCabeceraEdit').disabled = true;
       
-      // Desbloquear secciones
       const seccionDetalles = document.getElementById('editSeccionDetalles');
       const seccionAcciones = document.getElementById('editSeccionAcciones');
       seccionDetalles.classList.remove('bloqueada');
@@ -839,7 +827,6 @@ async function guardarCabeceraEdicion() {
       document.getElementById('editMensajeBloqueo').style.display = 'none';
       document.getElementById('btnAgregarDetalleEdit').disabled = false;
       
-      // Cargar detalles y acciones existentes
       if (window.datosEdicionTemp) {
         window.datosEdicionTemp.detalles.forEach((detalle, index) => {
           agregarDetalleEdicionExistente(detalle, index);
@@ -1050,7 +1037,7 @@ async function guardarDetalleEditado(id) {
       datos = {
         action: 'actualizarDetalleJIAT',
         ID_DETALLE: idDetalle,
-        UNIDAD_USUARIO: unidad, // Para validación
+        UNIDAD_USUARIO: unidad,
         CODIGO: codigoActualEdicion,
         SUBTIPO: subtipo,
         CARACTER: caracter,
@@ -1088,11 +1075,25 @@ async function guardarDetalleEditado(id) {
   }
 }
 
+// CORRECCIÓN 3: Función eliminarDetalleEditado arreglada
 async function eliminarDetalleEditado(id) {
   const detalleDiv = document.getElementById(`editDetalle-${id}`);
+  
+  if (!detalleDiv) {
+    alert('Error: No se encontró el detalle');
+    return;
+  }
+  
   const idDetalle = detalleDiv.getAttribute('data-id-detalle');
   
-  if (!confirm('¿Eliminar este detalle?')) return;
+  if (!idDetalle) {
+    alert('Error: ID de detalle no válido');
+    return;
+  }
+  
+  if (!confirm('¿Está seguro de eliminar este detalle?')) {
+    return;
+  }
   
   mostrarOverlay('Eliminando...');
   
@@ -1102,7 +1103,7 @@ async function eliminarDetalleEditado(id) {
       body: JSON.stringify({
         action: 'eliminarDetalleJIAT',
         ID_DETALLE: idDetalle,
-        UNIDAD: unidad // Para validación
+        UNIDAD: unidad
       })
     });
     
@@ -1112,18 +1113,22 @@ async function eliminarDetalleEditado(id) {
     
     if (result.success) {
       detalleDiv.remove();
-      alert('✅ Eliminado correctamente');
+      alert('✅ Detalle eliminado correctamente');
     } else {
-      alert('Error: ' + result.error);
+      alert('⚠️ Error al eliminar: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
-    alert('Error: ' + error.message);
+    console.error('Error:', error);
+    alert('⚠️ Error: ' + error.message);
   }
 }
 
 function quitarDetalleNuevo(id) {
-  document.getElementById(`editDetalle-${id}`).remove();
+  const elemento = document.getElementById(`editDetalle-${id}`);
+  if (elemento) {
+    elemento.remove();
+  }
 }
 
 async function guardarAccionEditada(id) {
@@ -1145,7 +1150,7 @@ async function guardarAccionEditada(id) {
     const datos = {
       action: 'actualizarDetalleJIAT',
       ID_DETALLE: idDetalle,
-      UNIDAD_USUARIO: unidad, // Para validación
+      UNIDAD_USUARIO: unidad,
       CODIGO: codigoActualEdicion,
       CARACTER: caracter,
       DESCRIPCION: descripcion,
@@ -1191,7 +1196,7 @@ async function eliminarAccionEditada(id) {
       body: JSON.stringify({
         action: 'eliminarDetalleJIAT',
         ID_DETALLE: idDetalle,
-        UNIDAD: unidad // Para validación
+        UNIDAD: unidad
       })
     });
     
@@ -1212,7 +1217,6 @@ async function eliminarAccionEditada(id) {
 }
 
 function cerrarModalEditar() {
-  // Permitir cerrar siempre
   if (cabeceraEdicionGuardada) {
     alert('✓ Cambios guardados correctamente');
     document.getElementById('modalEditar').style.display = 'none';
@@ -1225,7 +1229,7 @@ function cerrarModalEditar() {
 }
 
 // ============================================
-// ACCIONES TOMADAS CON VALIDACIÓN DE UNIDAD
+// ACCIONES TOMADAS
 // ============================================
 
 async function registrarAcciones(index) {
@@ -1445,7 +1449,7 @@ function cerrarModalAcciones() {
 }
 
 // ============================================
-// ELIMINAR REGISTRO CON VALIDACIÓN DE UNIDAD
+// ELIMINAR REGISTRO
 // ============================================
 
 function eliminarRegistro(index) {
@@ -1458,7 +1462,7 @@ function eliminarRegistro(index) {
       body: JSON.stringify({
         action: 'eliminarJIAT',
         CODIGO: registro.CODIGO,
-        UNIDAD: unidad // Para validación
+        UNIDAD: unidad
       })
     })
     .then(response => response.json())
