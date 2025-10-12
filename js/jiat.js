@@ -1734,16 +1734,12 @@ function quitarDetalleEdicion(id) {
 }
 
 function cerrarModalEditar() {
-  // Simplificar el cierre
-  const confirmacion = cabeceraEdicionGuardada 
-    ? confirm('Los cambios ya fueron guardados. ¿Desea cerrar?')
-    : confirm('¿Desea cerrar sin guardar cambios?');
-    
-  if (confirmacion) {
-    document.getElementById('modalEditar').style.display = 'none';
-    if (cabeceraEdicionGuardada) {
-      cargarDatosExcel(); // Recargar tabla si hubo cambios
-    }
+  // Siempre cerrar sin condiciones complicadas
+  document.getElementById('modalEditar').style.display = 'none';
+  
+  // Si hubo cambios, recargar la tabla
+  if (cabeceraEdicionGuardada) {
+    cargarDatosExcel();
   }
 }
 
@@ -1910,3 +1906,23 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+  const modalEditar = document.getElementById('modalEditar');
+  const modalNuevo = document.getElementById('modalNuevo');
+  const modalAcciones = document.getElementById('modalAcciones');
+  const modalVerDetalle = document.getElementById('modalVerDetalle');
+  
+  if (event.target === modalEditar) {
+    cerrarModalEditar();
+  }
+  if (event.target === modalNuevo) {
+    cerrarModal();
+  }
+  if (event.target === modalAcciones) {
+    cerrarModalAcciones();
+  }
+  if (event.target === modalVerDetalle) {
+    cerrarModalVerDetalle();
+  }
+};
