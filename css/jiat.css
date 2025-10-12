@@ -850,3 +850,29 @@ tbody tr:hover {
   font-size: 0.75rem;
   margin-left: 10px;
 }
+/* Animaciones para notificaciones */
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -100px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -100px);
+    opacity: 0;
+  }
+}
+
+.notificacion-custom {
+  animation: slideDown 0.3s ease-out;
+}
