@@ -1065,7 +1065,6 @@ async function editarRegistro(index) {
     mostrarNotificacion('Error al cargar los datos: ' + error.message, 'error');
   }
 }
-
 async function guardarCabeceraEdicion() {
   const codigo = document.getElementById('editCodigoActual').value;
   const fecha = document.getElementById('editFecha').value;
@@ -1115,45 +1114,138 @@ async function guardarCabeceraEdicion() {
     const detallesNormales = detalles.filter(d => d.subtipo !== 'ACCIÓN TOMADA');
     const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
 
-    // Mostrar detalles existentes
+    // Mostrar detalles existentes EDITABLES
     const containerDetalles = document.getElementById('editDetallesContainer');
     containerDetalles.innerHTML = '';
     
     detallesNormales.forEach((det, index) => {
       contadorDetallesEdicion++;
       const div = document.createElement('div');
-      div.className = 'detalle-item guardado';
+      div.className = 'detalle-item editable-existente';
+      div.id = `detalleExistente-${det.id_detalle}`;
+      div.setAttribute('data-id-detalle', det.id_detalle);
+      
       div.innerHTML = `
-        <div class="detalle-item-readonly">
-          <div class="detalle-item-readonly-header">
-            <span class="detalle-item-readonly-tipo">${det.subtipo} #${index + 1}</span>
-            <span class="detalle-item-readonly-caracter">${det.caracter}</span>
+        <div class="detalle-item-header">
+          <div class="detalle-titulo">
+            <strong>${det.subtipo} #${index + 1}</strong>
+            <span class="badge-existente">📌 Existente</span>
           </div>
-          <div class="detalle-item-readonly-descripcion">${det.descripcion}</div>
+          <div>
+            <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle}')" id="btnEditarDet-${det.id_detalle}">
+              ✏️ Editar
+            </button>
+            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle}')" id="btnGuardarEditDet-${det.id_detalle}" style="display:none;">
+              💾 Guardar
+            </button>
+            <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleExistente('${det.id_detalle}', '${codigo}')">
+              🗑️ Eliminar
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Asunto</label>
+            <select id="subtipoExist-${det.id_detalle}" disabled>
+              <option value="CONCLUSIÓN" ${det.subtipo === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
+              <option value="CAUSA" ${det.subtipo === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
+              <option value="RECOMENDACIÓN" ${det.subtipo === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Carácter</label>
+            <select id="caracterExist-${det.id_detalle}" disabled>
+              <option value="PSICOFÍSICO" ${det.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
+              <option value="TÉCNICO" ${det.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
+              <option value="OPERATIVO" ${det.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
+              <option value="PSICOLÓGICO" ${det.caracter === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
+              <option value="SALUD" ${det.caracter === 'SALUD' ? 'selected' : ''}>SALUD</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea id="descripcionExist-${det.id_detalle}" disabled>${det.descripcion}</textarea>
         </div>
       `;
       containerDetalles.appendChild(div);
     });
 
-    // Mostrar acciones existentes
+    // Mostrar acciones existentes EDITABLES/ELIMINABLES
     const containerAcciones = document.getElementById('editAccionesContainer');
     containerAcciones.innerHTML = '';
     
-    acciones.forEach((accion, index) => {
-      contadorAccionesEdicion++;
-      const div = document.createElement('div');
-      div.className = 'detalle-item guardado';
-      div.innerHTML = `
-        <div class="detalle-item-readonly">
-          <div class="detalle-item-readonly-header">
-            <span class="detalle-item-readonly-tipo">✅ Acción #${index + 1} - 📅 ${formatearFechaDisplay(accion.fecha)}</span>
-            <span class="detalle-item-readonly-caracter">${accion.caracter}</span>
+    if (acciones.length > 0) {
+      acciones.forEach((accion, index) => {
+        contadorAccionesEdicion++;
+        const div = document.createElement('div');
+        div.className = 'detalle-item editable-existente';
+        div.id = `accionExistente-${accion.id_detalle}`;
+        div.style.borderLeftColor = '#28a745';
+        
+        div.innerHTML = `
+          <div class="detalle-item-header">
+            <div class="detalle-titulo">
+              <strong>✅ Acción Tomada #${index + 1}</strong>
+              <span class="badge-existente" style="background: #28a745;">📌 Existente</span>
+            </div>
+            <div>
+              <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionAccion('${accion.id_detalle}')" id="btnEditarAccion-${accion.id_detalle}">
+                ✏️ Editar
+              </button>
+              <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionAccion('${accion.id_detalle}')" id="btnGuardarEditAccion-${accion.id_detalle}" style="display:none;">
+                💾 Guardar
+              </button>
+              <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionExistente('${accion.id_detalle}', '${codigo}')">
+                🗑️ Eliminar
+              </button>
+            </div>
           </div>
-          <div class="detalle-item-readonly-descripcion">${accion.descripcion}</div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha de la Acción</label>
+              <input type="date" id="fechaAccionExist-${accion.id_detalle}" value="${accion.fecha}" disabled>
+            </div>
+
+            <div class="form-group">
+              <label>Carácter</label>
+              <select id="caracterAccionExist-${accion.id_detalle}" disabled>
+                <option value="PSICOFÍSICO" ${accion.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
+                <option value="TÉCNICO" ${accion.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
+                <option value="OPERATIVO" ${accion.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
+                <option value="PSICOLÓGICO" ${accion.caracter === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
+                <option value="SALUD" ${accion.caracter === 'SALUD' ? 'selected' : ''}>SALUD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción de la Acción</label>
+            <textarea id="descripcionAccionExist-${accion.id_detalle}" disabled>${accion.descripcion}</textarea>
+          </div>
+        `;
+        containerAcciones.appendChild(div);
+      });
+      
+      // Agregar mensaje informativo al final
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'mensaje-info';
+      infoDiv.style.marginTop = '15px';
+      infoDiv.innerHTML = 'ℹ️ Para agregar nuevas acciones tomadas, use el botón "📋 Registrar Acciones" desde la tabla principal.';
+      containerAcciones.appendChild(infoDiv);
+      
+    } else {
+      containerAcciones.innerHTML = `
+        <div class="mensaje-info">
+          No hay acciones tomadas registradas.<br>
+          Para agregar acciones, use el botón "📋 Registrar Acciones" desde la tabla principal.
         </div>
       `;
-      containerAcciones.appendChild(div);
-    });
+    }
 
     ocultarOverlay();
     cabeceraEdicionGuardada = true;
@@ -1177,7 +1269,7 @@ async function guardarCabeceraEdicion() {
     const seccionAcciones = document.getElementById('editSeccionAcciones');
     seccionAcciones.classList.remove('bloqueada');
 
-    mostrarNotificacion('✓ Datos principales actualizados correctamente. Ahora puede agregar nuevos detalles o acciones.', 'success');
+    mostrarNotificacion('✓ Datos principales actualizados. Puede editar detalles y acciones existentes o agregar nuevos detalles.', 'success');
 
   } catch (error) {
     console.error('Error:', error);
@@ -1187,6 +1279,312 @@ async function guardarCabeceraEdicion() {
     mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
   }
 }
+
+// Habilitar edición de detalle existente
+function habilitarEdicionDetalle(idDetalle) {
+  document.getElementById(`subtipoExist-${idDetalle}`).disabled = false;
+  document.getElementById(`caracterExist-${idDetalle}`).disabled = false;
+  document.getElementById(`descripcionExist-${idDetalle}`).disabled = false;
+  
+  document.getElementById(`btnEditarDet-${idDetalle}`).style.display = 'none';
+  document.getElementById(`btnGuardarEditDet-${idDetalle}`).style.display = 'inline-block';
+}
+
+// Guardar edición de detalle existente
+async function guardarEdicionDetalle(idDetalle) {
+  const subtipo = document.getElementById(`subtipoExist-${idDetalle}`).value;
+  const caracter = document.getElementById(`caracterExist-${idDetalle}`).value;
+  const descripcion = document.getElementById(`descripcionExist-${idDetalle}`).value;
+
+  if (!subtipo || !caracter || !descripcion) {
+    mostrarNotificacion('Complete todos los campos del detalle', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarEditDet-${idDetalle}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Actualizando detalle...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .update({
+        subtipo: subtipo,
+        caracter: caracter,
+        descripcion: descripcion
+      })
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+
+    document.getElementById(`subtipoExist-${idDetalle}`).disabled = true;
+    document.getElementById(`caracterExist-${idDetalle}`).disabled = true;
+    document.getElementById(`descripcionExist-${idDetalle}`).disabled = true;
+    
+    btnGuardar.style.display = 'none';
+    document.getElementById(`btnEditarDet-${idDetalle}`).style.display = 'inline-block';
+
+    mostrarNotificacion('✓ Detalle actualizado correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
+
+// Eliminar detalle existente
+async function eliminarDetalleExistente(idDetalle, codigo) {
+  const confirmar = await mostrarConfirmacion(
+    `¿Está seguro de eliminar este detalle?<br><br><strong>Esta acción NO se puede deshacer.</strong>`,
+    '🗑️ Confirmar Eliminación'
+  );
+
+  if (!confirmar) return;
+
+  mostrarOverlay('Eliminando detalle...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .delete()
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+    
+    const elemento = document.getElementById(`detalleExistente-${idDetalle}`);
+    if (elemento) elemento.remove();
+
+    mostrarNotificacion('✓ Detalle eliminado correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    mostrarNotificacion('Error al eliminar: ' + error.message, 'error');
+  }
+}
+
+// Habilitar edición de acción existente
+function habilitarEdicionAccion(idDetalle) {
+  document.getElementById(`fechaAccionExist-${idDetalle}`).disabled = false;
+  document.getElementById(`caracterAccionExist-${idDetalle}`).disabled = false;
+  document.getElementById(`descripcionAccionExist-${idDetalle}`).disabled = false;
+  
+  document.getElementById(`btnEditarAccion-${idDetalle}`).style.display = 'none';
+  document.getElementById(`btnGuardarEditAccion-${idDetalle}`).style.display = 'inline-block';
+}
+
+// Guardar edición de acción existente
+async function guardarEdicionAccion(idDetalle) {
+  const fecha = document.getElementById(`fechaAccionExist-${idDetalle}`).value;
+  const caracter = document.getElementById(`caracterAccionExist-${idDetalle}`).value;
+  const descripcion = document.getElementById(`descripcionAccionExist-${idDetalle}`).value;
+
+  if (!fecha || !caracter || !descripcion) {
+    mostrarNotificacion('Complete todos los campos de la acción', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarEditAccion-${idDetalle}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Actualizando acción...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .update({
+        fecha: fecha,
+        caracter: caracter,
+        descripcion: descripcion
+      })
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+
+    document.getElementById(`fechaAccionExist-${idDetalle}`).disabled = true;
+    document.getElementById(`caracterAccionExist-${idDetalle}`).disabled = true;
+    document.getElementById(`descripcionAccionExist-${idDetalle}`).disabled = true;
+    
+    btnGuardar.style.display = 'none';
+    document.getElementById(`btnEditarAccion-${idDetalle}`).style.display = 'inline-block';
+
+    mostrarNotificacion('✓ Acción actualizada correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
+
+// Eliminar acción existente
+async function eliminarAccionExistente(idDetalle, codigo) {
+  const confirmar = await mostrarConfirmacion(
+    `¿Está seguro de eliminar esta acción tomada?<br><br><strong>Esta acción NO se puede deshacer.</strong>`,
+    '🗑️ Confirmar Eliminación'
+  );
+
+  if (!confirmar) return;
+
+  mostrarOverlay('Eliminando acción...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .delete()
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+    
+    const elemento = document.getElementById(`accionExistente-${idDetalle}`);
+    if (elemento) elemento.remove();
+
+    mostrarNotificacion('✓ Acción eliminada correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    mostrarNotificacion('Error al eliminar: ' + error.message, 'error');
+  }
+}
+
+// Función de cierre mejorada
+function cerrarModalEditar() {
+  const confirmacion = cabeceraEdicionGuardada 
+    ? confirm('Los cambios ya fueron guardados. ¿Desea cerrar?')
+    : confirm('¿Desea cerrar sin guardar cambios?');
+    
+  if (confirmacion) {
+    document.getElementById('modalEditar').style.display = 'none';
+    if (cabeceraEdicionGuardada) {
+      cargarDatosExcel();
+    }
+  }
+}
+
+
+// Habilitar edición de detalle existente
+function habilitarEdicionDetalle(idDetalle) {
+  document.getElementById(`subtipoExist-${idDetalle}`).disabled = false;
+  document.getElementById(`caracterExist-${idDetalle}`).disabled = false;
+  document.getElementById(`descripcionExist-${idDetalle}`).disabled = false;
+  
+  document.getElementById(`btnEditarDet-${idDetalle}`).style.display = 'none';
+  document.getElementById(`btnGuardarEditDet-${idDetalle}`).style.display = 'inline-block';
+}
+
+// Guardar edición de detalle existente
+async function guardarEdicionDetalle(idDetalle) {
+  const subtipo = document.getElementById(`subtipoExist-${idDetalle}`).value;
+  const caracter = document.getElementById(`caracterExist-${idDetalle}`).value;
+  const descripcion = document.getElementById(`descripcionExist-${idDetalle}`).value;
+
+  if (!subtipo || !caracter || !descripcion) {
+    mostrarNotificacion('Complete todos los campos del detalle', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarEditDet-${idDetalle}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Actualizando detalle...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .update({
+        subtipo: subtipo,
+        caracter: caracter,
+        descripcion: descripcion
+      })
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+
+    document.getElementById(`subtipoExist-${idDetalle}`).disabled = true;
+    document.getElementById(`caracterExist-${idDetalle}`).disabled = true;
+    document.getElementById(`descripcionExist-${idDetalle}`).disabled = true;
+    
+    btnGuardar.style.display = 'none';
+    document.getElementById(`btnEditarDet-${idDetalle}`).style.display = 'inline-block';
+
+    mostrarNotificacion('✓ Detalle actualizado correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
+
+// Eliminar detalle existente
+async function eliminarDetalleExistente(idDetalle, codigo) {
+  const confirmar = await mostrarConfirmacion(
+    `¿Está seguro de eliminar este detalle?<br><br><strong>Esta acción NO se puede deshacer.</strong>`,
+    '🗑️ Confirmar Eliminación'
+  );
+
+  if (!confirmar) return;
+
+  mostrarOverlay('Eliminando detalle...');
+
+  try {
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .delete()
+      .eq('id_detalle', idDetalle);
+
+    if (error) throw error;
+
+    ocultarOverlay();
+    
+    const elemento = document.getElementById(`detalleExistente-${idDetalle}`);
+    if (elemento) elemento.remove();
+
+    mostrarNotificacion('✓ Detalle eliminado correctamente', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    mostrarNotificacion('Error al eliminar: ' + error.message, 'error');
+  }
+}
+
+// Función de cierre mejorada
+function cerrarModalEditar() {
+  const confirmacion = cabeceraEdicionGuardada 
+    ? confirm('Los cambios ya fueron guardados. ¿Desea cerrar?')
+    : confirm('¿Desea cerrar sin guardar cambios?');
+    
+  if (confirmacion) {
+    document.getElementById('modalEditar').style.display = 'none';
+    if (cabeceraEdicionGuardada) {
+      cargarDatosExcel();
+    }
+  }
+}
+
 
 function agregarDetalleEdicion() {
   if (!cabeceraEdicionGuardada) {
@@ -1336,13 +1734,16 @@ function quitarDetalleEdicion(id) {
 }
 
 function cerrarModalEditar() {
-  if (cabeceraEdicionGuardada) {
-    if (confirm('¿Desea cerrar? Ya guardó los cambios.')) {
-      document.getElementById('modalEditar').style.display = 'none';
-      cargarDatosExcel();
-    }
-  } else {
+  // Simplificar el cierre
+  const confirmacion = cabeceraEdicionGuardada 
+    ? confirm('Los cambios ya fueron guardados. ¿Desea cerrar?')
+    : confirm('¿Desea cerrar sin guardar cambios?');
+    
+  if (confirmacion) {
     document.getElementById('modalEditar').style.display = 'none';
+    if (cabeceraEdicionGuardada) {
+      cargarDatosExcel(); // Recargar tabla si hubo cambios
+    }
   }
 }
 
