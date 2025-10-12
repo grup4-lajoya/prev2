@@ -103,7 +103,7 @@ async function guardarCabecera() {
   const descripcion = document.getElementById('descripcion').value;
 
   if (!numero || !periodo || !fecha || !lugar || !fatal || !descripcion) {
-    alert('Por favor complete todos los campos obligatorios');
+    mostrarNotificacion('Por favor complete todos los campos obligatorios');
     return;
   }
 
@@ -114,7 +114,7 @@ async function guardarCabecera() {
     .join(', ');
 
   if (!involucrados) {
-    alert('Debe agregar al menos un involucrado');
+    mostrarNotificacion('Debe agregar al menos un involucrado');
     return;
   }
 
@@ -216,7 +216,7 @@ if (resultValidacion.existe) {
     } else {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
-      alert('Error al guardar: ' + result.error);
+      mostrarNotificacion('Error al guardar: ' + result.error);
     }
   } catch (error) {
     console.error('Error:', error);
