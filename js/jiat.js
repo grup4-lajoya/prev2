@@ -1,8 +1,11 @@
 // ============================================
-// JIAT.JS - VERSIÓN CORREGIDA FINAL
+// JIAT.JS - VERSIÓN COMPLETA ADAPTADA PARA SUPABASE
 // ============================================
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec';
+// Configuración de Supabase - REEMPLAZA CON TUS CREDENCIALES
+const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let datosCompletos = [];
 let datosFiltrados = [];
@@ -32,6 +35,7 @@ const rol = localStorage.getItem("rol") || "";
 if (!usuario) {
   window.location.replace("login.html");
 }
+
 console.log("=== DATOS DE SESIÓN ===");
 console.log("Usuario:", usuario);
 console.log("Unidad:", unidad);
@@ -48,15 +52,20 @@ window.onload = function() {
 // ============================================
 
 function cargarPeriodos() {
-  const select = document.getElementById('periodo');
+  const selects = ['periodo', 'editPeriodo'];
   const añoActual = new Date().getFullYear();
   
-  for (let i = añoActual; i >= añoActual - 30; i--) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = i;
-    select.appendChild(option);
-  }
+  selects.forEach(selectId => {
+    const select = document.getElementById(selectId);
+    if (select) {
+      for (let i = añoActual; i >= añoActual - 30; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        select.appendChild(option);
+      }
+    }
+  });
 }
 
 function actualizarRangoFechas() {
@@ -67,7 +76,6 @@ function actualizarRangoFechas() {
     inputFecha.min = `${periodo}-01-01`;
     inputFecha.max = `${periodo}-12-31`;
     inputFecha.value = '';
-    // AGREGAR ESTAS 2 LÍNEAS NUEVAS ⬇️
     document.getElementById('numero').style.borderColor = '';
     document.getElementById('periodo').style.borderColor = '';
   }
@@ -97,8 +105,6 @@ function quitarInvolucrado(btn) {
 // ============================================
 
 async function guardarCabecera() {
-  const form = document.getElementById('formNuevo');
-  
   const numero = document.getElementById('numero').value;
   const periodo = document.getElementById('periodo').value;
   const fecha = document.getElementById('fecha').value;
@@ -108,7 +114,7 @@ async function guardarCabecera() {
   const descripcion = document.getElementById('descripcion').value;
 
   if (!numero || !periodo || !fecha || !lugar || !fatal || !descripcion) {
-    mostrarNotificacion('Por favor complete todos los campos obligatorios');
+    mostrarNotificacion('Por favor complete todos los campos obligatorios', 'error');
     return;
   }
 
@@ -119,7 +125,7 @@ async function guardarCabecera() {
     .join(', ');
 
   if (!involucrados) {
-    mostrarNotificacion('Debe agregar al menos un involucrado');
+    mostrarNotificacion('Debe agregar al menos un involucrado', 'error');
     return;
   }
 
@@ -129,26 +135,27 @@ async function guardarCabecera() {
 
   // VALIDACIÓN: Verificar que el número sea único en la unidad
   try {
-    const validacion = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'validarNumeroJIAT',
-        numero: numero,
-        periodo: periodo,
-        unidad: unidad
-      })
-    });
+    const { data: existente, error: errorValidacion } = await supabase
+      .from('jiat')
+      .select('codigo')
+      .eq('numero', numero)
+      .eq('periodo', periodo)
+      .eq('unidad', unidad)
+      .single();
 
-    const resultValidacion = await validacion.json();
+    if (errorValidacion && errorValidacion.code !== 'PGRST116') {
+      throw errorValidacion;
+    }
 
-if (resultValidacion.existe) {
+    if (existente) {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
       
-      // Mostrar notificación visual en lugar de alert
-      mostrarNotificacion(`⚠️ ERROR: ${resultValidacion.mensaje}<br><br>Por favor, use otro número para esta unidad.`, 'error');
+      mostrarNotificacion(
+        `⚠️ ERROR: Ya existe un JIAT con el número ${numero} y periodo ${periodo} en la unidad ${unidad}. Por favor, use otro número para esta unidad.`, 
+        'error'
+      );
       
-      // Resaltar los campos problemáticos
       document.getElementById('numero').style.borderColor = '#dc3545';
       document.getElementById('periodo').style.borderColor = '#dc3545';
       
@@ -159,7 +166,7 @@ if (resultValidacion.existe) {
     console.error('Error al validar:', error);
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar y Continuar';
-    mostrarNotificacion('Error al validar el número de JIAT');
+    mostrarNotificacion('Error al validar el número de JIAT', 'error');
     return;
   }
 
@@ -173,62 +180,54 @@ if (resultValidacion.existe) {
     fechaJIATActual = fecha;
     periodoJIATActual = periodo;
 
-    const datosJIAT = {
-      action: 'crearJIAT',
-      USUARIOREG: usuario,
-      TIPO: 'JIAT',
-      NUMERO: numero,
-      PERIODO: periodo,
-      CODIGO: codigo,
-      UNIDAD: unidad,
-      FECHA: fecha,
-      LUGAR: lugar,
-      INVOLUCRADO: involucrados,
-      FATAL: fatal,
-      CANTFALL: cantfall,
-      DESCRIPCION: descripcion
-    };
-
-    console.log("Enviando datos JIAT:", datosJIAT);
-
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datosJIAT)
-    });
-
-    const result = await response.json();
-    console.log("Respuesta del servidor:", result);
+    // Insertar en Supabase
+    const { data, error } = await supabase
+      .from('jiat')
+      .insert([{
+        codigo: codigo,
+        usuarioreg: usuario,
+        tipo: 'JIAT',
+        numero: parseInt(numero),
+        periodo: parseInt(periodo),
+        unidad: unidad,
+        fecha: fecha,
+        lugar: lugar,
+        involucrado: involucrados,
+        fatal: fatal,
+        cantfall: parseInt(cantfall),
+        descripcion: descripcion
+      }])
+      .select();
 
     ocultarOverlay();
 
-    if (result.success) {
-      cabeceraGuardada = true;
-      
-      const seccionCabecera = document.getElementById('seccionCabecera');
-      seccionCabecera.classList.add('guardada');
-      seccionCabecera.innerHTML += '<span class="badge-guardado">✓ Guardado</span>';
-      
-      document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
-        el.disabled = true;
-      });
-
-      const seccionDetalles = document.getElementById('seccionDetalles');
-      seccionDetalles.classList.remove('bloqueada');
-      document.getElementById('mensajeBloqueo').style.display = 'none';
-      document.getElementById('btnAgregarDetalle').disabled = false;
-
-      mostrarNotificacion(`✓ Datos principales guardados correctamente.\nCódigo: ${codigo}\n\nAhora puede agregar conclusiones, causas y recomendaciones.`);
-    } else {
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = '💾 Guardar y Continuar';
-      mostrarNotificacion('Error al guardar: ' + result.error);
+    if (error) {
+      throw error;
     }
+
+    cabeceraGuardada = true;
+    
+    const seccionCabecera = document.getElementById('seccionCabecera');
+    seccionCabecera.classList.add('guardada');
+    seccionCabecera.innerHTML += '<span class="badge-guardado">✓ Guardado</span>';
+    
+    document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
+      el.disabled = true;
+    });
+
+    const seccionDetalles = document.getElementById('seccionDetalles');
+    seccionDetalles.classList.remove('bloqueada');
+    document.getElementById('mensajeBloqueo').style.display = 'none';
+    document.getElementById('btnAgregarDetalle').disabled = false;
+
+    mostrarNotificacion(`✓ Datos principales guardados correctamente. Código: ${codigo}. Ahora puede agregar conclusiones, causas y recomendaciones.`, 'success');
+    
   } catch (error) {
     console.error('Error:', error);
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar y Continuar';
-    mostrarNotificacion('Error al guardar los datos principales: ' + error.message);
+    mostrarNotificacion('Error al guardar los datos principales: ' + error.message, 'error');
   }
 }
 
@@ -238,7 +237,7 @@ if (resultValidacion.existe) {
 
 function agregarDetalle() {
   if (!cabeceraGuardada) {
-    mostrarNotificacion('Primero debe guardar los datos principales');
+    mostrarNotificacion('Primero debe guardar los datos principales', 'error');
     return;
   }
 
@@ -298,7 +297,7 @@ async function guardarDetalle(id) {
   const descripcionDet = document.getElementById(`descripcionDet${id}`).value;
 
   if (!subtipo || !caracter || !descripcionDet) {
-    mostrarNotificacion('Por favor complete todos los campos del detalle');
+    mostrarNotificacion('Por favor complete todos los campos del detalle', 'error');
     return;
   }
 
@@ -309,55 +308,62 @@ async function guardarDetalle(id) {
   mostrarOverlay('Guardando detalle...');
 
   try {
-    const datosDetalle = {
-      action: 'crearDetalleJIAT',
-      USUARIOREG: usuario,
-      UNIDAD: unidad,
-      TIPO: 'JIAT',
-      CODIGO: codigoJIATActual,
-      SUBTIPO: subtipo,
-      FECHA: fechaJIATActual,
-      PERIODO: periodoJIATActual,
-      CARACTER: caracter,
-      DESCRIPCION: descripcionDet
-    };
+    // Generar ID de detalle
+    const { data: ultimoDetalle } = await supabase
+      .from('detalle_accidentes')
+      .select('id_detalle')
+      .order('id_detalle', { ascending: false })
+      .limit(1)
+      .single();
 
-    console.log("Enviando detalle:", datosDetalle);
+    let nuevoIdDetalle = 'DET-00001';
+    if (ultimoDetalle) {
+      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
+    }
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datosDetalle)
-    });
-
-    const result = await response.json();
-    console.log("Respuesta del servidor:", result);
+    // Insertar en Supabase
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .insert([{
+        id_detalle: nuevoIdDetalle,
+        usuarioreg: usuario,
+        unidad: unidad,
+        tipo: 'JIAT',
+        codigo: codigoJIATActual,
+        subtipo: subtipo,
+        fechareg: new Date().toISOString(),
+        fecha: fechaJIATActual,
+        periodo: parseInt(periodoJIATActual),
+        caracter: caracter,
+        descripcion: descripcionDet
+      }]);
 
     ocultarOverlay();
 
-    if (result.success) {
-      const detalleDiv = document.getElementById(`detalle-${id}`);
-      detalleDiv.classList.add('guardado');
-      
-      const titulo = detalleDiv.querySelector('.detalle-titulo');
-      titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
-      
-      document.getElementById(`subtipo${id}`).disabled = true;
-      document.getElementById(`caracter${id}`).disabled = true;
-      document.getElementById(`descripcionDet${id}`).disabled = true;
-      btnGuardar.style.display = 'none';
-
-      console.log('✓ Detalle guardado correctamente');
-    } else {
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = '💾 Guardar';
-      mostrarNotificacion('Error al guardar el detalle: ' + result.error);
+    if (error) {
+      throw error;
     }
+
+    const detalleDiv = document.getElementById(`detalle-${id}`);
+    detalleDiv.classList.add('guardado');
+    
+    const titulo = detalleDiv.querySelector('.detalle-titulo');
+    titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
+    
+    document.getElementById(`subtipo${id}`).disabled = true;
+    document.getElementById(`caracter${id}`).disabled = true;
+    document.getElementById(`descripcionDet${id}`).disabled = true;
+    btnGuardar.style.display = 'none';
+
+    mostrarNotificacion('✓ Detalle guardado correctamente', 'success');
+    
   } catch (error) {
     console.error('Error:', error);
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar';
-    mostrarNotificacion('Error al guardar el detalle: ' + error.message);
+    mostrarNotificacion('Error al guardar el detalle: ' + error.message, 'error');
   }
 }
 
@@ -366,7 +372,7 @@ function quitarDetalle(id) {
   if (elemento && !elemento.classList.contains('guardado')) {
     elemento.remove();
   } else if (elemento && elemento.classList.contains('guardado')) {
-    mostrarNotificacion('No puede eliminar un detalle ya guardado.');
+    mostrarNotificacion('No puede eliminar un detalle ya guardado', 'warning');
   }
 }
 
@@ -380,40 +386,39 @@ async function cargarDatosExcel() {
   try {
     loadingEl.innerHTML = 'Cargando datos... ⏳';
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
-    const url = `${API_URL}?action=obtenerJIAT&rol=${encodeURIComponent(rol)}&unidad=${encodeURIComponent(unidad)}`;
-    console.log("=== URL LLAMADA ===");
-console.log("URL:", url);
-console.log("Rol:", rol);
-console.log("Unidad:", unidad);
-console.log("=== FIN URL ===");
-    
-    const response = await fetch(url, {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+    let query = supabase
+      .from('jiat')
+      .select('*')
+      .order('fecha', { ascending: false });
+
+    // Filtrar por unidad si no es ADMIN
+    if (rol !== 'ADMIN' && rol !== 'admin') {
+      query = query.eq('unidad', unidad);
     }
-    const datos = await response.json();
+
+    const { data, error } = await query;
     
-    console.log("=== DATOS RECIBIDOS DEL BACKEND ===");
-    console.log(datos);
+    if (error) {
+      throw error;
+    }
+
+    console.log("=== DATOS RECIBIDOS DE SUPABASE ===");
+    console.log(data);
     console.log("=== FIN DATOS ===");
     
-    if (datos.error) {
-      throw new Error(datos.error);
-    }
-   
-    datosCompletos = datos.sort((a, b) => {
-      const fechaA = convertirFecha(a.FECHA);
-      const fechaB = convertirFecha(b.FECHA);
-      return fechaB - fechaA;
-    });
+    datosCompletos = data.map(registro => ({
+      ...registro,
+      CODIGO: registro.codigo,
+      UNIDAD: registro.unidad,
+      FECHA: formatearFechaDisplay(registro.fecha),
+      FATAL: registro.fatal,
+      NUMERO: registro.numero,
+      PERIODO: registro.periodo,
+      LUGAR: registro.lugar,
+      INVOLUCRADO: registro.involucrado,
+      CANTFALL: registro.cantfall,
+      DESCRIPCION: registro.descripcion
+    }));
     
     datosFiltrados = [...datosCompletos];
     
@@ -425,26 +430,17 @@ console.log("=== FIN URL ===");
     
   } catch (error) {
     console.error('Error al cargar los datos:', error);
-    
-    if (error.name === 'AbortError') {
-      loadingEl.innerHTML = '⏱️ Tiempo de espera agotado.<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>';
-    } else {
-      loadingEl.innerHTML = `❌ Error: ${error.message}<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
-    }
+    loadingEl.innerHTML = `❌ Error: ${error.message}<br><button onclick="cargarDatosExcel()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
   }
 }
 
-function convertirFecha(fechaStr) {
-  if (!fechaStr) return new Date(0);
-  
-  if (fechaStr.includes('/')) {
-    const partes = fechaStr.split('/');
-    if (partes.length === 3) {
-      return new Date(partes[2], partes[1] - 1, partes[0]);
-    }
-  }
-  
-  return new Date(fechaStr);
+function formatearFechaDisplay(fecha) {
+  if (!fecha) return '';
+  const d = new Date(fecha + 'T00:00:00');
+  const dia = d.getDate().toString().padStart(2, '0');
+  const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+  const anio = d.getFullYear();
+  return `${dia}/${mes}/${anio}`;
 }
 
 function actualizarTabla() {
@@ -535,87 +531,83 @@ document.getElementById('buscar').addEventListener('input', function(e) {
 });
 
 // ============================================
-// MODALES - NUEVO REGISTRO
+// VER DETALLE COMPLETO
 // ============================================
 
-function nuevoRegistro() {
-  document.getElementById('modalNuevo').style.display = 'block';
-  document.getElementById('formNuevo').reset();
-  contadorDetalles = 0;
-  cabeceraGuardada = false;
-  codigoJIATActual = null;
-  fechaJIATActual = null;
-  periodoJIATActual = null;
-  
-  const seccionCabecera = document.getElementById('seccionCabecera');
-  seccionCabecera.classList.remove('guardada');
-  const badge = seccionCabecera.querySelector('.badge-guardado');
-  if (badge) badge.remove();
-  
-  document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
-    el.disabled = false;
-  });
-  
-  document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar y Continuar';
-  
-  document.getElementById('involucradosContainer').innerHTML = `
-    <div class="involucrado-item">
-      <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
-    </div>
-  `;
-  
-  const seccionDetalles = document.getElementById('seccionDetalles');
-  seccionDetalles.classList.add('bloqueada');
-  document.getElementById('mensajeBloqueo').style.display = 'block';
-  document.getElementById('detallesContainer').innerHTML = '';
-  document.getElementById('btnAgregarDetalle').disabled = true;
-}
-
-function cerrarModal() {
-  if (cabeceraGuardada) {
-    if (confirm('¿Desea cerrar? Ya guardó los datos principales.')) {
-      document.getElementById('modalNuevo').style.display = 'none';
-      cargarDatosExcel();
-    }
-  } else {
-    document.getElementById('modalNuevo').style.display = 'none';
-  }
-}
-
-function cerrarModalCompleto() {
-  if (cabeceraGuardada) {
-    mostrarNotificacion('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
-    document.getElementById('modalNuevo').style.display = 'none';
-    cargarDatosExcel();
-  } else {
-    if (confirm('No ha guardado ningún dato. ¿Desea cerrar de todos modos?')) {
-      document.getElementById('modalNuevo').style.display = 'none';
-    }
-  }
-}
-
-// ============================================
-// VER DETALLE COMPLETO - CORRECCIÓN 2
-// ============================================
-
-  async function verDetalle(index) {
+async function verDetalle(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
-  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
   
   mostrarOverlay('Cargando información...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
-    
-    const data = await response.json();
-    
-    ocultarOverlay();
-    
-    if (!data.success) {
-      mostrarNotificacion('Error al cargar la información: ' + data.error);
-      return;
+    // Obtener cabecera
+    const { data: cabecera, error: errorCabecera } = await supabase
+      .from('jiat')
+      .select('*')
+      .eq('codigo', codigo)
+      .single();
+
+    if (errorCabecera) throw errorCabecera;
+
+    // Validar permisos
+    if (rol !== 'ADMIN' && rol !== 'admin' && cabecera.unidad !== unidad) {
+      throw new Error('No tiene permisos para acceder a este JIAT');
     }
+
+    // Obtener detalles
+    const { data: detalles, error: errorDetalles } = await supabase
+      .from('detalle_accidentes')
+      .select('*')
+      .eq('codigo', codigo)
+      .order('fechareg', { ascending: true });
+
+    if (errorDetalles) throw errorDetalles;
+
+    // Organizar detalles por subtipo
+    const conclusiones = detalles.filter(d => d.subtipo === 'CONCLUSIÓN');
+    const causas = detalles.filter(d => d.subtipo === 'CAUSA');
+    const recomendaciones = detalles.filter(d => d.subtipo === 'RECOMENDACIÓN');
+    const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
+
+    const data = {
+      success: true,
+      cabecera: {
+        CODIGO: cabecera.codigo,
+        FECHA: formatearFechaDisplay(cabecera.fecha),
+        UNIDAD: cabecera.unidad,
+        LUGAR: cabecera.lugar,
+        INVOLUCRADO: cabecera.involucrado,
+        FATAL: cabecera.fatal,
+        DESCRIPCION: cabecera.descripcion,
+        NUMERO: cabecera.numero,
+        PERIODO: cabecera.periodo,
+        CANTFALL: cabecera.cantfall
+      },
+      conclusiones: conclusiones.map(d => ({
+        ID_DETALLE: d.id_detalle,
+        CARACTER: d.caracter,
+        DESCRIPCION: d.descripcion
+      })),
+      causas: causas.map(d => ({
+        ID_DETALLE: d.id_detalle,
+        CARACTER: d.caracter,
+        DESCRIPCION: d.descripcion
+      })),
+      recomendaciones: recomendaciones.map(d => ({
+        ID_DETALLE: d.id_detalle,
+        CARACTER: d.caracter,
+        DESCRIPCION: d.descripcion
+      })),
+      acciones: acciones.map(d => ({
+        ID_DETALLE: d.id_detalle,
+        FECHA: formatearFechaDisplay(d.fecha),
+        CARACTER: d.caracter,
+        DESCRIPCION: d.descripcion
+      }))
+    };
+
+    ocultarOverlay();
     
     mostrarDetalleCompleto(data);
     document.getElementById('modalVerDetalle').style.display = 'block';
@@ -623,7 +615,7 @@ function cerrarModalCompleto() {
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    mostrarNotificacion('Error al cargar la información del JIAT: ' + error.message);
+    mostrarNotificacion('Error al cargar la información del JIAT: ' + error.message, 'error');
   }
 }
 
@@ -694,849 +686,6 @@ function cerrarModalVerDetalle() {
 }
 
 // ============================================
-// EDITAR REGISTRO
-// ============================================
-
-  async function editarRegistro(index) {
-  const registro = datosFiltrados[index];
-  const codigo = registro.CODIGO;
-  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
-
-      // LOGS PARA DEBUG
-  console.log("=== EDITAR REGISTRO ===");
-  console.log("Index:", index);
-  console.log("Registro completo:", registro);
-  console.log("Código:", codigo);
-  console.log("Unidad usuario logueado:", unidad);
-  console.log("Unidad del registro:", unidadRegistro);
-  console.log("======================");
-  
-  mostrarOverlay('Cargando información...');
-  
-  try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
-    
-    const data = await response.json();
-    
-    ocultarOverlay();
-    
-    if (!data.success) {
-      mostrarNotificacion('Error al cargar la información: ' + data.error);
-      return;
-    }
-    
-    cargarDatosEdicion(data);
-    document.getElementById('modalEditar').style.display = 'block';
-    
-  } catch (error) {
-    ocultarOverlay();
-    console.error('Error:', error);
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-function cargarDatosEdicion(data) {
-  const cabecera = data.cabecera;
-  
-  contadorDetallesEdicion = 0;
-  contadorAccionesEdicion = 0;
-  cabeceraEdicionGuardada = false;
-  codigoActualEdicion = cabecera.CODIGO;
-  
-  const selectPeriodo = document.getElementById('editPeriodo');
-  selectPeriodo.innerHTML = '<option value="">Seleccione un año</option>';
-  const añoActual = new Date().getFullYear();
-  for (let i = añoActual; i >= añoActual - 30; i--) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = i;
-    selectPeriodo.appendChild(option);
-  }
-  
-  document.getElementById('editCodigoActual').value = cabecera.CODIGO || '';
-  document.getElementById('editNumero').value = cabecera.NUMERO || '';
-  document.getElementById('editNumero').disabled = true;
-  
-  document.getElementById('editPeriodo').value = cabecera.PERIODO || '';
-  document.getElementById('editPeriodo').disabled = true;
-  
-  let fechaInput = '';
-  if (cabecera.FECHA) {
-    const partes = cabecera.FECHA.split('/');
-    if (partes.length === 3) {
-      fechaInput = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-    }
-  }
-  document.getElementById('editFecha').value = fechaInput;
-  
-  document.getElementById('editLugar').value = cabecera.LUGAR || '';
-  document.getElementById('editInvolucrado').value = cabecera.INVOLUCRADO || '';
-  document.getElementById('editFatal').value = cabecera.FATAL || '';
-  document.getElementById('editCantfall').value = cabecera.CANTFALL || '0';
-  document.getElementById('editDescripcion').value = cabecera.DESCRIPCION || '';
-  
-  document.getElementById('editAdvertenciaCodigo').style.display = 'none';
-  
-  const seccionCabecera = document.getElementById('editSeccionCabecera');
-  seccionCabecera.classList.remove('guardada');
-  const badge = seccionCabecera.querySelector('.badge-guardado');
-  if (badge) badge.remove();
-  document.getElementById('btnGuardarCabeceraEdit').disabled = false;
-  document.getElementById('btnGuardarCabeceraEdit').textContent = '💾 Guardar y Continuar';
-  
-  const seccionDetalles = document.getElementById('editSeccionDetalles');
-  const seccionAcciones = document.getElementById('editSeccionAcciones');
-  seccionDetalles.classList.add('bloqueada');
-  seccionAcciones.classList.add('bloqueada');
-  document.getElementById('editMensajeBloqueo').style.display = 'block';
-  document.getElementById('btnAgregarDetalleEdit').disabled = true;
-  
-  document.getElementById('editDetallesContainer').innerHTML = '';
-  document.getElementById('editAccionesContainer').innerHTML = '';
-  
-  // Guardar datos originales para detectar cambios
-  window.datosEdicionOriginales = JSON.parse(JSON.stringify(cabecera));
-  window.datosEdicionTemp = {
-    detalles: [
-      ...(data.conclusiones || []),
-      ...(data.causas || []),
-      ...(data.recomendaciones || [])
-    ],
-    acciones: data.acciones || []
-  };
-}
-
-async function guardarCabeceraEdicion() {
-  const codigo = document.getElementById('editCodigoActual').value;
-  const fecha = document.getElementById('editFecha').value;
-  const lugar = document.getElementById('editLugar').value.trim();
-  const involucrado = document.getElementById('editInvolucrado').value.trim();
-  const fatal = document.getElementById('editFatal').value;
-  const cantfall = document.getElementById('editCantfall').value;
-  const descripcion = document.getElementById('editDescripcion').value.trim();
-  
-  if (!fecha || !lugar || !involucrado || !fatal || !descripcion) {
-    mostrarNotificacion('⚠️ Por favor complete todos los campos obligatorios');
-    return;
-  }
-  
-  mostrarOverlay('Guardando cabecera...');
-  
-  try {
-    const datosCabecera = {
-      action: 'editarCabeceraJIAT',
-      CODIGO: codigo,
-      UNIDAD_USUARIO: unidad,
-      FECHA: fecha,
-      LUGAR: lugar,
-      INVOLUCRADO: involucrado,
-      FATAL: fatal,
-      CANTFALL: cantfall,
-      DESCRIPCION: descripcion
-    };
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datosCabecera)
-    });
-    
-    const result = await response.json();
-    
-    ocultarOverlay();
-    
-    if (result.success) {
-      cabeceraEdicionGuardada = true;
-      
-      const seccionCabecera = document.getElementById('editSeccionCabecera');
-      seccionCabecera.classList.add('guardada');
-      
-      const badge = document.createElement('span');
-      badge.className = 'badge-guardado';
-      badge.textContent = '✓ Guardado';
-      seccionCabecera.appendChild(badge);
-      
-      document.getElementById('btnGuardarCabeceraEdit').disabled = true;
-      
-      const seccionDetalles = document.getElementById('editSeccionDetalles');
-      const seccionAcciones = document.getElementById('editSeccionAcciones');
-      seccionDetalles.classList.remove('bloqueada');
-      seccionAcciones.classList.remove('bloqueada');
-      document.getElementById('editMensajeBloqueo').style.display = 'none';
-      document.getElementById('btnAgregarDetalleEdit').disabled = false;
-      
-      if (window.datosEdicionTemp) {
-        window.datosEdicionTemp.detalles.forEach((detalle, index) => {
-          agregarDetalleEdicionExistente(detalle, index);
-        });
-        
-        const containerAcciones = document.getElementById('editAccionesContainer');
-        if (window.datosEdicionTemp.acciones.length > 0) {
-          window.datosEdicionTemp.acciones.forEach((accion, index) => {
-            agregarAccionEdicionExistente(accion, index);
-          });
-        } else {
-          containerAcciones.innerHTML = '<p style="color:#666;padding:15px;">No hay acciones registradas aún.</p>';
-        }
-      }
-      
-      mostrarNotificacion('✅ Cabecera actualizada correctamente.\n\nAhora puede editar los detalles y acciones.');
-      
-    } else {
-      mostrarNotificacion('⚠️ Error: ' + (result.error || 'Error desconocido'));
-    }
-  } catch (error) {
-    ocultarOverlay();
-    console.error('Error:', error);
-    mostrarNotificacion('⚠️ Error al guardar: ' + error.message);
-  }
-}
-
-function agregarDetalleEdicionExistente(detalle, index) {
-  contadorDetallesEdicion++;
-  const container = document.getElementById('editDetallesContainer');
-  const detalleDiv = document.createElement('div');
-  detalleDiv.className = 'detalle-item';
-  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
-  detalleDiv.setAttribute('data-id-detalle', detalle.ID_DETALLE);
-  
-  detalleDiv.innerHTML = `
-    <div class="detalle-item-header">
-      <div class="detalle-titulo">
-        <strong>${detalle.SUBTIPO} #${index + 1}</strong>
-      </div>
-      <div>
-        <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEditado(${contadorDetallesEdicion})" id="btnGuardarDetEdit${contadorDetallesEdicion}">
-          💾 Guardar
-        </button>
-        <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleEditado(${contadorDetallesEdicion})">🗑️ Eliminar</button>
-      </div>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group">
-        <label>Asunto</label>
-        <select class="edit-detalle-subtipo" id="editSubtipo${contadorDetallesEdicion}">
-          <option value="CONCLUSIÓN" ${detalle.SUBTIPO === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
-          <option value="CAUSA" ${detalle.SUBTIPO === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
-          <option value="RECOMENDACIÓN" ${detalle.SUBTIPO === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Carácter</label>
-        <select class="edit-detalle-caracter" id="editCaracter${contadorDetallesEdicion}">
-          <option value="PSICOFÍSICO" ${detalle.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-          <option value="TÉCNICO" ${detalle.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-          <option value="OPERATIVO" ${detalle.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-          <option value="PSICOLÓGICO" ${detalle.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-          <option value="SALUD" ${detalle.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Descripción</label>
-      <textarea class="edit-detalle-descripcion" id="editDescDet${contadorDetallesEdicion}">${detalle.DESCRIPCION || ''}</textarea>
-    </div>
-  `;
-  container.appendChild(detalleDiv);
-}
-
-function agregarAccionEdicionExistente(accion, index) {
-  contadorAccionesEdicion++;
-  const container = document.getElementById('editAccionesContainer');
-  const accionDiv = document.createElement('div');
-  accionDiv.className = 'accion-item';
-  accionDiv.id = `editAccion-${contadorAccionesEdicion}`;
-  accionDiv.setAttribute('data-id-detalle', accion.ID_DETALLE);
-  
-  let fechaInput = '';
-  if (accion.FECHA) {
-    const partes = accion.FECHA.split('/');
-    if (partes.length === 3) {
-      fechaInput = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-    }
-  }
-  
-  accionDiv.innerHTML = `
-    <div class="accion-item-header">
-      <div class="accion-titulo">
-        <strong>Acción #${index + 1}</strong>
-      </div>
-      <div>
-        <button type="button" class="btn-guardar-accion" onclick="guardarAccionEditada(${contadorAccionesEdicion})">💾 Guardar</button>
-        <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionEditada(${contadorAccionesEdicion})">🗑️ Eliminar</button>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha</label>
-        <input type="date" class="edit-accion-fecha" id="editFechaAccion${contadorAccionesEdicion}" value="${fechaInput}">
-      </div>
-      <div class="form-group">
-        <label>Carácter</label>
-        <select class="edit-accion-caracter" id="editCaracterAccion${contadorAccionesEdicion}">
-          <option value="PSICOFÍSICO" ${accion.CARACTER === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-          <option value="TÉCNICO" ${accion.CARACTER === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-          <option value="OPERATIVO" ${accion.CARACTER === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-          <option value="PSICOLÓGICO" ${accion.CARACTER === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-          <option value="SALUD" ${accion.CARACTER === 'SALUD' ? 'selected' : ''}>SALUD</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Descripción</label>
-      <textarea class="edit-accion-descripcion" id="editDescAccion${contadorAccionesEdicion}">${accion.DESCRIPCION || ''}</textarea>
-    </div>
-  `;
-  container.appendChild(accionDiv);
-}
-
-function agregarDetalleEdicion() {
-  contadorDetallesEdicion++;
-  const container = document.getElementById('editDetallesContainer');
-  const detalleDiv = document.createElement('div');
-  detalleDiv.className = 'detalle-item';
-  detalleDiv.id = `editDetalle-${contadorDetallesEdicion}`;
-  detalleDiv.setAttribute('data-nuevo', 'true');
-  
-  detalleDiv.innerHTML = `
-    <div class="detalle-item-header">
-      <div class="detalle-titulo">
-        <strong>Nuevo Detalle</strong>
-        <span class="badge-guardado-detalle" style="background:#28a745;">NUEVO</span>
-      </div>
-      <div>
-        <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEditado(${contadorDetallesEdicion})">💾 Guardar</button>
-        <button type="button" class="btn-quitar" onclick="quitarDetalleNuevo(${contadorDetallesEdicion})">× Quitar</button>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Asunto <span class="required">*</span></label>
-        <select class="edit-detalle-subtipo" id="editSubtipo${contadorDetallesEdicion}" required>
-          <option value="">Seleccione</option>
-          <option value="CONCLUSIÓN">CONCLUSIÓN</option>
-          <option value="CAUSA">CAUSA</option>
-          <option value="RECOMENDACIÓN">RECOMENDACIÓN</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Carácter <span class="required">*</span></label>
-        <select class="edit-detalle-caracter" id="editCaracter${contadorDetallesEdicion}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>Descripción <span class="required">*</span></label>
-      <textarea class="edit-detalle-descripcion" id="editDescDet${contadorDetallesEdicion}" required></textarea>
-    </div>
-  `;
-  container.appendChild(detalleDiv);
-}
-
-async function guardarDetalleEditado(id) {
-  const detalleDiv = document.getElementById(`editDetalle-${id}`);
-  const idDetalle = detalleDiv.getAttribute('data-id-detalle');
-  const esNuevo = detalleDiv.getAttribute('data-nuevo') === 'true';
-  
-  const subtipo = document.getElementById(`editSubtipo${id}`).value;
-  const caracter = document.getElementById(`editCaracter${id}`).value;
-  const descripcion = document.getElementById(`editDescDet${id}`).value.trim();
-  
-  if (!subtipo || !caracter || !descripcion) {
-    mostrarNotificacion('Complete todos los campos');
-    return;
-  }
-  
-  mostrarOverlay('Guardando...');
-  
-  try {
-    let datos;
-    if (esNuevo) {
-      datos = {
-        action: 'crearDetalleJIAT',
-        USUARIOREG: usuario,
-        UNIDAD: unidad,
-        TIPO: 'JIAT',
-        CODIGO: codigoActualEdicion,
-        SUBTIPO: subtipo,
-        FECHA: document.getElementById('editFecha').value,
-        PERIODO: document.getElementById('editPeriodo').value,
-        CARACTER: caracter,
-        DESCRIPCION: descripcion
-      };
-    } else {
-      datos = {
-        action: 'actualizarDetalleJIAT',
-        ID_DETALLE: idDetalle,
-        UNIDAD_USUARIO: unidad,
-        CODIGO: codigoActualEdicion,
-        SUBTIPO: subtipo,
-        CARACTER: caracter,
-        DESCRIPCION: descripcion,
-        FECHA: document.getElementById('editFecha').value,
-        PERIODO: document.getElementById('editPeriodo').value
-      };
-    }
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datos)
-    });
-    
-    const result = await response.json();
-    
-    ocultarOverlay();
-    
-    if (result.success) {
-      detalleDiv.classList.add('guardado');
-      document.getElementById(`editSubtipo${id}`).disabled = true;
-      document.getElementById(`editCaracter${id}`).disabled = true;
-      document.getElementById(`editDescDet${id}`).disabled = true;
-      
-      const btn = document.getElementById(`btnGuardarDetEdit${id}`);
-      if (btn) btn.style.display = 'none';
-      
-      mostrarNotificacion('✅ Guardado correctamente');
-    } else {
-      mostrarNotificacion('Error: ' + result.error);
-    }
-  } catch (error) {
-    ocultarOverlay();
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-// CORRECCIÓN 3: Función eliminarDetalleEditado arreglada
-async function eliminarDetalleEditado(id) {
-  const detalleDiv = document.getElementById(`editDetalle-${id}`);
-  
-  if (!detalleDiv) {
-    mostrarNotificacion('Error: No se encontró el detalle', 'error');
-    return;
-  }
-  
-  const idDetalle = detalleDiv.getAttribute('data-id-detalle');
-  
-  if (!idDetalle) {
-    mostrarNotificacion('Error: ID de detalle no válido', 'error');
-    return;
-  }
-  
-  const confirmar = await mostrarConfirmacion(
-    '¿Está seguro de eliminar este detalle?<br><br><strong>Esta acción no se puede deshacer.</strong>',
-    '🗑️ Confirmar Eliminación'
-  );
-  
-  if (!confirmar) {
-    return;
-  }
-  
-  mostrarOverlay('Eliminando...');
-  
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'eliminarDetalleJIAT',
-        ID_DETALLE: idDetalle,
-        UNIDAD: unidad
-      })
-    });
-    
-    const result = await response.json();
-    
-    ocultarOverlay();
-    
-    if (result.success) {
-      detalleDiv.remove();
-      mostrarNotificacion('✅ Detalle eliminado correctamente');
-    } else {
-      mostrarNotificacion('⚠️ Error al eliminar: ' + result.error);
-    }
-  } catch (error) {
-    ocultarOverlay();
-    console.error('Error:', error);
-    mostrarNotificacion('⚠️ Error: ' + error.message);
-  }
-}
-
-function quitarDetalleNuevo(id) {
-  const elemento = document.getElementById(`editDetalle-${id}`);
-  if (elemento) {
-    elemento.remove();
-  }
-}
-
-async function guardarAccionEditada(id) {
-  const accionDiv = document.getElementById(`editAccion-${id}`);
-  const idDetalle = accionDiv.getAttribute('data-id-detalle');
-  
-  const fecha = document.getElementById(`editFechaAccion${id}`).value;
-  const caracter = document.getElementById(`editCaracterAccion${id}`).value;
-  const descripcion = document.getElementById(`editDescAccion${id}`).value.trim();
-  
-  if (!fecha || !caracter || !descripcion) {
-    mostrarNotificacion('Complete todos los campos');
-    return;
-  }
-  
-  mostrarOverlay('Guardando...');
-  
-  try {
-    const datos = {
-      action: 'actualizarDetalleJIAT',
-      ID_DETALLE: idDetalle,
-      UNIDAD_USUARIO: unidad,
-      CODIGO: codigoActualEdicion,
-      CARACTER: caracter,
-      DESCRIPCION: descripcion,
-      FECHA: fecha,
-      PERIODO: new Date(fecha).getFullYear()
-    };
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datos)
-    });
-    
-    const result = await response.json();
-    
-    ocultarOverlay();
-    
-    if (result.success) {
-      accionDiv.classList.add('guardado');
-      document.getElementById(`editFechaAccion${id}`).disabled = true;
-      document.getElementById(`editCaracterAccion${id}`).disabled = true;
-      document.getElementById(`editDescAccion${id}`).disabled = true;
-      mostrarNotificacion('✅ Guardado correctamente');
-    } else {
-      mostrarNotificacion('Error: ' + result.error);
-    }
-  } catch (error) {
-    ocultarOverlay();
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-async function eliminarAccionEditada(id) {
-  const accionDiv = document.getElementById(`editAccion-${id}`);
-  const idDetalle = accionDiv.getAttribute('data-id-detalle');
-  
-  const confirmar = await mostrarConfirmacion(
-    '¿Está seguro de eliminar esta acción?<br><br><strong>Esta acción no se puede deshacer.</strong>',
-    '🗑️ Confirmar Eliminación'
-  );
-  
-  if (!confirmar) return;
-  
-  mostrarOverlay('Eliminando...');
-  
-  try {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'eliminarDetalleJIAT',
-        ID_DETALLE: idDetalle,
-        UNIDAD: unidad
-      })
-    });
-    
-    const result = await response.json();
-    
-    ocultarOverlay();
-    
-    if (result.success) {
-      accionDiv.remove();
-      mostrarNotificacion('✅ Eliminado correctamente');
-    } else {
-      mostrarNotificacion('Error: ' + result.error);
-    }
-  } catch (error) {
-    ocultarOverlay();
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-function cerrarModalEditar() {
-  // Verificar si se hicieron cambios en los campos
-  const camposEditados = verificarCambiosEnEdicion();
-  
-  if (cabeceraEdicionGuardada) {
-    // Si ya guardó cambios, cerrar con confirmación de éxito
-    mostrarNotificacion('✔ Cambios guardados correctamente');
-    document.getElementById('modalEditar').style.display = 'none';
-    cargarDatosExcel();
-  } else if (camposEditados) {
-    // Si hay cambios sin guardar, pedir confirmación
-    if (confirm('⚠️ Hay cambios sin guardar.\n\n¿Desea cerrar de todos modos?')) {
-      document.getElementById('modalEditar').style.display = 'none';
-    }
-  } else {
-    // No hay cambios, cerrar directamente
-    document.getElementById('modalEditar').style.display = 'none';
-  }
-}
-// Función auxiliar para verificar si hay cambios en el modal de edición
-function verificarCambiosEnEdicion() {
-  if (!window.datosEdicionOriginales) {
-    return false; // No hay datos originales para comparar
-  }
-  
-  const orig = window.datosEdicionOriginales;
-  
-  // Comparar cada campo
-  const fechaActual = document.getElementById('editFecha').value;
-  const lugarActual = document.getElementById('editLugar').value.trim();
-  const involucradoActual = document.getElementById('editInvolucrado').value.trim();
-  const fatalActual = document.getElementById('editFatal').value;
-  const cantfallActual = document.getElementById('editCantfall').value;
-  const descripcionActual = document.getElementById('editDescripcion').value.trim();
-  
-  // Convertir fecha original al formato del input
-  let fechaOriginal = '';
-  if (orig.FECHA) {
-    const partes = orig.FECHA.split('/');
-    if (partes.length === 3) {
-      fechaOriginal = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-    }
-  }
-  
-  return fechaActual !== fechaOriginal ||
-         lugarActual !== (orig.LUGAR || '') ||
-         involucradoActual !== (orig.INVOLUCRADO || '') ||
-         fatalActual !== (orig.FATAL || '') ||
-         cantfallActual !== (orig.CANTFALL || '0').toString() ||
-         descripcionActual !== (orig.DESCRIPCION || '');
-}
-// ============================================
-// ACCIONES TOMADAS
-// ============================================
-
-  async function registrarAcciones(index) {
-  const registro = datosFiltrados[index];
-  codigoJIATAcciones = registro.CODIGO;
-  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
-  
-  mostrarOverlay('Cargando...');
-  
-  try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
-    
-    const data = await response.json();
-    
-    ocultarOverlay();
-    
-    if (!data.success) {
-      mostrarNotificacion('Error: ' + data.error);
-      return;
-    }
-    
-    mostrarInformacionJIAT(data);
-    contadorAcciones = 0;
-    document.getElementById('accionesContainer').innerHTML = '';
-    document.getElementById('modalAcciones').style.display = 'block';
-    
-  } catch (error) {
-    ocultarOverlay();
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-function mostrarInformacionJIAT(data) {
-  const cabecera = data.cabecera;
-  
-  document.getElementById('infoCodigo').textContent = cabecera.CODIGO || '-';
-  document.getElementById('infoFecha').textContent = cabecera.FECHA || '-';
-  document.getElementById('infoUnidad').textContent = cabecera.UNIDAD || '-';
-  document.getElementById('infoLugar').textContent = cabecera.LUGAR || '-';
-  document.getElementById('infoInvolucrado').textContent = cabecera.INVOLUCRADO || '-';
-  document.getElementById('infoFatal').textContent = cabecera.FATAL || '-';
-  document.getElementById('infoDescripcion').textContent = cabecera.DESCRIPCION || '-';
-  
-  periodoJIATAcciones = cabecera.PERIODO || new Date().getFullYear();
-  
-  const mostrarListaSimple = (seccionId, listaId, datos) => {
-    const seccion = document.getElementById(seccionId);
-    const lista = document.getElementById(listaId);
-    if (datos && datos.length > 0) {
-      lista.innerHTML = '';
-      datos.forEach(item => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${item.CARACTER}:</strong> ${item.DESCRIPCION}`;
-        lista.appendChild(li);
-      });
-      seccion.style.display = 'block';
-    } else {
-      seccion.style.display = 'none';
-    }
-  };
-  
-  mostrarListaSimple('detallesConclusiones', 'listaConclusiones', data.conclusiones);
-  mostrarListaSimple('detallesCausas', 'listaCausas', data.causas);
-  mostrarListaSimple('detallesRecomendaciones', 'listaRecomendaciones', data.recomendaciones);
-  
-  const seccionAccionesReg = document.getElementById('seccionAccionesRegistradas');
-  const listaAccionesReg = document.getElementById('listaAccionesRegistradas');
-  if (data.acciones && data.acciones.length > 0) {
-    listaAccionesReg.innerHTML = '';
-    data.acciones.forEach(a => {
-      const div = document.createElement('div');
-      div.className = 'accion-registrada';
-      div.innerHTML = `
-        <div class="accion-registrada-header">
-          <span class="accion-registrada-fecha">📅 ${a.FECHA}</span>
-          <span class="accion-registrada-caracter">${a.CARACTER}</span>
-        </div>
-        <div class="accion-registrada-descripcion">${a.DESCRIPCION}</div>
-      `;
-      listaAccionesReg.appendChild(div);
-    });
-    seccionAccionesReg.style.display = 'block';
-  } else {
-    seccionAccionesReg.style.display = 'none';
-  }
-}
-
-function agregarAccionTomada() {
-  contadorAcciones++;
-  const container = document.getElementById('accionesContainer');
-  const accionDiv = document.createElement('div');
-  accionDiv.className = 'accion-item';
-  accionDiv.id = `accion-${contadorAcciones}`;
-  
-  const hoy = new Date().toISOString().split('T')[0];
-  
-  accionDiv.innerHTML = `
-    <div class="accion-item-header">
-      <div class="accion-titulo">
-        <strong>Acción #${contadorAcciones}</strong>
-      </div>
-      <div>
-        <button type="button" class="btn-guardar-accion" onclick="guardarAccionTomada(${contadorAcciones})" id="btnGuardarAccion${contadorAcciones}">
-          💾 Guardar
-        </button>
-        <button type="button" class="btn-quitar" onclick="quitarAccionTomada(${contadorAcciones})">× Quitar</button>
-      </div>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha <span class="required">*</span></label>
-        <input type="date" id="fechaAccion${contadorAcciones}" value="${hoy}" required>
-      </div>
-      <div class="form-group">
-        <label>Carácter <span class="required">*</span></label>
-        <select id="caracterAccion${contadorAcciones}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Descripción <span class="required">*</span></label>
-      <textarea id="descripcionAccion${contadorAcciones}" required></textarea>
-    </div>
-  `;
-  container.appendChild(accionDiv);
-}
-
-async function guardarAccionTomada(id) {
-  const fecha = document.getElementById(`fechaAccion${id}`).value;
-  const caracter = document.getElementById(`caracterAccion${id}`).value;
-  const descripcion = document.getElementById(`descripcionAccion${id}`).value;
-
-  if (!fecha || !caracter || !descripcion) {
-    mostrarNotificacion('Complete todos los campos');
-    return;
-  }
-
-  const btnGuardar = document.getElementById(`btnGuardarAccion${id}`);
-  btnGuardar.disabled = true;
-  btnGuardar.textContent = 'Guardando...';
-
-  mostrarOverlay('Guardando acción...');
-
-  try {
-    const periodo = new Date(fecha).getFullYear();
-    
-    const datosAccion = {
-      action: 'crearDetalleJIAT',
-      USUARIOREG: usuario,
-      UNIDAD: unidad,
-      TIPO: 'JIAT',
-      CODIGO: codigoJIATAcciones,
-      SUBTIPO: 'ACCIÓN TOMADA',
-      FECHA: fecha,
-      PERIODO: periodo,
-      CARACTER: caracter,
-      DESCRIPCION: descripcion
-    };
-
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(datosAccion)
-    });
-
-    const result = await response.json();
-
-    ocultarOverlay();
-
-    if (result.success) {
-      const accionDiv = document.getElementById(`accion-${id}`);
-      accionDiv.classList.add('guardado');
-      
-      const titulo = accionDiv.querySelector('.accion-titulo');
-      titulo.innerHTML += ' <span class="badge-guardado-accion">✓ Guardado</span>';
-      
-      document.getElementById(`fechaAccion${id}`).disabled = true;
-      document.getElementById(`caracterAccion${id}`).disabled = true;
-      document.getElementById(`descripcionAccion${id}`).disabled = true;
-      btnGuardar.style.display = 'none';
-
-      mostrarNotificacion('✓ Acción guardada correctamente');
-      
-      const indexRegistro = datosFiltrados.findIndex(r => r.CODIGO === codigoJIATAcciones);
-      if (indexRegistro !== -1) {
-        await registrarAcciones(indexRegistro);
-      }
-      
-    } else {
-      btnGuardar.disabled = false;
-      btnGuardar.textContent = '💾 Guardar';
-     mostrarNotificacion('Error: ' + result.error);
-    }
-  } catch (error) {
-    ocultarOverlay();
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = '💾 Guardar';
-    mostrarNotificacion('Error: ' + error.message);
-  }
-}
-
-function quitarAccionTomada(id) {
-  const elemento = document.getElementById(`accion-${id}`);
-  if (elemento && !elemento.classList.contains('guardado')) {
-    elemento.remove();
-  }
-}
-
-function cerrarModalAcciones() {
-  document.getElementById('modalAcciones').style.display = 'none';
-  cargarDatosExcel();
-}
-
-// ============================================
 // ELIMINAR REGISTRO
 // ============================================
 
@@ -1556,30 +705,704 @@ async function eliminarRegistro(index) {
   if (confirmar) {
     mostrarOverlay('Eliminando...');
     
-    fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'eliminarJIAT',
-        CODIGO: registro.CODIGO,
-        UNIDAD: unidad
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        cargarDatosExcel().then(() => {
-          ocultarOverlay();
-          mostrarNotificacion('✓ Eliminado correctamente');
-        });
-      } else {
-        ocultarOverlay();
-        mostrarNotificacion('Error: ' + data.error);
+    try {
+      // Validar permisos
+      if (rol !== 'ADMIN' && rol !== 'admin' && registro.UNIDAD !== unidad) {
+        throw new Error('No tiene permisos para eliminar este JIAT');
       }
-    })
-    .catch(error => {
+
+      // Eliminar detalles primero
+      const { error: errorDetalles } = await supabase
+        .from('detalle_accidentes')
+        .delete()
+        .eq('codigo', registro.CODIGO);
+
+      if (errorDetalles) throw errorDetalles;
+
+      // Eliminar JIAT
+      const { error: errorJIAT } = await supabase
+        .from('jiat')
+        .delete()
+        .eq('codigo', registro.CODIGO);
+
+      if (errorJIAT) throw errorJIAT;
+
+      await cargarDatosExcel();
       ocultarOverlay();
-      mostrarNotificacion('Error: ' + error.message);
+      mostrarNotificacion('✓ Eliminado correctamente', 'success');
+      
+    } catch (error) {
+      ocultarOverlay();
+      mostrarNotificacion('Error: ' + error.message, 'error');
+    }
+  }
+}
+
+// ============================================
+// REGISTRAR ACCIONES TOMADAS
+// ============================================
+
+async function registrarAcciones(index) {
+  const registro = datosFiltrados[index];
+  const codigo = registro.CODIGO;
+  
+  mostrarOverlay('Cargando información...');
+  
+  try {
+    // Obtener cabecera
+    const { data: cabecera, error: errorCabecera } = await supabase
+      .from('jiat')
+      .select('*')
+      .eq('codigo', codigo)
+      .single();
+
+    if (errorCabecera) throw errorCabecera;
+
+    // Validar permisos
+    if (rol !== 'ADMIN' && rol !== 'admin' && cabecera.unidad !== unidad) {
+      throw new Error('No tiene permisos para acceder a este JIAT');
+    }
+
+    // Obtener detalles y acciones
+    const { data: detalles, error: errorDetalles } = await supabase
+      .from('detalle_accidentes')
+      .select('*')
+      .eq('codigo', codigo)
+      .order('fechareg', { ascending: true });
+
+    if (errorDetalles) throw errorDetalles;
+
+    // Separar por tipo
+    const conclusiones = detalles.filter(d => d.subtipo === 'CONCLUSIÓN');
+    const causas = detalles.filter(d => d.subtipo === 'CAUSA');
+    const recomendaciones = detalles.filter(d => d.subtipo === 'RECOMENDACIÓN');
+    const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
+
+    // Guardar datos globales
+    codigoJIATAcciones = codigo;
+    periodoJIATAcciones = cabecera.periodo;
+    contadorAcciones = 0;
+
+    // Mostrar información en el modal
+    document.getElementById('infoCodigo').textContent = cabecera.codigo;
+    document.getElementById('infoFecha').textContent = formatearFechaDisplay(cabecera.fecha);
+    document.getElementById('infoUnidad').textContent = cabecera.unidad;
+    document.getElementById('infoLugar').textContent = cabecera.lugar;
+    document.getElementById('infoInvolucrado').textContent = cabecera.involucrado;
+    document.getElementById('infoFatal').textContent = cabecera.fatal;
+    document.getElementById('infoDescripcion').textContent = cabecera.descripcion;
+
+    // Mostrar detalles existentes
+    mostrarDetallesEnModal('detallesConclusiones', 'listaConclusiones', conclusiones, '📌');
+    mostrarDetallesEnModal('detallesCausas', 'listaCausas', causas, '⚠️');
+    mostrarDetallesEnModal('detallesRecomendaciones', 'listaRecomendaciones', recomendaciones, '💡');
+
+    // Mostrar acciones ya registradas
+    const seccionAcciones = document.getElementById('seccionAccionesRegistradas');
+    const listaAcciones = document.getElementById('listaAccionesRegistradas');
+    
+    if (acciones.length > 0) {
+      listaAcciones.innerHTML = '';
+      acciones.forEach((accion, index) => {
+        const div = document.createElement('div');
+        div.className = 'detalle-item-readonly';
+        div.style.borderLeftColor = '#28a745';
+        div.innerHTML = `
+          <div class="detalle-item-readonly-header">
+            <span class="detalle-item-readonly-tipo" style="color: #28a745;">✅ Acción #${index + 1} - 📅 ${formatearFechaDisplay(accion.fecha)}</span>
+            <span class="detalle-item-readonly-caracter" style="background: #28a745;">${accion.caracter}</span>
+          </div>
+          <div class="detalle-item-readonly-descripcion">${accion.descripcion}</div>
+        `;
+        listaAcciones.appendChild(div);
+      });
+      seccionAcciones.style.display = 'block';
+    } else {
+      seccionAcciones.style.display = 'none';
+    }
+
+    // Limpiar contenedor de nuevas acciones
+    document.getElementById('accionesContainer').innerHTML = '';
+
+    ocultarOverlay();
+    document.getElementById('modalAcciones').style.display = 'block';
+
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al cargar la información: ' + error.message, 'error');
+  }
+}
+
+function mostrarDetallesEnModal(seccionId, listaId, detalles, icono) {
+  const seccion = document.getElementById(seccionId);
+  const lista = document.getElementById(listaId);
+  
+  if (detalles && detalles.length > 0) {
+    lista.innerHTML = '';
+    detalles.forEach(det => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${det.caracter}:</strong> ${det.descripcion}`;
+      lista.appendChild(li);
     });
+    seccion.style.display = 'block';
+  } else {
+    seccion.style.display = 'none';
+  }
+}
+
+function agregarAccionTomada() {
+  contadorAcciones++;
+  const container = document.getElementById('accionesContainer');
+  const accionDiv = document.createElement('div');
+  accionDiv.className = 'detalle-item';
+  accionDiv.id = `accion-${contadorAcciones}`;
+  accionDiv.innerHTML = `
+    <div class="detalle-item-header">
+      <div class="detalle-titulo">
+        <strong>Acción Tomada #${contadorAcciones}</strong>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-detalle" onclick="guardarAccionTomada(${contadorAcciones})" id="btnGuardarAccion${contadorAcciones}">
+          💾 Guardar
+        </button>
+        <button type="button" class="btn-quitar" onclick="quitarAccionTomada(${contadorAcciones})">× Quitar</button>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de la Acción <span class="required">*</span></label>
+        <input type="date" id="fechaAccion${contadorAcciones}" required>
+      </div>
+
+      <div class="form-group">
+        <label>Carácter <span class="required">*</span></label>
+        <select id="caracterAccion${contadorAcciones}" required>
+          <option value="">Seleccione</option>
+          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
+          <option value="TÉCNICO">TÉCNICO</option>
+          <option value="OPERATIVO">OPERATIVO</option>
+          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
+          <option value="SALUD">SALUD</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descripción de la Acción <span class="required">*</span></label>
+      <textarea id="descripcionAccion${contadorAcciones}" required placeholder="Describa la acción tomada..."></textarea>
+    </div>
+  `;
+  container.appendChild(accionDiv);
+}
+
+async function guardarAccionTomada(id) {
+  const fechaAccion = document.getElementById(`fechaAccion${id}`).value;
+  const caracterAccion = document.getElementById(`caracterAccion${id}`).value;
+  const descripcionAccion = document.getElementById(`descripcionAccion${id}`).value;
+
+  if (!fechaAccion || !caracterAccion || !descripcionAccion) {
+    mostrarNotificacion('Por favor complete todos los campos de la acción', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarAccion${id}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Guardando acción tomada...');
+
+  try {
+    // Generar ID
+    const { data: ultimoDetalle } = await supabase
+      .from('detalle_accidentes')
+      .select('id_detalle')
+      .order('id_detalle', { ascending: false })
+      .limit(1)
+      .single();
+
+    let nuevoIdDetalle = 'DET-00001';
+    if (ultimoDetalle) {
+      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
+    }
+
+    // Insertar en Supabase
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .insert([{
+        id_detalle: nuevoIdDetalle,
+        usuarioreg: usuario,
+        unidad: unidad,
+        tipo: 'JIAT',
+        codigo: codigoJIATAcciones,
+        subtipo: 'ACCIÓN TOMADA',
+        fechareg: new Date().toISOString(),
+        fecha: fechaAccion,
+        periodo: parseInt(periodoJIATAcciones),
+        caracter: caracterAccion,
+        descripcion: descripcionAccion
+      }]);
+
+    ocultarOverlay();
+
+    if (error) {
+      throw error;
+    }
+
+    const accionDiv = document.getElementById(`accion-${id}`);
+    accionDiv.classList.add('guardado');
+    
+    const titulo = accionDiv.querySelector('.detalle-titulo');
+    titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
+    
+    document.getElementById(`fechaAccion${id}`).disabled = true;
+    document.getElementById(`caracterAccion${id}`).disabled = true;
+    document.getElementById(`descripcionAccion${id}`).disabled = true;
+    btnGuardar.style.display = 'none';
+
+    mostrarNotificacion('✓ Acción tomada guardada correctamente', 'success');
+    
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    mostrarNotificacion('Error al guardar la acción: ' + error.message, 'error');
+  }
+}
+
+function quitarAccionTomada(id) {
+  const elemento = document.getElementById(`accion-${id}`);
+  if (elemento && !elemento.classList.contains('guardado')) {
+    elemento.remove();
+  } else if (elemento && elemento.classList.contains('guardado')) {
+    mostrarNotificacion('No puede eliminar una acción ya guardada', 'warning');
+  }
+}
+
+function cerrarModalAcciones() {
+  document.getElementById('modalAcciones').style.display = 'none';
+}
+
+// ============================================
+// EDITAR REGISTRO
+// ============================================
+
+async function editarRegistro(index) {
+  const registro = datosFiltrados[index];
+  const codigo = registro.CODIGO;
+  
+  mostrarOverlay('Cargando datos para edición...');
+  
+  try {
+    // Validar permisos
+    if (rol !== 'ADMIN' && rol !== 'admin' && registro.UNIDAD !== unidad) {
+      throw new Error('No tiene permisos para editar este JIAT');
+    }
+
+    // Obtener cabecera
+    const { data: cabecera, error: errorCabecera } = await supabase
+      .from('jiat')
+      .select('*')
+      .eq('codigo', codigo)
+      .single();
+
+    if (errorCabecera) throw errorCabecera;
+
+    // Obtener detalles
+    const { data: detalles, error: errorDetalles } = await supabase
+      .from('detalle_accidentes')
+      .select('*')
+      .eq('codigo', codigo)
+      .order('fechareg', { ascending: true });
+
+    if (errorDetalles) throw errorDetalles;
+
+    // Resetear variables
+    contadorDetallesEdicion = 0;
+    contadorAccionesEdicion = 0;
+    cabeceraEdicionGuardada = false;
+    codigoActualEdicion = codigo;
+
+    // Cargar datos en el formulario
+    document.getElementById('editCodigoActual').value = codigo;
+    document.getElementById('editNumero').value = cabecera.numero;
+    document.getElementById('editPeriodo').value = cabecera.periodo;
+    document.getElementById('editFecha').value = cabecera.fecha;
+    document.getElementById('editLugar').value = cabecera.lugar;
+    document.getElementById('editInvolucrado').value = cabecera.involucrado;
+    document.getElementById('editFatal').value = cabecera.fatal;
+    document.getElementById('editCantfall').value = cabecera.cantfall;
+    document.getElementById('editDescripcion').value = cabecera.descripcion;
+
+    // Habilitar sección de cabecera
+    const seccionCabecera = document.getElementById('editSeccionCabecera');
+    seccionCabecera.classList.remove('guardada');
+    const badge = seccionCabecera.querySelector('.badge-guardado');
+    if (badge) badge.remove();
+
+    // Bloquear detalles hasta guardar cabecera
+    const seccionDetalles = document.getElementById('editSeccionDetalles');
+    seccionDetalles.classList.add('bloqueada');
+    document.getElementById('editMensajeBloqueo').style.display = 'block';
+    document.getElementById('btnAgregarDetalleEdit').disabled = true;
+
+    const seccionAcciones = document.getElementById('editSeccionAcciones');
+    seccionAcciones.classList.add('bloqueada');
+
+    // Limpiar contenedores
+    document.getElementById('editDetallesContainer').innerHTML = '';
+    document.getElementById('editAccionesContainer').innerHTML = '';
+
+    ocultarOverlay();
+    document.getElementById('modalEditar').style.display = 'block';
+
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al cargar los datos: ' + error.message, 'error');
+  }
+}
+
+async function guardarCabeceraEdicion() {
+  const codigo = document.getElementById('editCodigoActual').value;
+  const fecha = document.getElementById('editFecha').value;
+  const lugar = document.getElementById('editLugar').value;
+  const involucrado = document.getElementById('editInvolucrado').value;
+  const fatal = document.getElementById('editFatal').value;
+  const cantfall = document.getElementById('editCantfall').value;
+  const descripcion = document.getElementById('editDescripcion').value;
+
+  if (!fecha || !lugar || !involucrado || !fatal || !descripcion) {
+    mostrarNotificacion('Por favor complete todos los campos obligatorios', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById('btnGuardarCabeceraEdit');
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Actualizando datos principales...');
+
+  try {
+    // Actualizar en Supabase
+    const { error } = await supabase
+      .from('jiat')
+      .update({
+        fecha: fecha,
+        lugar: lugar,
+        involucrado: involucrado,
+        fatal: fatal,
+        cantfall: parseInt(cantfall),
+        descripcion: descripcion
+      })
+      .eq('codigo', codigo);
+
+    if (error) throw error;
+
+    // Cargar detalles existentes
+    const { data: detalles, error: errorDetalles } = await supabase
+      .from('detalle_accidentes')
+      .select('*')
+      .eq('codigo', codigo)
+      .order('fechareg', { ascending: true });
+
+    if (errorDetalles) throw errorDetalles;
+
+    // Separar detalles y acciones
+    const detallesNormales = detalles.filter(d => d.subtipo !== 'ACCIÓN TOMADA');
+    const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
+
+    // Mostrar detalles existentes
+    const containerDetalles = document.getElementById('editDetallesContainer');
+    containerDetalles.innerHTML = '';
+    
+    detallesNormales.forEach((det, index) => {
+      contadorDetallesEdicion++;
+      const div = document.createElement('div');
+      div.className = 'detalle-item guardado';
+      div.innerHTML = `
+        <div class="detalle-item-readonly">
+          <div class="detalle-item-readonly-header">
+            <span class="detalle-item-readonly-tipo">${det.subtipo} #${index + 1}</span>
+            <span class="detalle-item-readonly-caracter">${det.caracter}</span>
+          </div>
+          <div class="detalle-item-readonly-descripcion">${det.descripcion}</div>
+        </div>
+      `;
+      containerDetalles.appendChild(div);
+    });
+
+    // Mostrar acciones existentes
+    const containerAcciones = document.getElementById('editAccionesContainer');
+    containerAcciones.innerHTML = '';
+    
+    acciones.forEach((accion, index) => {
+      contadorAccionesEdicion++;
+      const div = document.createElement('div');
+      div.className = 'detalle-item guardado';
+      div.innerHTML = `
+        <div class="detalle-item-readonly">
+          <div class="detalle-item-readonly-header">
+            <span class="detalle-item-readonly-tipo">✅ Acción #${index + 1} - 📅 ${formatearFechaDisplay(accion.fecha)}</span>
+            <span class="detalle-item-readonly-caracter">${accion.caracter}</span>
+          </div>
+          <div class="detalle-item-readonly-descripcion">${accion.descripcion}</div>
+        </div>
+      `;
+      containerAcciones.appendChild(div);
+    });
+
+    ocultarOverlay();
+    cabeceraEdicionGuardada = true;
+
+    // Marcar cabecera como guardada
+    const seccionCabecera = document.getElementById('editSeccionCabecera');
+    seccionCabecera.classList.add('guardada');
+    seccionCabecera.innerHTML += '<span class="badge-guardado">✓ Guardado</span>';
+    
+    document.querySelectorAll('#editSeccionCabecera input:not([readonly]), #editSeccionCabecera select:not([disabled]), #editSeccionCabecera textarea, #editSeccionCabecera button').forEach(el => {
+      el.disabled = true;
+    });
+
+    // Desbloquear detalles
+    const seccionDetalles = document.getElementById('editSeccionDetalles');
+    seccionDetalles.classList.remove('bloqueada');
+    document.getElementById('editMensajeBloqueo').style.display = 'none';
+    document.getElementById('btnAgregarDetalleEdit').disabled = false;
+
+    // Desbloquear acciones
+    const seccionAcciones = document.getElementById('editSeccionAcciones');
+    seccionAcciones.classList.remove('bloqueada');
+
+    mostrarNotificacion('✓ Datos principales actualizados correctamente. Ahora puede agregar nuevos detalles o acciones.', 'success');
+
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar y Continuar';
+    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
+
+function agregarDetalleEdicion() {
+  if (!cabeceraEdicionGuardada) {
+    mostrarNotificacion('Primero debe guardar los cambios en los datos principales', 'error');
+    return;
+  }
+
+  contadorDetallesEdicion++;
+  const container = document.getElementById('editDetallesContainer');
+  const detalleDiv = document.createElement('div');
+  detalleDiv.className = 'detalle-item';
+  detalleDiv.id = `detalleEdit-${contadorDetallesEdicion}`;
+  detalleDiv.innerHTML = `
+    <div class="detalle-item-header">
+      <div class="detalle-titulo">
+        <strong>Nuevo Detalle #${contadorDetallesEdicion}</strong>
+      </div>
+      <div>
+        <button type="button" class="btn-guardar-detalle" onclick="guardarDetalleEdicion(${contadorDetallesEdicion})" id="btnGuardarDetEdit${contadorDetallesEdicion}">
+          💾 Guardar
+        </button>
+        <button type="button" class="btn-quitar" onclick="quitarDetalleEdicion(${contadorDetallesEdicion})">× Quitar</button>
+      </div>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label>Asunto <span class="required">*</span></label>
+        <select id="subtipoEdit${contadorDetallesEdicion}" required>
+          <option value="">Seleccione</option>
+          <option value="CONCLUSIÓN">CONCLUSIÓN</option>
+          <option value="CAUSA">CAUSA</option>
+          <option value="RECOMENDACIÓN">RECOMENDACIÓN</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Carácter <span class="required">*</span></label>
+        <select id="caracterEdit${contadorDetallesEdicion}" required>
+          <option value="">Seleccione</option>
+          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
+          <option value="TÉCNICO">TÉCNICO</option>
+          <option value="OPERATIVO">OPERATIVO</option>
+          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
+          <option value="SALUD">SALUD</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descripción <span class="required">*</span></label>
+      <textarea id="descripcionDetEdit${contadorDetallesEdicion}" required placeholder="Describa la conclusión, causa o recomendación..."></textarea>
+    </div>
+  `;
+  container.appendChild(detalleDiv);
+}
+
+async function guardarDetalleEdicion(id) {
+  const subtipo = document.getElementById(`subtipoEdit${id}`).value;
+  const caracter = document.getElementById(`caracterEdit${id}`).value;
+  const descripcionDet = document.getElementById(`descripcionDetEdit${id}`).value;
+
+  if (!subtipo || !caracter || !descripcionDet) {
+    mostrarNotificacion('Por favor complete todos los campos del detalle', 'error');
+    return;
+  }
+
+  const btnGuardar = document.getElementById(`btnGuardarDetEdit${id}`);
+  btnGuardar.disabled = true;
+  btnGuardar.textContent = 'Guardando...';
+
+  mostrarOverlay('Guardando detalle...');
+
+  try {
+    // Obtener datos de la JIAT
+    const codigo = codigoActualEdicion;
+    const { data: jiat } = await supabase
+      .from('jiat')
+      .select('fecha, periodo')
+      .eq('codigo', codigo)
+      .single();
+
+    // Generar ID
+    const { data: ultimoDetalle } = await supabase
+      .from('detalle_accidentes')
+      .select('id_detalle')
+      .order('id_detalle', { ascending: false })
+      .limit(1)
+      .single();
+
+    let nuevoIdDetalle = 'DET-00001';
+    if (ultimoDetalle) {
+      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
+    }
+
+    // Insertar
+    const { error } = await supabase
+      .from('detalle_accidentes')
+      .insert([{
+        id_detalle: nuevoIdDetalle,
+        usuarioreg: usuario,
+        unidad: unidad,
+        tipo: 'JIAT',
+        codigo: codigo,
+        subtipo: subtipo,
+        fechareg: new Date().toISOString(),
+        fecha: jiat.fecha,
+        periodo: parseInt(jiat.periodo),
+        caracter: caracter,
+        descripcion: descripcionDet
+      }]);
+
+    ocultarOverlay();
+
+    if (error) throw error;
+
+    const detalleDiv = document.getElementById(`detalleEdit-${id}`);
+    detalleDiv.classList.add('guardado');
+    
+    const titulo = detalleDiv.querySelector('.detalle-titulo');
+    titulo.innerHTML += ' <span class="badge-guardado-detalle">✓ Guardado</span>';
+    
+    document.getElementById(`subtipoEdit${id}`).disabled = true;
+    document.getElementById(`caracterEdit${id}`).disabled = true;
+    document.getElementById(`descripcionDetEdit${id}`).disabled = true;
+    btnGuardar.style.display = 'none';
+
+    mostrarNotificacion('✓ Detalle guardado correctamente', 'success');
+    
+  } catch (error) {
+    console.error('Error:', error);
+    ocultarOverlay();
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar';
+    mostrarNotificacion('Error al guardar el detalle: ' + error.message, 'error');
+  }
+}
+
+function quitarDetalleEdicion(id) {
+  const elemento = document.getElementById(`detalleEdit-${id}`);
+  if (elemento && !elemento.classList.contains('guardado')) {
+    elemento.remove();
+  } else if (elemento && elemento.classList.contains('guardado')) {
+    mostrarNotificacion('No puede eliminar un detalle ya guardado', 'warning');
+  }
+}
+
+function cerrarModalEditar() {
+  if (cabeceraEdicionGuardada) {
+    if (confirm('¿Desea cerrar? Ya guardó los cambios.')) {
+      document.getElementById('modalEditar').style.display = 'none';
+      cargarDatosExcel();
+    }
+  } else {
+    document.getElementById('modalEditar').style.display = 'none';
+  }
+}
+
+// ============================================
+// MODALES
+// ============================================
+
+function nuevoRegistro() {
+  document.getElementById('modalNuevo').style.display = 'block';
+  document.getElementById('formNuevo').reset();
+  contadorDetalles = 0;
+  cabeceraGuardada = false;
+  codigoJIATActual = null;
+  fechaJIATActual = null;
+  periodoJIATActual = null;
+  
+  const seccionCabecera = document.getElementById('seccionCabecera');
+  seccionCabecera.classList.remove('guardada');
+  const badge = seccionCabecera.querySelector('.badge-guardado');
+  if (badge) badge.remove();
+  
+  document.querySelectorAll('#seccionCabecera input, #seccionCabecera select, #seccionCabecera textarea, #seccionCabecera button').forEach(el => {
+    el.disabled = false;
+  });
+  
+  document.getElementById('btnGuardarCabecera').textContent = '💾 Guardar y Continuar';
+  
+  document.getElementById('involucradosContainer').innerHTML = `
+    <div class="involucrado-item">
+      <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+    </div>
+  `;
+  
+  const seccionDetalles = document.getElementById('seccionDetalles');
+  seccionDetalles.classList.add('bloqueada');
+  document.getElementById('mensajeBloqueo').style.display = 'block';
+  document.getElementById('detallesContainer').innerHTML = '';
+  document.getElementById('btnAgregarDetalle').disabled = true;
+}
+
+function cerrarModal() {
+  if (cabeceraGuardada) {
+    if (confirm('¿Desea cerrar? Ya guardó los datos principales.')) {
+      document.getElementById('modalNuevo').style.display = 'none';
+      cargarDatosExcel();
+    }
+  } else {
+    document.getElementById('modalNuevo').style.display = 'none';
+  }
+}
+
+function cerrarModalCompleto() {
+  if (cabeceraGuardada) {
+    mostrarNotificacion('✓ JIAT registrada correctamente con código: ' + codigoJIATActual, 'success');
+    document.getElementById('modalNuevo').style.display = 'none';
+    cargarDatosExcel();
+  } else {
+    if (confirm('No ha guardado ningún dato. ¿Desea cerrar de todos modos?')) {
+      document.getElementById('modalNuevo').style.display = 'none';
+    }
   }
 }
 
@@ -1596,41 +1419,15 @@ function ocultarOverlay() {
   document.getElementById('overlayGlobal').style.display = 'none';
 }
 
-window.onclick = function(event) {
-  const modalNuevo = document.getElementById('modalNuevo');
-  const modalAcciones = document.getElementById('modalAcciones');
-  const modalVerDetalle = document.getElementById('modalVerDetalle');
-  const modalEditar = document.getElementById('modalEditar');
-  
-  if (event.target == modalNuevo) {
-    cerrarModal();
-  }
-  
-  if (event.target == modalAcciones) {
-    cerrarModalAcciones();
-  }
-  
-  if (event.target == modalVerDetalle) {
-    cerrarModalVerDetalle();
-  }
-  
-  if (event.target == modalEditar) {
-    cerrarModalEditar(); // Permitir cerrar al hacer clic fuera
-  }
-}
-  // Función para mostrar notificaciones visuales
 function mostrarNotificacion(mensaje, tipo = 'info') {
-  // Remover notificación anterior si existe
   const notifAnterior = document.querySelector('.notificacion-custom');
   if (notifAnterior) {
     notifAnterior.remove();
   }
   
-  // Crear elemento de notificación
   const notificacion = document.createElement('div');
   notificacion.className = 'notificacion-custom';
   
-  // Configurar estilos según tipo
   const colores = {
     'error': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
     'success': { bg: '#d4edda', border: '#28a745', text: '#155724' },
@@ -1638,63 +1435,77 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     'info': { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' }
   };
   
-  const color = colores[tipo] || colores['info'];
+  const color = colores[tipo] || colores.info;
   
   notificacion.style.cssText = `
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: ${color.bg};
-    border: 2px solid ${color.border};
+    right: 20px;
+    background: ${color.bg};
     color: ${color.text};
-    padding: 20px 30px;
+    border: 2px solid ${color.border};
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 15px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     z-index: 10000;
-    max-width: 500px;
-    font-size: 1rem;
-    font-weight: 500;
-    animation: slideDown 0.3s ease-out;
+    max-width: 400px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
   `;
   
-  notificacion.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <span style="font-size: 1.5rem;">${tipo === 'error' ? '⚠️' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
-      <div style="flex: 1;">${mensaje}</div>
-      <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: ${color.text};">×</button>
-    </div>
-  `;
-  
+  notificacion.innerHTML = mensaje.replace(/\n/g, '<br>');
   document.body.appendChild(notificacion);
   
-  // Auto-remover después de 5 segundos
   setTimeout(() => {
-    if (notificacion.parentElement) {
-      notificacion.style.animation = 'slideUp 0.3s ease-out';
-      setTimeout(() => notificacion.remove(), 300);
-    }
+    notificacion.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => notificacion.remove(), 300);
   }, 5000);
 }
-// Variable global para manejar el callback del confirm personalizado
-let confirmCallback = null;
 
-// Función para mostrar confirmación personalizada
+// Sistema de confirmación personalizado
+let resolverConfirmacion = null;
+
 function mostrarConfirmacion(mensaje, titulo = '⚠️ Confirmar acción') {
   return new Promise((resolve) => {
+    resolverConfirmacion = resolve;
     document.getElementById('tituloConfirmacion').textContent = titulo;
     document.getElementById('mensajeConfirmacion').innerHTML = mensaje;
-    document.getElementById('modalConfirmacion').style.display = 'block';
-    
-    confirmCallback = resolve;
+    document.getElementById('modalConfirmacion').style.display = 'flex';
   });
 }
 
-// Función para cerrar confirmación
-function cerrarConfirmacion(resultado) {
+function cerrarConfirmacion(respuesta) {
   document.getElementById('modalConfirmacion').style.display = 'none';
-  if (confirmCallback) {
-    confirmCallback(resultado);
-    confirmCallback = null;
+  if (resolverConfirmacion) {
+    resolverConfirmacion(respuesta);
+    resolverConfirmacion = null;
   }
 }
+
+// Agregar estilos de animación
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+`;
+document.head.appendChild(style);
