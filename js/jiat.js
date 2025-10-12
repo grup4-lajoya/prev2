@@ -1091,18 +1091,23 @@ async function eliminarDetalleEditado(id) {
   const detalleDiv = document.getElementById(`editDetalle-${id}`);
   
   if (!detalleDiv) {
-    mostrarNotificacion('Error: No se encontró el detalle');
+    mostrarNotificacion('Error: No se encontró el detalle', 'error');
     return;
   }
   
   const idDetalle = detalleDiv.getAttribute('data-id-detalle');
   
   if (!idDetalle) {
-    mostrarNotificacion('Error: ID de detalle no válido');
+    mostrarNotificacion('Error: ID de detalle no válido', 'error');
     return;
   }
   
-  if (!confirm('¿Está seguro de eliminar este detalle?')) {
+  const confirmar = await mostrarConfirmacion(
+    '¿Está seguro de eliminar este detalle?<br><br><strong>Esta acción no se puede deshacer.</strong>',
+    '🗑️ Confirmar Eliminación'
+  );
+  
+  if (!confirmar) {
     return;
   }
   
@@ -1197,7 +1202,12 @@ async function eliminarAccionEditada(id) {
   const accionDiv = document.getElementById(`editAccion-${id}`);
   const idDetalle = accionDiv.getAttribute('data-id-detalle');
   
-  if (!confirm('¿Eliminar esta acción?')) return;
+  const confirmar = await mostrarConfirmacion(
+    '¿Está seguro de eliminar esta acción?<br><br><strong>Esta acción no se puede deshacer.</strong>',
+    '🗑️ Confirmar Eliminación'
+  );
+  
+  if (!confirmar) return;
   
   mostrarOverlay('Eliminando...');
   
@@ -1502,9 +1512,20 @@ function cerrarModalAcciones() {
 // ELIMINAR REGISTRO
 // ============================================
 
-function eliminarRegistro(index) {
+async function eliminarRegistro(index) {
   const registro = datosFiltrados[index];
-  if (confirm('¿Eliminar el registro ' + registro.CODIGO + '?')) {
+  
+  const confirmar = await mostrarConfirmacion(
+    `¿Está seguro de eliminar el registro <strong>${registro.CODIGO}</strong>?<br><br>` +
+    `<strong>⚠️ ATENCIÓN:</strong> Se eliminará:<br>` +
+    `• La JIAT completa<br>` +
+    `• Todos los detalles (conclusiones, causas, recomendaciones)<br>` +
+    `• Todas las acciones tomadas<br><br>` +
+    `<strong>Esta acción NO se puede deshacer.</strong>`,
+    '🗑️ Confirmar Eliminación de JIAT'
+  );
+  
+  if (confirmar) {
     mostrarOverlay('Eliminando...');
     
     fetch(API_URL, {
@@ -1626,4 +1647,26 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
       setTimeout(() => notificacion.remove(), 300);
     }
   }, 5000);
+}
+// Variable global para manejar el callback del confirm personalizado
+let confirmCallback = null;
+
+// Función para mostrar confirmación personalizada
+function mostrarConfirmacion(mensaje, titulo = '⚠️ Confirmar acción') {
+  return new Promise((resolve) => {
+    document.getElementById('tituloConfirmacion').textContent = titulo;
+    document.getElementById('mensajeConfirmacion').innerHTML = mensaje;
+    document.getElementById('modalConfirmacion').style.display = 'block';
+    
+    confirmCallback = resolve;
+  });
+}
+
+// Función para cerrar confirmación
+function cerrarConfirmacion(resultado) {
+  document.getElementById('modalConfirmacion').style.display = 'none';
+  if (confirmCallback) {
+    confirmCallback(resultado);
+    confirmCallback = null;
+  }
 }
