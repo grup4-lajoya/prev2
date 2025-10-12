@@ -34,6 +34,7 @@
   input:focus { border-color: #0056b3; outline: none; box-shadow: 0 0 5px rgba(0,86,179,0.5); }
   button { padding: 9px; margin-top: 10px; border: none; background: #0056b3; color: #fff; cursor: pointer; transition: background 0.2s, box-shadow 0.2s; }
   button:hover { background: #003366; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  button:disabled { background: #ccc; cursor: not-allowed; }
   #mensajeProcesando { display: none; margin-top: 10px; font-weight: bold; font-size: 14px; color: #0056b3; }
   #mensajeProcesando span { display: inline-block; animation: blink 1s infinite; }
   #mensajeProcesando span:nth-child(2) { animation-delay: 0.2s; }
@@ -49,6 +50,17 @@
     font-size: 14px;
     border: 1px solid #c3e6cb;
   }
+
+  .mensaje-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border: 1px solid #f5c6cb;
+    display: none;
+  }
   
   @media (max-width: 400px) {
     #loginForm { padding: 20px; width: 90%; }
@@ -56,75 +68,112 @@
     h2 { font-size: 20px; }
   }
 </style>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <form id="loginForm">
   <h2>Iniciar Sesión</h2>
   <div id="mensajeLogout" class="mensaje-logout" style="display:none;"></div>
-  <input type="text" id="usuario" placeholder="Usuario" required>
-  <input type="password" id="clave" placeholder="Clave" required>
-  <button type="submit">Ingresar</button>
+  <div id="mensajeError" class="mensaje-error"></div>
+  <input type="text" id="usuario" placeholder="Usuario" required autocomplete="username">
+  <input type="password" id="clave" placeholder="Clave" required autocomplete="current-password">
+  <button type="submit" id="btnLogin">Ingresar</button>
   <div id="mensajeProcesando">Procesando<span>.</span><span>.</span><span>.</span></div>
 </form>
+
 <script>
-  // Verificar si viene de un logout (parámetro en URL)
+  // Configuración de Supabase - REEMPLAZA CON TUS CREDENCIALES
+  const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+  const SUPABASE_ANON_KEY = 'tu-anon-key-aqui';
+  
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Verificar si viene de un logout
   const urlParams = new URLSearchParams(window.location.search);
   const fromLogout = urlParams.get('logout');
   
   if(fromLogout === 'true') {
-    // Limpiar sesión
     localStorage.clear();
     
-    // Mostrar mensaje de cierre de sesión exitoso
     const mensajeLogout = document.getElementById('mensajeLogout');
-    mensajeLogout.textContent = '✓ Sesión cerrada exitosamente';
+    mensajeLogout.textContent = '✔ Sesión cerrada exitosamente';
     mensajeLogout.style.display = 'block';
     
-    // Limpiar URL sin recargar
     window.history.replaceState({}, document.title, window.location.pathname);
     
-    // Ocultar mensaje después de 3 segundos
     setTimeout(() => {
       mensajeLogout.style.display = 'none';
     }, 3000);
   } else if(localStorage.getItem("usuario")) {
-    // Si ya hay sesión activa y NO viene de logout, redirige al dashboard
     window.location.replace("index.html");
   }
-  
+
+  // Función para mostrar error
+  function mostrarError(mensaje) {
+    const mensajeError = document.getElementById('mensajeError');
+    mensajeError.textContent = mensaje;
+    mensajeError.style.display = 'block';
+    
+    setTimeout(() => {
+      mensajeError.style.display = 'none';
+    }, 5000);
+  }
+
+  // Manejo del formulario de login
   document.getElementById("loginForm").addEventListener("submit", async function(e){
     e.preventDefault();
+    
     const usuario = document.getElementById("usuario").value.trim();
     const clave = document.getElementById("clave").value.trim();
     const mensaje = document.getElementById("mensajeProcesando");
+    const btnLogin = document.getElementById("btnLogin");
+    
+    // Mostrar indicador de carga
     mensaje.style.display = "block";
-    const url = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
+    btnLogin.disabled = true;
     
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: new URLSearchParams({usuario, clave, token: "#####%%%256//&&*****"})
-      });
-      const result = await response.json();
+      // Consulta a Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('usuario', usuario)
+        .eq('clave', clave)
+        .single();
       
-      if(result.success){
-        // Guardar todos los datos del usuario
+      mensaje.style.display = "none";
+      btnLogin.disabled = false;
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          mostrarError("Usuario o clave incorrectos");
+        } else {
+          console.error('Error de Supabase:', error);
+          mostrarError("Error de conexión. Intente nuevamente.");
+        }
+        return;
+      }
+      
+      if (data) {
+        // Guardar datos de sesión
         localStorage.setItem("usuario", usuario);
-        localStorage.setItem("datos", result.datos || "");
-        localStorage.setItem("rol", result.rol || "");
-        localStorage.setItem("correo", result.correo || "");
-        localStorage.setItem("unidad", result.unidad || "");
+        localStorage.setItem("datos", data.datos || "");
+        localStorage.setItem("rol", data.rol || "");
+        localStorage.setItem("correo", data.correo || "");
+        localStorage.setItem("unidad", data.unidad || "");
         
-        // Reemplaza historial y redirige
+        // Redirigir al sistema
         window.location.replace("index.html");
       } else {
-        mensaje.style.display = "none";
-        alert("Usuario o clave incorrectos");
+        mostrarError("Usuario o clave incorrectos");
       }
+      
     } catch(err){
       mensaje.style.display = "none";
-      console.error(err);
-      alert("Error de conexión. Intente nuevamente.");
+      btnLogin.disabled = false;
+      console.error('Error:', err);
+      mostrarError("Error de conexión. Intente nuevamente.");
     }
   });
 </script>
