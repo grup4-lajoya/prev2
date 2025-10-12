@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Registro Accidentes / Incidentes</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { 
     margin:0; 
@@ -56,7 +58,6 @@
   nav a:hover { background-color:#003366; color:#e6e6e6; }
   nav a.active { background-color:#0056A6; color:#fff; }
 
-  /* Estilos para menú desplegable */
   .dropdown {
     position: relative;
   }
@@ -136,7 +137,6 @@
     cursor:pointer; 
     font-weight: 500;
     transition: background 0.3s;
-    /* REMOVIDO: display: none; */
   }
   #logoutButton:hover { background:#003366; }
 
@@ -152,10 +152,8 @@
     padding: 8px 16px;
     border-radius: 6px;
     z-index: 1001;
-    /* REMOVIDO: display: none; */
   }
 
-  /* Overlay de carga */
   #loading-overlay {
     position: fixed;
     top:0;
@@ -190,6 +188,16 @@
   #loading-overlay.hidden {
     display: none;
   }
+
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px;
+    border: 1px solid #f5c6cb;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -212,13 +220,18 @@
 </div>
 
 <script>
+  // Configuración de Supabase - REEMPLAZA CON TUS CREDENCIALES
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   // Validación de sesión
   if(!localStorage.getItem("usuario")) {
     window.location.replace("login.html");
   }
 
   const rol = localStorage.getItem("rol");
-  const urlScript = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
   
   let menusData = {};
   let primeraVista = null;
@@ -226,31 +239,63 @@
   // Cargar menús al iniciar
   async function cargarMenus() {
     try {
-      const response = await fetch(`${urlScript}?action=getMenusByRole&rol=${encodeURIComponent(rol)}`);
-      const result = await response.json();
+      // Consultar menús desde Supabase
+      const { data, error } = await supabase
+        .from('rolesmenu')
+        .select('*')
+        .eq('rol', rol)
+        .eq('activo', true)
+        .order('id');
       
-      if(result.success) {
-        menusData = result.menus;
-        construirMenu();
-        crearIframes();
-        mostrarInfoUsuario();
-        if(primeraVista) {
-          mostrar(primeraVista);
+      if (error) {
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        mostrarError("No se encontraron menús para su rol");
+        return;
+      }
+      
+      // Organizar menús
+      menusData = {};
+      data.forEach(item => {
+        const menu = item.menu;
+        const submenu = item.submenu || '';
+        const url = item.url;
+        
+        if (!menusData[menu]) {
+          menusData[menu] = [];
         }
         
-        // Ocultar overlay después de cargar todo
-        setTimeout(() => {
-          document.getElementById("loading-overlay").classList.add("hidden");
-        }, 300);
-      } else {
-        alert("Error al cargar los menús: " + (result.message || "Error desconocido"));
-        document.getElementById("loading-overlay").classList.add("hidden");
+        menusData[menu].push({
+          submenu: submenu,
+          url: url
+        });
+      });
+      
+      construirMenu();
+      crearIframes();
+      mostrarInfoUsuario();
+      
+      if(primeraVista) {
+        mostrar(primeraVista);
       }
+      
+      // Ocultar overlay
+      setTimeout(() => {
+        document.getElementById("loading-overlay").classList.add("hidden");
+      }, 300);
+      
     } catch(err) {
       console.error("Error al cargar menús:", err);
-      alert("Error de conexión al cargar menús");
+      mostrarError("Error de conexión al cargar menús: " + err.message);
       document.getElementById("loading-overlay").classList.add("hidden");
     }
+  }
+
+  function mostrarError(mensaje) {
+    const contenido = document.getElementById("contenido");
+    contenido.innerHTML = `<div class="error-message"><strong>⚠️ Error:</strong><br>${mensaje}</div>`;
   }
 
   // Función para mostrar información del usuario
@@ -262,7 +307,6 @@
     if (userInfoDiv) {
       let textoInfo = "";
       
-      // Solo mostrar unidad y datos, NO el usuario
       if (unidad && datos) {
         textoInfo = `${unidad} - ${datos}`;
       } else if (unidad) {
@@ -274,7 +318,7 @@
       if (textoInfo) {
         userInfoDiv.textContent = textoInfo;
       } else {
-        userInfoDiv.style.display = "none"; // Ocultar si no hay info
+        userInfoDiv.style.display = "none";
       }
     }
   }
