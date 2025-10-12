@@ -691,9 +691,17 @@ function cerrarModalVerDetalle() {
 
 async function eliminarRegistro(index) {
   const registro = datosFiltrados[index];
+  const codigo = registro.CODIGO;
+  const unidadRegistro = registro.UNIDAD;
+  
+  // Validar permisos
+  if (rol !== 'ADMIN' && rol !== 'admin' && unidadRegistro !== unidad) {
+    mostrarNotificacion('No tiene permisos para eliminar este JIAT', 'error');
+    return;
+  }
   
   const confirmar = await mostrarConfirmacion(
-    `¿Está seguro de eliminar el registro <strong>${registro.CODIGO}</strong>?<br><br>` +
+    `¿Está seguro de eliminar el registro <strong>${codigo}</strong> de la unidad <strong>${unidadRegistro}</strong>?<br><br>` +
     `<strong>⚠️ ATENCIÓN:</strong> Se eliminará:<br>` +
     `• La JIAT completa<br>` +
     `• Todos los detalles (conclusiones, causas, recomendaciones)<br>` +
@@ -703,37 +711,62 @@ async function eliminarRegistro(index) {
   );
   
   if (confirmar) {
-    mostrarOverlay('Eliminando...');
+    mostrarOverlay('Eliminando JIAT y todos sus detalles...');
     
     try {
-      // Validar permisos
-      if (rol !== 'ADMIN' && rol !== 'admin' && registro.UNIDAD !== unidad) {
-        throw new Error('No tiene permisos para eliminar este JIAT');
-      }
-
-      // Eliminar detalles primero
-      const { error: errorDetalles } = await supabase
+      console.log('=== ELIMINANDO JIAT ===');
+      console.log('Código:', codigo);
+      console.log('Unidad:', unidadRegistro);
+      console.log('Usuario en sesión:', unidad);
+      
+      // PASO 1: Eliminar todos los detalles relacionados con este código
+      const { error: errorDetalles, data: detallesEliminados } = await supabase
         .from('detalle_accidentes')
         .delete()
-        .eq('codigo', registro.CODIGO);
+        .eq('codigo', codigo)
+        .select();
 
-      if (errorDetalles) throw errorDetalles;
+      if (errorDetalles) {
+        console.error('Error al eliminar detalles:', errorDetalles);
+        throw errorDetalles;
+      }
+      
+      console.log('Detalles eliminados:', detallesEliminados ? detallesEliminados.length : 0);
 
-      // Eliminar JIAT
-      const { error: errorJIAT } = await supabase
+      // PASO 2: Eliminar la JIAT (filtrar por codigo Y unidad para seguridad)
+      const { error: errorJIAT, data: jiatEliminada } = await supabase
         .from('jiat')
         .delete()
-        .eq('codigo', registro.CODIGO);
+        .eq('codigo', codigo)
+        .eq('unidad', unidadRegistro)
+        .select();
 
-      if (errorJIAT) throw errorJIAT;
+      if (errorJIAT) {
+        console.error('Error al eliminar JIAT:', errorJIAT);
+        throw errorJIAT;
+      }
+      
+      console.log('JIAT eliminada:', jiatEliminada);
+      console.log('=== FIN ELIMINACIÓN ===');
+
+      // Verificar que se eliminó algo
+      if (!jiatEliminada || jiatEliminada.length === 0) {
+        throw new Error('No se encontró la JIAT para eliminar o no tiene permisos');
+      }
 
       await cargarDatosExcel();
       ocultarOverlay();
-      mostrarNotificacion('✓ Eliminado correctamente', 'success');
+      mostrarNotificacion(
+        `✓ JIAT eliminada correctamente:<br>` +
+        `• Código: ${codigo}<br>` +
+        `• Detalles eliminados: ${detallesEliminados ? detallesEliminados.length : 0}`,
+        'success'
+      );
       
     } catch (error) {
+      console.error('Error completo:', error);
       ocultarOverlay();
-      mostrarNotificacion('Error: ' + error.message, 'error');
+      mostrarNotificacion('Error al eliminar: ' + error.message, 'error');
     }
   }
 }
