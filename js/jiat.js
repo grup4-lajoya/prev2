@@ -133,26 +133,26 @@ async function guardarCabecera() {
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Validando...';
 
-  // VALIDACIÓN: Verificar que el número sea único en la unidad
+  // VALIDACIÓN: Verificar que el número sea único SOLO en la unidad del usuario logueado
   try {
-    const { data: existente, error: errorValidacion } = await supabase
+    const { data: existentes, error: errorValidacion } = await supabase
       .from('jiat')
-      .select('codigo')
+      .select('codigo, unidad')
       .eq('numero', numero)
       .eq('periodo', periodo)
-      .eq('unidad', unidad)
-      .single();
+      .eq('unidad', unidad); // Solo valida en la unidad del usuario
 
-    if (errorValidacion && errorValidacion.code !== 'PGRST116') {
+    if (errorValidacion) {
       throw errorValidacion;
     }
 
-    if (existente) {
+    // Si existe al menos un registro con ese número+periodo en esta unidad
+    if (existentes && existentes.length > 0) {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
       
       mostrarNotificacion(
-        `⚠️ ERROR: Ya existe un JIAT con el número ${numero} y periodo ${periodo} en la unidad ${unidad}. Por favor, use otro número para esta unidad.`, 
+        `⚠️ ERROR: Ya existe un JIAT con el número ${numero} y periodo ${periodo} en la unidad ${unidad}.<br><br>Por favor, use otro número para esta unidad.`, 
         'error'
       );
       
