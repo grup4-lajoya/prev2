@@ -585,14 +585,16 @@ function cerrarModalCompleto() {
 // VER DETALLE COMPLETO - CORRECCIÓN 2
 // ============================================
 
-async function verDetalle(index) {
+  async function verDetalle(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
+  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
   
   mostrarOverlay('Cargando información...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
+    
     const data = await response.json();
     
     ocultarOverlay();
@@ -682,14 +684,16 @@ function cerrarModalVerDetalle() {
 // EDITAR REGISTRO
 // ============================================
 
-async function editarRegistro(index) {
+  async function editarRegistro(index) {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
+  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
   
   mostrarOverlay('Cargando información...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}`);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigo)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
+    
     const data = await response.json();
     
     ocultarOverlay();
@@ -1292,14 +1296,16 @@ function verificarCambiosEnEdicion() {
 // ACCIONES TOMADAS
 // ============================================
 
-async function registrarAcciones(index) {
+  async function registrarAcciones(index) {
   const registro = datosFiltrados[index];
   codigoJIATAcciones = registro.CODIGO;
+  const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
   
   mostrarOverlay('Cargando...');
   
   try {
-    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}&unidad=${encodeURIComponent(unidad)}`);
+    const response = await fetch(`${API_URL}?action=obtenerDetalleJIAT&codigo=${encodeURIComponent(codigoJIATAcciones)}&unidad=${encodeURIComponent(unidad)}&unidadRegistro=${encodeURIComponent(unidadRegistro)}`);
+    
     const data = await response.json();
     
     ocultarOverlay();
