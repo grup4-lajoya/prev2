@@ -62,6 +62,9 @@ function actualizarRangoFechas() {
     inputFecha.min = `${periodo}-01-01`;
     inputFecha.max = `${periodo}-12-31`;
     inputFecha.value = '';
+    // AGREGAR ESTAS 2 LÍNEAS NUEVAS ⬇️
+    document.getElementById('numero').style.borderColor = '';
+    document.getElementById('periodo').style.borderColor = '';
   }
 }
 
