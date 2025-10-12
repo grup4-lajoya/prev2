@@ -361,5 +361,21 @@
 </div>
 
 <script src="js/jiat.js"></script>
+  <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span style="font-size: 1.5rem;">⚠️</span>
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
