@@ -1020,11 +1020,42 @@ async function editarRegistro(index) {
 
     if (errorDetalles) throw errorDetalles;
 
-    // Resetear variables
+    // ===== RESET COMPLETO DEL MODAL =====
     contadorDetallesEdicion = 0;
     contadorAccionesEdicion = 0;
     cabeceraEdicionGuardada = false;
     codigoActualEdicion = codigo;
+
+    // Resetear sección de cabecera
+    const seccionCabecera = document.getElementById('editSeccionCabecera');
+    seccionCabecera.classList.remove('guardada');
+    const badgeGuardado = seccionCabecera.querySelector('.badge-guardado');
+    if (badgeGuardado) badgeGuardado.remove();
+    
+    // Habilitar todos los campos de cabecera (excepto número y periodo que son readonly/disabled)
+    document.querySelectorAll('#editSeccionCabecera input:not([readonly]), #editSeccionCabecera select:not([disabled]), #editSeccionCabecera textarea').forEach(el => {
+      el.disabled = false;
+    });
+    
+    // Habilitar botón de guardar cabecera
+    const btnGuardar = document.getElementById('btnGuardarCabeceraEdit');
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = '💾 Guardar y Continuar';
+    
+    // Bloquear sección de detalles
+    const seccionDetalles = document.getElementById('editSeccionDetalles');
+    seccionDetalles.classList.add('bloqueada');
+    document.getElementById('editMensajeBloqueo').style.display = 'block';
+    document.getElementById('btnAgregarDetalleEdit').disabled = true;
+    
+    // Bloquear sección de acciones
+    const seccionAcciones = document.getElementById('editSeccionAcciones');
+    seccionAcciones.classList.add('bloqueada');
+    
+    // Limpiar contenedores
+    document.getElementById('editDetallesContainer').innerHTML = '';
+    document.getElementById('editAccionesContainer').innerHTML = '';
+    // ===== FIN DEL RESET =====
 
     // Cargar datos en el formulario
     document.getElementById('editCodigoActual').value = codigo;
@@ -1036,25 +1067,6 @@ async function editarRegistro(index) {
     document.getElementById('editFatal').value = cabecera.fatal;
     document.getElementById('editCantfall').value = cabecera.cantfall;
     document.getElementById('editDescripcion').value = cabecera.descripcion;
-
-    // Habilitar sección de cabecera
-    const seccionCabecera = document.getElementById('editSeccionCabecera');
-    seccionCabecera.classList.remove('guardada');
-    const badge = seccionCabecera.querySelector('.badge-guardado');
-    if (badge) badge.remove();
-
-    // Bloquear detalles hasta guardar cabecera
-    const seccionDetalles = document.getElementById('editSeccionDetalles');
-    seccionDetalles.classList.add('bloqueada');
-    document.getElementById('editMensajeBloqueo').style.display = 'block';
-    document.getElementById('btnAgregarDetalleEdit').disabled = true;
-
-    const seccionAcciones = document.getElementById('editSeccionAcciones');
-    seccionAcciones.classList.add('bloqueada');
-
-    // Limpiar contenedores
-    document.getElementById('editDetallesContainer').innerHTML = '';
-    document.getElementById('editAccionesContainer').innerHTML = '';
 
     ocultarOverlay();
     document.getElementById('modalEditar').style.display = 'block';
