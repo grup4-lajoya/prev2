@@ -701,6 +701,15 @@ function cerrarModalVerDetalle() {
   const registro = datosFiltrados[index];
   const codigo = registro.CODIGO;
   const unidadRegistro = registro.UNIDAD; // Unidad del registro seleccionado
+
+      // LOGS PARA DEBUG
+  console.log("=== EDITAR REGISTRO ===");
+  console.log("Index:", index);
+  console.log("Registro completo:", registro);
+  console.log("Código:", codigo);
+  console.log("Unidad usuario logueado:", unidad);
+  console.log("Unidad del registro:", unidadRegistro);
+  console.log("======================");
   
   mostrarOverlay('Cargando información...');
   
