@@ -32,6 +32,11 @@ const rol = localStorage.getItem("rol") || "";
 if (!usuario) {
   window.location.replace("login.html");
 }
+console.log("=== DATOS DE SESIÓN ===");
+console.log("Usuario:", usuario);
+console.log("Unidad:", unidad);
+console.log("Rol:", rol);
+console.log("=== FIN SESIÓN ===");
 
 window.onload = function() {
   cargarPeriodos();
@@ -379,6 +384,11 @@ async function cargarDatosExcel() {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     
     const url = `${API_URL}?action=obtenerJIAT&rol=${encodeURIComponent(rol)}&unidad=${encodeURIComponent(unidad)}`;
+    console.log("=== URL LLAMADA ===");
+console.log("URL:", url);
+console.log("Rol:", rol);
+console.log("Unidad:", unidad);
+console.log("=== FIN URL ===");
     
     const response = await fetch(url, {
       signal: controller.signal
@@ -389,13 +399,16 @@ async function cargarDatosExcel() {
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);
     }
-    
     const datos = await response.json();
+    
+    console.log("=== DATOS RECIBIDOS DEL BACKEND ===");
+    console.log(datos);
+    console.log("=== FIN DATOS ===");
     
     if (datos.error) {
       throw new Error(datos.error);
     }
-    
+   
     datosCompletos = datos.sort((a, b) => {
       const fechaA = convertirFecha(a.FECHA);
       const fechaB = convertirFecha(b.FECHA);
