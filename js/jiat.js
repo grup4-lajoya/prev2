@@ -1568,6 +1568,7 @@ window.onclick = function(event) {
   if (event.target == modalEditar) {
     cerrarModalEditar(); // Permitir cerrar al hacer clic fuera
   }
+}
   // Función para mostrar notificaciones visuales
 function mostrarNotificacion(mensaje, tipo = 'info') {
   // Remover notificación anterior si existe
@@ -1625,5 +1626,4 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
       setTimeout(() => notificacion.remove(), 300);
     }
   }, 5000);
-}
 }
