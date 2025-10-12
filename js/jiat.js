@@ -154,7 +154,7 @@ if (resultValidacion.existe) {
     console.error('Error al validar:', error);
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar y Continuar';
-    alert('Error al validar el número de JIAT');
+    mostrarNotificacion('Error al validar el número de JIAT');
     return;
   }
 
@@ -212,7 +212,7 @@ if (resultValidacion.existe) {
       document.getElementById('mensajeBloqueo').style.display = 'none';
       document.getElementById('btnAgregarDetalle').disabled = false;
 
-      alert(`✓ Datos principales guardados correctamente.\nCódigo: ${codigo}\n\nAhora puede agregar conclusiones, causas y recomendaciones.`);
+      mostrarNotificacion(`✓ Datos principales guardados correctamente.\nCódigo: ${codigo}\n\nAhora puede agregar conclusiones, causas y recomendaciones.`);
     } else {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
@@ -223,7 +223,7 @@ if (resultValidacion.existe) {
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar y Continuar';
-    alert('Error al guardar los datos principales: ' + error.message);
+    mostrarNotificacion('Error al guardar los datos principales: ' + error.message);
   }
 }
 
@@ -233,7 +233,7 @@ if (resultValidacion.existe) {
 
 function agregarDetalle() {
   if (!cabeceraGuardada) {
-    alert('Primero debe guardar los datos principales');
+    mostrarNotificacion('Primero debe guardar los datos principales');
     return;
   }
 
@@ -293,7 +293,7 @@ async function guardarDetalle(id) {
   const descripcionDet = document.getElementById(`descripcionDet${id}`).value;
 
   if (!subtipo || !caracter || !descripcionDet) {
-    alert('Por favor complete todos los campos del detalle');
+    mostrarNotificacion('Por favor complete todos los campos del detalle');
     return;
   }
 
@@ -345,14 +345,14 @@ async function guardarDetalle(id) {
     } else {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar';
-      alert('Error al guardar el detalle: ' + result.error);
+      mostrarNotificacion('Error al guardar el detalle: ' + result.error);
     }
   } catch (error) {
     console.error('Error:', error);
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar';
-    alert('Error al guardar el detalle: ' + error.message);
+    mostrarNotificacion('Error al guardar el detalle: ' + error.message);
   }
 }
 
@@ -361,7 +361,7 @@ function quitarDetalle(id) {
   if (elemento && !elemento.classList.contains('guardado')) {
     elemento.remove();
   } else if (elemento && elemento.classList.contains('guardado')) {
-    alert('No puede eliminar un detalle ya guardado.');
+    mostrarNotificacion('No puede eliminar un detalle ya guardado.');
   }
 }
 
@@ -571,7 +571,7 @@ function cerrarModal() {
 
 function cerrarModalCompleto() {
   if (cabeceraGuardada) {
-    alert('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
+    mostrarNotificacion('✓ JIAT registrada correctamente con código: ' + codigoJIATActual);
     document.getElementById('modalNuevo').style.display = 'none';
     cargarDatosExcel();
   } else {
@@ -598,7 +598,7 @@ async function verDetalle(index) {
     ocultarOverlay();
     
     if (!data.success) {
-      alert('Error al cargar la información: ' + data.error);
+      mostrarNotificacion('Error al cargar la información: ' + data.error);
       return;
     }
     
@@ -608,7 +608,7 @@ async function verDetalle(index) {
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    alert('Error al cargar la información del JIAT: ' + error.message);
+    mostrarNotificacion('Error al cargar la información del JIAT: ' + error.message);
   }
 }
 
@@ -695,7 +695,7 @@ async function editarRegistro(index) {
     ocultarOverlay();
     
     if (!data.success) {
-      alert('Error al cargar la información: ' + data.error);
+      mostrarNotificacion('Error al cargar la información: ' + data.error);
       return;
     }
     
@@ -705,7 +705,7 @@ async function editarRegistro(index) {
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -790,7 +790,7 @@ async function guardarCabeceraEdicion() {
   const descripcion = document.getElementById('editDescripcion').value.trim();
   
   if (!fecha || !lugar || !involucrado || !fatal || !descripcion) {
-    alert('⚠️ Por favor complete todos los campos obligatorios');
+    mostrarNotificacion('⚠️ Por favor complete todos los campos obligatorios');
     return;
   }
   
@@ -853,15 +853,15 @@ async function guardarCabeceraEdicion() {
         }
       }
       
-      alert('✅ Cabecera actualizada correctamente.\n\nAhora puede editar los detalles y acciones.');
+      mostrarNotificacion('✅ Cabecera actualizada correctamente.\n\nAhora puede editar los detalles y acciones.');
       
     } else {
-      alert('⚠️ Error: ' + (result.error || 'Error desconocido'));
+      mostrarNotificacion('⚠️ Error: ' + (result.error || 'Error desconocido'));
     }
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    alert('⚠️ Error al guardar: ' + error.message);
+    mostrarNotificacion('⚠️ Error al guardar: ' + error.message);
   }
 }
 
@@ -1023,7 +1023,7 @@ async function guardarDetalleEditado(id) {
   const descripcion = document.getElementById(`editDescDet${id}`).value.trim();
   
   if (!subtipo || !caracter || !descripcion) {
-    alert('Complete todos los campos');
+    mostrarNotificacion('Complete todos los campos');
     return;
   }
   
@@ -1076,13 +1076,13 @@ async function guardarDetalleEditado(id) {
       const btn = document.getElementById(`btnGuardarDetEdit${id}`);
       if (btn) btn.style.display = 'none';
       
-      alert('✅ Guardado correctamente');
+      mostrarNotificacion('✅ Guardado correctamente');
     } else {
-      alert('Error: ' + result.error);
+      mostrarNotificacion('Error: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -1091,14 +1091,14 @@ async function eliminarDetalleEditado(id) {
   const detalleDiv = document.getElementById(`editDetalle-${id}`);
   
   if (!detalleDiv) {
-    alert('Error: No se encontró el detalle');
+    mostrarNotificacion('Error: No se encontró el detalle');
     return;
   }
   
   const idDetalle = detalleDiv.getAttribute('data-id-detalle');
   
   if (!idDetalle) {
-    alert('Error: ID de detalle no válido');
+    mostrarNotificacion('Error: ID de detalle no válido');
     return;
   }
   
@@ -1124,14 +1124,14 @@ async function eliminarDetalleEditado(id) {
     
     if (result.success) {
       detalleDiv.remove();
-      alert('✅ Detalle eliminado correctamente');
+      mostrarNotificacion('✅ Detalle eliminado correctamente');
     } else {
-      alert('⚠️ Error al eliminar: ' + result.error);
+      mostrarNotificacion('⚠️ Error al eliminar: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
     console.error('Error:', error);
-    alert('⚠️ Error: ' + error.message);
+    mostrarNotificacion('⚠️ Error: ' + error.message);
   }
 }
 
@@ -1151,7 +1151,7 @@ async function guardarAccionEditada(id) {
   const descripcion = document.getElementById(`editDescAccion${id}`).value.trim();
   
   if (!fecha || !caracter || !descripcion) {
-    alert('Complete todos los campos');
+    mostrarNotificacion('Complete todos los campos');
     return;
   }
   
@@ -1183,13 +1183,13 @@ async function guardarAccionEditada(id) {
       document.getElementById(`editFechaAccion${id}`).disabled = true;
       document.getElementById(`editCaracterAccion${id}`).disabled = true;
       document.getElementById(`editDescAccion${id}`).disabled = true;
-      alert('✅ Guardado correctamente');
+      mostrarNotificacion('✅ Guardado correctamente');
     } else {
-      alert('Error: ' + result.error);
+      mostrarNotificacion('Error: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -1217,13 +1217,13 @@ async function eliminarAccionEditada(id) {
     
     if (result.success) {
       accionDiv.remove();
-      alert('✅ Eliminado correctamente');
+      mostrarNotificacion('✅ Eliminado correctamente');
     } else {
-      alert('Error: ' + result.error);
+      mostrarNotificacion('Error: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -1233,7 +1233,7 @@ function cerrarModalEditar() {
   
   if (cabeceraEdicionGuardada) {
     // Si ya guardó cambios, cerrar con confirmación de éxito
-    alert('✔ Cambios guardados correctamente');
+    mostrarNotificacion('✔ Cambios guardados correctamente');
     document.getElementById('modalEditar').style.display = 'none';
     cargarDatosExcel();
   } else if (camposEditados) {
@@ -1295,7 +1295,7 @@ async function registrarAcciones(index) {
     ocultarOverlay();
     
     if (!data.success) {
-      alert('Error: ' + data.error);
+      mostrarNotificacion('Error: ' + data.error);
       return;
     }
     
@@ -1306,7 +1306,7 @@ async function registrarAcciones(index) {
     
   } catch (error) {
     ocultarOverlay();
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -1419,7 +1419,7 @@ async function guardarAccionTomada(id) {
   const descripcion = document.getElementById(`descripcionAccion${id}`).value;
 
   if (!fecha || !caracter || !descripcion) {
-    alert('Complete todos los campos');
+    mostrarNotificacion('Complete todos los campos');
     return;
   }
 
@@ -1466,7 +1466,7 @@ async function guardarAccionTomada(id) {
       document.getElementById(`descripcionAccion${id}`).disabled = true;
       btnGuardar.style.display = 'none';
 
-      alert('✓ Acción guardada correctamente');
+      mostrarNotificacion('✓ Acción guardada correctamente');
       
       const indexRegistro = datosFiltrados.findIndex(r => r.CODIGO === codigoJIATAcciones);
       if (indexRegistro !== -1) {
@@ -1476,13 +1476,13 @@ async function guardarAccionTomada(id) {
     } else {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar';
-      alert('Error: ' + result.error);
+     mostrarNotificacion('Error: ' + result.error);
     }
   } catch (error) {
     ocultarOverlay();
     btnGuardar.disabled = false;
     btnGuardar.textContent = '💾 Guardar';
-    alert('Error: ' + error.message);
+    mostrarNotificacion('Error: ' + error.message);
   }
 }
 
@@ -1520,16 +1520,16 @@ function eliminarRegistro(index) {
       if (data.success) {
         cargarDatosExcel().then(() => {
           ocultarOverlay();
-          alert('✓ Eliminado correctamente');
+          mostrarNotificacion('✓ Eliminado correctamente');
         });
       } else {
         ocultarOverlay();
-        alert('Error: ' + data.error);
+        mostrarNotificacion('Error: ' + data.error);
       }
     })
     .catch(error => {
       ocultarOverlay();
-      alert('Error: ' + error.message);
+      mostrarNotificacion('Error: ' + error.message);
     });
   }
 }
