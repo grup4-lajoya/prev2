@@ -1565,4 +1565,62 @@ window.onclick = function(event) {
   if (event.target == modalEditar) {
     cerrarModalEditar(); // Permitir cerrar al hacer clic fuera
   }
+  // Función para mostrar notificaciones visuales
+function mostrarNotificacion(mensaje, tipo = 'info') {
+  // Remover notificación anterior si existe
+  const notifAnterior = document.querySelector('.notificacion-custom');
+  if (notifAnterior) {
+    notifAnterior.remove();
+  }
+  
+  // Crear elemento de notificación
+  const notificacion = document.createElement('div');
+  notificacion.className = 'notificacion-custom';
+  
+  // Configurar estilos según tipo
+  const colores = {
+    'error': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+    'success': { bg: '#d4edda', border: '#28a745', text: '#155724' },
+    'warning': { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+    'info': { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' }
+  };
+  
+  const color = colores[tipo] || colores['info'];
+  
+  notificacion.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: ${color.bg};
+    border: 2px solid ${color.border};
+    color: ${color.text};
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    max-width: 500px;
+    font-size: 1rem;
+    font-weight: 500;
+    animation: slideDown 0.3s ease-out;
+  `;
+  
+  notificacion.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span style="font-size: 1.5rem;">${tipo === 'error' ? '⚠️' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
+      <div style="flex: 1;">${mensaje}</div>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: ${color.text};">×</button>
+    </div>
+  `;
+  
+  document.body.appendChild(notificacion);
+  
+  // Auto-remover después de 5 segundos
+  setTimeout(() => {
+    if (notificacion.parentElement) {
+      notificacion.style.animation = 'slideUp 0.3s ease-out';
+      setTimeout(() => notificacion.remove(), 300);
+    }
+  }, 5000);
+}
 }
