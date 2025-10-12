@@ -175,7 +175,7 @@ async function guardarCabecera() {
 
   try {
     const numeroFormateado = numero.padStart(3, '0');
-    const codigo = `JIAT-${numeroFormateado}-${periodo}`;
+    const codigo = `JIAT-${numeroFormateado}-${periodo}-${unidad.replace(/\s+/g, '')}`;
     codigoJIATActual = codigo;
     fechaJIATActual = fecha;
     periodoJIATActual = periodo;
