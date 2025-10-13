@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIA - Información de las Juntas de Investigación de Accidentes de Aviación</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/jia.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>JIA - Información de las Juntas de Investigación de Accidentes de Aviación</h1>
+  
+  <div class="buscador">
+    <input type="text" id="buscar" placeholder="Buscar por unidad, código o fecha...">
+    <span class="info-registros" id="infoRegistros"></span>
+  </div>
+
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando datos...</div>
+    <table id="tablaJIA" style="display:none;">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>UNIDAD</th>
+          <th>CÓDIGO</th>
+          <th>FECHA</th>
+          <th>FATAL</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
+</div>
+
+<button class="btn-flotante" onclick="nuevoRegistro()" title="Nuevo Registro">+</button>
+
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Guardando registro...</p>
+  </div>
+</div>
+
+<!-- MODAL NUEVO REGISTRO JIA -->
+<div id="modalNuevo" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Nuevo Registro JIA</h2>
+      <span class="close" onclick="cerrarModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevo">
+        <div class="seccion" id="seccionCabecera">
+          <div class="seccion-titulo">📋 Paso 1: Datos Principales del Accidente Aéreo</div>
+          
+          <div class="mensaje-info">
+            💡 <strong>Importante:</strong> Primero guarde los datos principales. Luego podrá agregar conclusiones, causas y recomendaciones.
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Número <span class="required">*</span></label>
+              <input type="number" id="numero" min="1" required>
+            </div>
+            <div class="form-group">
+              <label>Periodo <span class="required">*</span></label>
+              <select id="periodo" required onchange="actualizarRangoFechas()">
+                <option value="">Seleccione un año</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha <span class="required">*</span></label>
+              <input type="date" id="fecha" required>
+            </div>
+            <div class="form-group">
+              <label>Lugar <span class="required">*</span></label>
+              <input type="text" id="lugar" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Accidente <span class="required">*</span></label>
+              <select id="tipo_accidente" required>
+                <option value="">Seleccione</option>
+                <option value="FATAL">FATAL</option>
+                <option value="NO FATAL">NO FATAL</option>
+                <option value="INCIDENTE GRAVE">INCIDENTE GRAVE</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Aeronave <span class="required">*</span></label>
+              <select id="tipo_aeronave" required>
+                <option value="">Seleccione</option>
+                <option value="ALA FIJA">ALA FIJA</option>
+                <option value="ALA ROTATIVA">ALA ROTATIVA</option>
+                <option value="DRONE/UAV">DRONE/UAV</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Lesión <span class="required">*</span></label>
+              <select id="tipo_lesion" required>
+                <option value="">Seleccione</option>
+                <option value="FATAL">FATAL</option>
+                <option value="GRAVE">GRAVE</option>
+                <option value="LEVE">LEVE</option>
+                <option value="NINGUNA">NINGUNA</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Daño <span class="required">*</span></label>
+              <select id="tipo_dano" required>
+                <option value="">Seleccione</option>
+                <option value="DESTRUIDO">DESTRUIDO</option>
+                <option value="DAÑO SUSTANCIAL">DAÑO SUSTANCIAL</option>
+                <option value="DAÑO MENOR">DAÑO MENOR</option>
+                <option value="NINGUNO">NINGUNO</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Causa Principal <span class="required">*</span></label>
+              <select id="causa_principal" required>
+                <option value="">Seleccione</option>
+                <option value="FACTOR HUMANO">FACTOR HUMANO</option>
+                <option value="FALLA MECÁNICA">FALLA MECÁNICA</option>
+                <option value="CONDICIONES METEOROLÓGICAS">CONDICIONES METEOROLÓGICAS</option>
+                <option value="FALLA DE SISTEMAS">FALLA DE SISTEMAS</option>
+                <option value="ERROR OPERACIONAL">ERROR OPERACIONAL</option>
+                <option value="OTROS">OTROS</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fase del Vuelo <span class="required">*</span></label>
+              <select id="fase" required>
+                <option value="">Seleccione</option>
+                <option value="DESPEGUE">DESPEGUE</option>
+                <option value="ASCENSO">ASCENSO</option>
+                <option value="CRUCERO">CRUCERO</option>
+                <option value="DESCENSO">DESCENSO</option>
+                <option value="APROXIMACIÓN">APROXIMACIÓN</option>
+                <option value="ATERRIZAJE">ATERRIZAJE</option>
+                <option value="RODAJE">RODAJE</option>
+                <option value="ESTACIONAMIENTO">ESTACIONAMIENTO</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Vuelo <span class="required">*</span></label>
+            <select id="tipo_vuelo" required>
+              <option value="">Seleccione</option>
+              <option value="ENTRENAMIENTO">ENTRENAMIENTO</option>
+              <option value="COMBATE">COMBATE</option>
+              <option value="TRANSPORTE">TRANSPORTE</option>
+              <option value="RECONOCIMIENTO">RECONOCIMIENTO</option>
+              <option value="MISIÓN ESPECIAL">MISIÓN ESPECIAL</option>
+              <option value="OTROS">OTROS</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Involucrado(s) <span class="required">*</span></label>
+            <div id="involucradosContainer" class="involucrados-container">
+              <div class="involucrado-item">
+                <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
+              </div>
+            </div>
+            <button type="button" class="btn-agregar-involucrado" onclick="agregarInvolucrado()">+ Agregar Involucrado</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fatal <span class="required">*</span></label>
+              <select id="fatal" required>
+                <option value="">Seleccione</option>
+                <option value="SÍ">SÍ</option>
+                <option value="NO">NO</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Cant. Fatalidades <span class="required">*</span></label>
+              <input type="number" id="cantfall" min="0" value="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Descripción del Accidente <span class="required">*</span></label>
+            <textarea id="descripcion" required></textarea>
+          </div>
+
+          <button type="button" class="btn-guardar-cabecera" onclick="guardarCabecera()" id="btnGuardarCabecera">
+            💾 Guardar y Continuar
+          </button>
+        </div>
+
+        <div class="seccion bloqueada" id="seccionDetalles">
+          <div class="seccion-titulo">📝 Paso 2: Detalles - Conclusiones, Causas y Recomendaciones</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueo">
+            🔒 Esta sección se habilitará después de guardar los datos principales.
+          </div>
+          
+          <div id="detallesContainer"></div>
+          
+          <button type="button" class="btn-agregar-detalle" onclick="agregarDetalle()" id="btnAgregarDetalle" disabled>
+            + Agregar Conclusión / Causa / Recomendación
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalCompleto()">Cerrar y Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACCIONES TOMADAS -->
+<div id="modalAcciones" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>Registrar Acciones Tomadas</h2>
+      <span class="close" onclick="cerrarModalAcciones()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion info-jia">
+        <div class="seccion-titulo">📋 Información de la JIA</div>
+        
+        <div class="info-grid">
+          <div class="info-item"><strong>Código:</strong><span id="infoCodigo">-</span></div>
+          <div class="info-item"><strong>Fecha:</strong><span id="infoFecha">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="infoUnidad">-</span></div>
+          <div class="info-item"><strong>Lugar:</strong><span id="infoLugar">-</span></div>
+          <div class="info-item"><strong>Tipo Accidente:</strong><span id="infoTipoAccidente">-</span></div>
+          <div class="info-item"><strong>Aeronave:</strong><span id="infoTipoAeronave">-</span></div>
+          <div class="info-item"><strong>Involucrado(s):</strong><span id="infoInvolucrado">-</span></div>
+          <div class="info-item"><strong>Fatal:</strong><span id="infoFatal">-</span></div>
+        </div>
+
+        <div class="info-descripcion">
+          <strong>Descripción del Accidente:</strong>
+          <p id="infoDescripcion">-</p>
+        </div>
+
+        <div id="detallesConclusiones" style="display:none;">
+          <h4>📌 Conclusiones:</h4>
+          <ul id="listaConclusiones"></ul>
+        </div>
+
+        <div id="detallesCausas" style="display:none;">
+          <h4>⚠️ Causas:</h4>
+          <ul id="listaCausas"></ul>
+        </div>
+
+        <div id="detallesRecomendaciones" style="display:none;">
+          <h4>💡 Recomendaciones:</h4>
+          <ul id="listaRecomendaciones"></ul>
+        </div>
+      </div>
+
+      <div class="seccion" id="seccionAccionesRegistradas" style="display:none;">
+        <div class="seccion-titulo">✅ Acciones Tomadas Previamente Registradas</div>
+        <div id="listaAccionesRegistradas"></div>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">➕ Registrar Nueva Acción Tomada</div>
+        <div id="accionesContainer"></div>
+        <button type="button" class="btn-agregar-detalle" onclick="agregarAccionTomada()">
+          + Agregar Acción Tomada
+        </button>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalAcciones()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>👁 Ver Detalle Completo de la JIA</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion info-jia">
+        <div class="seccion-titulo">📋 Información de la JIA</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Código:</strong><span id="verCodigo">-</span></div>
+          <div class="info-item"><strong>Fecha:</strong><span id="verFecha">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="verUnidad">-</span></div>
+          <div class="info-item"><strong>Lugar:</strong><span id="verLugar">-</span></div>
+          <div class="info-item"><strong>Tipo Accidente:</strong><span id="verTipoAccidente">-</span></div>
+          <div class="info-item"><strong>Aeronave:</strong><span id="verTipoAeronave">-</span></div>
+          <div class="info-item"><strong>Tipo Lesión:</strong><span id="verTipoLesion">-</span></div>
+          <div class="info-item"><strong>Tipo Daño:</strong><span id="verTipoDano">-</span></div>
+          <div class="info-item"><strong>Causa Principal:</strong><span id="verCausaPrincipal">-</span></div>
+          <div class="info-item"><strong>Fase:</strong><span id="verFase">-</span></div>
+          <div class="info-item"><strong>Tipo Vuelo:</strong><span id="verTipoVuelo">-</span></div>
+          <div class="info-item"><strong>Involucrado(s):</strong><span id="verInvolucrado">-</span></div>
+          <div class="info-item"><strong>Fatal:</strong><span id="verFatal">-</span></div>
+        </div>
+        <div class="info-descripcion">
+          <strong>Descripción del Accidente:</strong>
+          <p id="verDescripcion">-</p>
+        </div>
+      </div>
+
+      <div class="seccion" id="verSeccionConclusiones" style="display:none;">
+        <div class="seccion-titulo">📌 Conclusiones</div>
+        <div id="verListaConclusiones"></div>
+      </div>
+
+      <div class="seccion" id="verSeccionCausas" style="display:none;">
+        <div class="seccion-titulo">⚠️ Causas</div>
+        <div id="verListaCausas"></div>
+      </div>
+      
+      <div class="seccion" id="verSeccionRecomendaciones" style="display:none;">
+        <div class="seccion-titulo">💡 Recomendaciones</div>
+        <div id="verListaRecomendaciones"></div>
+      </div>
+
+      <div class="seccion" id="verSeccionAcciones" style="display:none;">
+        <div class="seccion-titulo">✅ Acciones Tomadas</div>
+        <div id="verListaAcciones"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content" style="max-width: 1000px;">
+    <div class="modal-header">
+      <h2>✏️ Editar JIA</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion" id="editSeccionCabecera">
+        <div class="seccion-titulo">📋 Paso 1: Editar Datos Principales</div>
+        
+        <div class="mensaje-info">
+          ℹ️ <strong>Nota:</strong> El Número y Periodo de la JIA no se pueden modificar.
+        </div>
+        
+        <input type="hidden" id="editCodigoActual">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Número (solo lectura)</label>
+            <input type="number" id="editNumero" min="1" required readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+          </div>
+          <div class="form-group">
+            <label>Periodo (solo lectura)</label>
+            <select id="editPeriodo" required disabled style="background-color: #f0f0f0; cursor: not-allowed;">
+              <option value="">Seleccione un año</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha <span class="required">*</span></label>
+            <input type="date" id="editFecha" required>
+          </div>
+          <div class="form-group">
+            <label>Lugar <span class="required">*</span></label>
+            <input type="text" id="editLugar" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Accidente <span class="required">*</span></label>
+            <select id="editTipoAccidente" required>
+              <option value="">Seleccione</option>
+              <option value="FATAL">FATAL</option>
+              <option value="NO FATAL">NO FATAL</option>
+              <option value="INCIDENTE GRAVE">INCIDENTE GRAVE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Aeronave <span class="required">*</span></label>
+            <select id="editTipoAeronave" required>
+              <option value="">Seleccione</option>
+              <option value="ALA FIJA">ALA FIJA</option>
+              <option value="ALA ROTATIVA">ALA ROTATIVA</option>
+              <option value="DRONE/UAV">DRONE/UAV</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Lesión <span class="required">*</span></label>
+            <select id="editTipoLesion" required>
+              <option value="">Seleccione</option>
+              <option value="FATAL">FATAL</option>
+              <option value="GRAVE">GRAVE</option>
+              <option value="LEVE">LEVE</option>
+              <option value="NINGUNA">NINGUNA</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Daño <span class="required">*</span></label>
+            <select id="editTipoDano" required>
+              <option value="">Seleccione</option>
+              <option value="DESTRUIDO">DESTRUIDO</option>
+              <option value="DAÑO SUSTANCIAL">DAÑO SUSTANCIAL</option>
+              <option value="DAÑO MENOR">DAÑO MENOR</option>
+              <option value="NINGUNO">NINGUNO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Causa Principal <span class="required">*</span></label>
+            <select id="editCausaPrincipal" required>
+              <option value="">Seleccione</option>
+              <option value="FACTOR HUMANO">FACTOR HUMANO</option>
+              <option value="FALLA MECÁNICA">FALLA MECÁNICA</option>
+              <option value="CONDICIONES METEOROLÓGICAS">CONDICIONES METEOROLÓGICAS</option>
+              <option value="FALLA DE SISTEMAS">FALLA DE SISTEMAS</option>
+              <option value="ERROR OPERACIONAL">ERROR OPERACIONAL</option>
+              <option value="OTROS">OTROS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fase del Vuelo <span class="required">*</span></label>
+            <select id="editFase" required>
+              <option value="">Seleccione</option>
+              <option value="DESPEGUE">DESPEGUE</option>
+              <option value="ASCENSO">ASCENSO</option>
+              <option value="CRUCERO">CRUCERO</option>
+              <option value="DESCENSO">DESCENSO</option>
+              <option value="APROXIMACIÓN">APROXIMACIÓN</option>
+              <option value="ATERRIZAJE">ATERRIZAJE</option>
+              <option value="RODAJE">RODAJE</option>
+              <option value="ESTACIONAMIENTO">ESTACIONAMIENTO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Vuelo <span class="required">*</span></label>
+          <select id="editTipoVuelo" required>
+            <option value="">Seleccione</option>
+            <option value="ENTRENAMIENTO">ENTRENAMIENTO</option>
+            <option value="COMBATE">COMBATE</option>
+            <option value="TRANSPORTE">TRANSPORTE</option>
+            <option value="RECONOCIMIENTO">RECONOCIMIENTO</option>
+            <option value="MISIÓN ESPECIAL">MISIÓN ESPECIAL</option>
+            <option value="OTROS">OTROS</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Involucrado(s) <span class="required">*</span></label>
+          <textarea id="editInvolucrado" required rows="2"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fatal <span class="required">*</span></label>
+            <select id="editFatal" required>
+              <option value="">Seleccione</option>
+              <option value="SÍ">SÍ</option>
+              <option value="NO">NO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cant. Fatalidades <span class="required">*</span></label>
+            <input type="number" id="editCantfall" min="0" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción del Accidente <span class="required">*</span></label>
+          <textarea id="editDescripcion" required rows="4"></textarea>
+        </div>
+
+        <button type="button" class="btn-guardar-cabecera" onclick="guardarCabeceraEdicion()" id="btnGuardarCabeceraEdit">
+          💾 Guardar y Continuar
+        </button>
+      </div>
+
+      <div class="seccion bloqueada" id="editSeccionDetalles">
+        <div class="seccion-titulo">📝 Paso 2: Editar Detalles (Conclusiones, Causas, Recomendaciones)</div>
+        
+        <div class="mensaje-info" id="editMensajeBloqueo">
+          🔒 Esta sección se habilitará después de guardar los primeros cambios.
+        </div>
+        
+        <div id="editDetallesContainer"></div>
+        
+        <button type="button" class="btn-agregar-detalle" onclick="agregarDetalleEdicion()" id="btnAgregarDetalleEdit" disabled>
+          + Agregar Nuevo Detalle
+        </button>
+      </div>
+
+      <div class="seccion bloqueada" id="editSeccionAcciones">
+        <div class="seccion-titulo">✅ Paso 3: Editar Acciones Tomadas</div>
+        <div id="editAccionesContainer"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cerrar y Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN PERSONALIZADO -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span style="font-size: 1.5rem;">⚠️</span>
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/jia.js"></script>
+</body>
+</html>
