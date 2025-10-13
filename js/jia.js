@@ -236,14 +236,14 @@ async function guardarDetalle(id) {
   mostrarOverlay('Guardando detalle...');
 
   try {
-    const { data: ultimoDetalle } = await supabase.from('detalle_accidentes').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
       const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
-    const { error } = await supabase.from('detalle_accidentes').insert([{
+    const { error } = await supabase.from('detalle_jia').insert([{
       id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAActual,
       subtipo, fechareg: new Date().toISOString(), fecha: fechaJIAActual, periodo: parseInt(periodoJIAActual),
       caracter, descripcion: descripcionDet
@@ -400,7 +400,7 @@ async function verDetalle(index) {
     if (errorCabecera) throw errorCabecera;
     if (rol !== 'ADMIN' && rol !== 'admin' && cabecera.unidad !== unidad) throw new Error('Sin permisos');
 
-    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_accidentes').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
+    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_jia').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
     if (errorDetalles) throw errorDetalles;
 
     const conclusiones = detalles.filter(d => d.subtipo === 'CONCLUSIÓN');
@@ -497,7 +497,7 @@ async function eliminarRegistro(index) {
   if (confirmar) {
     mostrarOverlay('Eliminando...');
     try {
-      await supabase.from('detalle_accidentes').delete().eq('codigo', codigo);
+      await supabase.from('detalle_jia').delete().eq('codigo', codigo);
       const { error } = await supabase.from('jia').delete().eq('codigo', codigo).eq('unidad', unidadRegistro);
       if (error) throw error;
       await cargarDatosExcel();
@@ -519,7 +519,7 @@ async function registrarAcciones(index) {
     if (errorCabecera) throw errorCabecera;
     if (rol !== 'ADMIN' && rol !== 'admin' && cabecera.unidad !== unidad) throw new Error('Sin permisos');
 
-    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_accidentes').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
+    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_jia').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
     if (errorDetalles) throw errorDetalles;
 
     const conclusiones = detalles.filter(d => d.subtipo === 'CONCLUSIÓN');
@@ -647,14 +647,14 @@ async function guardarAccionTomada(id) {
   mostrarOverlay('Guardando acción...');
 
   try {
-    const { data: ultimoDetalle } = await supabase.from('detalle_accidentes').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
       const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
-    const { error } = await supabase.from('detalle_accidentes').insert([{
+    const { error } = await supabase.from('detalle_jia').insert([{
       id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAAcciones,
       subtipo: 'ACCIÓN TOMADA', fechareg: new Date().toISOString(), fecha: fechaAccion,
       periodo: parseInt(periodoJIAAcciones), caracter: caracterAccion, descripcion: descripcionAccion
@@ -703,7 +703,7 @@ async function editarRegistro(index) {
     const { data: cabecera, error: errorCabecera } = await supabase.from('jia').select('*').eq('codigo', codigo).single();
     if (errorCabecera) throw errorCabecera;
 
-    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_accidentes').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
+    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_jia').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
     if (errorDetalles) throw errorDetalles;
 
     contadorDetallesEdicion = 0;
@@ -792,7 +792,7 @@ async function guardarCabeceraEdicion() {
 
     if (error) throw error;
 
-    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_accidentes').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
+    const { data: detalles, error: errorDetalles } = await supabase.from('detalle_jia').select('*').eq('codigo', codigo).order('fechareg', { ascending: true });
     if (errorDetalles) throw errorDetalles;
 
     const detallesNormales = detalles.filter(d => d.subtipo !== 'ACCIÓN TOMADA');
@@ -951,7 +951,7 @@ async function guardarEdicionDetalle(idDetalle) {
   mostrarOverlay('Actualizando...');
 
   try {
-    const { error } = await supabase.from('detalle_accidentes').update({ subtipo, caracter, descripcion }).eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').update({ subtipo, caracter, descripcion }).eq('id_detalle', idDetalle);
     if (error) throw error;
 
     ocultarOverlay();
@@ -974,7 +974,7 @@ async function eliminarDetalleExistente(idDetalle) {
   if (!confirmar) return;
   mostrarOverlay('Eliminando...');
   try {
-    const { error } = await supabase.from('detalle_accidentes').delete().eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle', idDetalle);
     if (error) throw error;
     ocultarOverlay();
     const elemento = document.getElementById(`detalleExistente-${idDetalle}`);
@@ -1010,7 +1010,7 @@ async function guardarEdicionAccion(idDetalle) {
   mostrarOverlay('Actualizando...');
 
   try {
-    const { error } = await supabase.from('detalle_accidentes').update({ fecha, caracter, descripcion }).eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').update({ fecha, caracter, descripcion }).eq('id_detalle', idDetalle);
     if (error) throw error;
 
     ocultarOverlay();
@@ -1033,7 +1033,7 @@ async function eliminarAccionExistente(idDetalle) {
   if (!confirmar) return;
   mostrarOverlay('Eliminando...');
   try {
-    const { error } = await supabase.from('detalle_accidentes').delete().eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle', idDetalle);
     if (error) throw error;
     ocultarOverlay();
     const elemento = document.getElementById(`accionExistente-${idDetalle}`);
@@ -1112,14 +1112,14 @@ async function guardarDetalleEdicion(id) {
     const codigo = codigoActualEdicion;
     const { data: jia } = await supabase.from('jia').select('fecha, periodo').eq('codigo', codigo).single();
 
-    const { data: ultimoDetalle } = await supabase.from('detalle_accidentes').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
       const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
-    const { error } = await supabase.from('detalle_accidentes').insert([{
+    const { error } = await supabase.from('detalle_jia').insert([{
       id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo,
       subtipo, fechareg: new Date().toISOString(), fecha: jia.fecha, periodo: parseInt(jia.periodo),
       caracter, descripcion: descripcionDet
