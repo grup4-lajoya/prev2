@@ -970,17 +970,36 @@ async function guardarEdicionDetalle(idDetalle) {
 }
 
 async function eliminarDetalleExistente(idDetalle) {
+  console.log('=== ELIMINANDO DETALLE ===');
+  console.log('ID a eliminar:', idDetalle);
+  
   const confirmar = await mostrarConfirmacion('¿Eliminar este detalle?<br><br><strong>No se puede deshacer.</strong>', '🗑️ Confirmar');
-  if (!confirmar) return;
+  if (!confirmar) {
+    console.log('Usuario canceló');
+    return;
+  }
+  
   mostrarOverlay('Eliminando...');
   try {
-    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle_jia', idDetalle);
+    console.log('Ejecutando DELETE en detalle_jia...');
+    const { error, data } = await supabase
+      .from('detalle_jia')
+      .delete()
+      .eq('id_detalle_jia', idDetalle)
+      .select(); // ← AGREGAR .select() para ver qué se eliminó
+    
+    console.log('Resultado DELETE:', { error, data });
+    
     if (error) throw error;
+    
     ocultarOverlay();
     const elemento = document.getElementById(`detalleExistente-${idDetalle}`);
     if (elemento) elemento.remove();
     mostrarNotificacion('✓ Eliminado', 'success');
+    cabeceraEdicionGuardada = true;
+    
   } catch (error) {
+    console.error('Error completo:', error);
     ocultarOverlay();
     mostrarNotificacion('Error: ' + error.message, 'error');
   }
