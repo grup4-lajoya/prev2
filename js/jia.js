@@ -968,12 +968,8 @@ async function guardarEdicionDetalle(idDetalle) {
     mostrarNotificacion('Error: ' + error.message, 'error');
   }
 }
-
 async function eliminarDetalleExistente(idDetalle) {
-  console.log('=== ELIMINANDO DETALLE ===');
-  console.log('ID a eliminar:', idDetalle);
-  
-  const confirmar = await mostrarConfirmacion('¿Eliminar este detalle?<br><br><strong>No se puede deshacer.</strong>', '🗑️ Confirmar');
+ const confirmar = await mostrarConfirmacion('¿Eliminar este detalle?<br><br><strong>No se puede deshacer.</strong>', '🗑️ Confirmar');
   if (!confirmar) {
     console.log('Usuario canceló');
     return;
@@ -981,7 +977,6 @@ async function eliminarDetalleExistente(idDetalle) {
   
   mostrarOverlay('Eliminando...');
   try {
-    console.log('Ejecutando DELETE en detalle_jia...');
     const { error, data } = await supabase
       .from('detalle_jia')
       .delete()
