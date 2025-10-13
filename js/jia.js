@@ -814,14 +814,14 @@ async function guardarCabeceraEdicion() {
           </div>
           <div>
             <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle_jia}')" id="btnEditarDet-${det.id_detalle_jia}">✏️ Editar</button>
-            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle_jia}')" id="btnGuardarEditDet-${det.id_detalle:jia}" style="display:none;">💾 Guardar</button>
+            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle_jia}')" id="btnGuardarEditDet-${det.id_detalle_jia}" style="display:none;">💾 Guardar</button>
             <button type="button" class="btn-eliminar-detalle" data-id="${det.id_detalle_jia}" onclick="eliminarDetalleExistente(this.dataset.id)">🗑️ Eliminar</button>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Asunto</label>
-            <select id="subtipoExist-${det.id_detalle}" disabled>
+            <select id="subtipoExist-${det.id_detalle_jia}" disabled>
               <option value="CONCLUSIÓN" ${det.subtipo === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
               <option value="CAUSA" ${det.subtipo === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
               <option value="RECOMENDACIÓN" ${det.subtipo === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
@@ -829,7 +829,7 @@ async function guardarCabeceraEdicion() {
           </div>
           <div class="form-group">
             <label>Carácter</label>
-            <select id="caracterExist-${det.id_detalle}" disabled>
+            <select id="caracterExist-${det.id_detalle_jia}" disabled>
               <option value="PSICOFÍSICO" ${det.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
               <option value="TÉCNICO" ${det.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
               <option value="OPERATIVO" ${det.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
@@ -840,7 +840,7 @@ async function guardarCabeceraEdicion() {
         </div>
         <div class="form-group">
           <label>Descripción</label>
-          <textarea id="descripcionExist-${det.id_detalle}" disabled>${det.descripcion}</textarea>
+          <textarea id="descripcionExist-${det.id_detalle_jia}" disabled>${det.descripcion}</textarea>
         </div>
       `;
       containerDetalles.appendChild(div);
@@ -863,19 +863,19 @@ async function guardarCabeceraEdicion() {
               <span class="badge-existente" style="background: #28a745;">📌 Existente</span>
             </div>
             <div>
-              <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionAccion('${accion.id_detalle}')" id="btnEditarAccion-${accion.id_detalle}">✏️ Editar</button>
-              <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionAccion('${accion.id_detalle}')" id="btnGuardarEditAccion-${accion.id_detalle}" style="display:none;">💾 Guardar</button>
-              <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionExistente('${accion.id_detalle}')">🗑️ Eliminar</button>
+              <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionAccion('${accion.id_detalle_jia}')" id="btnEditarAccion-${accion.id_detalle_jia}">✏️ Editar</button>
+              <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionAccion('${accion.id_detalle_jia}')" id="btnGuardarEditAccion-${accion.id_detalle_jia}" style="display:none;">💾 Guardar</button>
+              <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionExistente('${accion.id_detalle_jia}')">🗑️ Eliminar</button>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Fecha</label>
-              <input type="date" id="fechaAccionExist-${accion.id_detalle}" value="${accion.fecha}" disabled>
+              <input type="date" id="fechaAccionExist-${accion.id_detalle_jia}" value="${accion.fecha}" disabled>
             </div>
             <div class="form-group">
               <label>Carácter</label>
-              <select id="caracterAccionExist-${accion.id_detalle}" disabled>
+              <select id="caracterAccionExist-${accion.id_detalle_jia}" disabled>
                 <option value="PSICOFÍSICO" ${accion.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
                 <option value="TÉCNICO" ${accion.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
                 <option value="OPERATIVO" ${accion.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
@@ -886,7 +886,7 @@ async function guardarCabeceraEdicion() {
           </div>
           <div class="form-group">
             <label>Descripción</label>
-            <textarea id="descripcionAccionExist-${accion.id_detalle}" disabled>${accion.descripcion}</textarea>
+            <textarea id="descripcionAccionExist-${accion.id_detalle_jia}" disabled>${accion.descripcion}</textarea>
           </div>
         `;
         containerAcciones.appendChild(div);
