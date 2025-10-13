@@ -236,15 +236,15 @@ async function guardarDetalle(id) {
   mostrarOverlay('Guardando detalle...');
 
   try {
-    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle_jia').order('id_detalle_jia', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
-      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      const numeroActual = parseInt(ultimoDetalle.id_detalle_jia.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
     const { error } = await supabase.from('detalle_jia').insert([{
-      id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAActual,
+      id_detalle_jia: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAActual,
       subtipo, fechareg: new Date().toISOString(), fecha: fechaJIAActual, periodo: parseInt(periodoJIAActual),
       caracter, descripcion: descripcionDet
     }]);
@@ -647,15 +647,15 @@ async function guardarAccionTomada(id) {
   mostrarOverlay('Guardando acción...');
 
   try {
-    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle_jia').order('id_detalle_jia', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
-      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      const numeroActual = parseInt(ultimoDetalle.id_detalle_jia.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
     const { error } = await supabase.from('detalle_jia').insert([{
-      id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAAcciones,
+      id_detalle_jia: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo: codigoJIAAcciones,
       subtipo: 'ACCIÓN TOMADA', fechareg: new Date().toISOString(), fecha: fechaAccion,
       periodo: parseInt(periodoJIAAcciones), caracter: caracterAccion, descripcion: descripcionAccion
     }]);
@@ -805,7 +805,7 @@ async function guardarCabeceraEdicion() {
       contadorDetallesEdicion++;
       const div = document.createElement('div');
       div.className = 'detalle-item editable-existente';
-      div.id = `detalleExistente-${det.id_detalle}`;
+      div.id = `detalleExistente-${det.id_detalle_jia}`;
       div.innerHTML = `
         <div class="detalle-item-header">
           <div class="detalle-titulo">
@@ -813,15 +813,15 @@ async function guardarCabeceraEdicion() {
             <span class="badge-existente">📌 Existente</span>
           </div>
           <div>
-            <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle}')" id="btnEditarDet-${det.id_detalle}">✏️ Editar</button>
-            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle}')" id="btnGuardarEditDet-${det.id_detalle}" style="display:none;">💾 Guardar</button>
-            <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleExistente('${det.id_detalle}')">🗑️ Eliminar</button>
+            <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle_jia}')" id="btnEditarDet-${det.id_detalle_jia}">✏️ Editar</button>
+            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle_jia}')" id="btnGuardarEditDet-${det.id_detalle_jia}" style="display:none;">💾 Guardar</button>
+            <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleExistente('${det.id_detalle_jia}')">🗑️ Eliminar</button>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Asunto</label>
-            <select id="subtipoExist-${det.id_detalle}" disabled>
+            <select id="subtipoExist-${det.id_detalle_jia}" disabled>
               <option value="CONCLUSIÓN" ${det.subtipo === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
               <option value="CAUSA" ${det.subtipo === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
               <option value="RECOMENDACIÓN" ${det.subtipo === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
@@ -829,7 +829,7 @@ async function guardarCabeceraEdicion() {
           </div>
           <div class="form-group">
             <label>Carácter</label>
-            <select id="caracterExist-${det.id_detalle}" disabled>
+            <select id="caracterExist-${det.id_detalle_jia}" disabled>
               <option value="PSICOFÍSICO" ${det.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
               <option value="TÉCNICO" ${det.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
               <option value="OPERATIVO" ${det.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
@@ -840,7 +840,7 @@ async function guardarCabeceraEdicion() {
         </div>
         <div class="form-group">
           <label>Descripción</label>
-          <textarea id="descripcionExist-${det.id_detalle}" disabled>${det.descripcion}</textarea>
+          <textarea id="descripcionExist-${det.id_detalle_jia}" disabled>${det.descripcion}</textarea>
         </div>
       `;
       containerDetalles.appendChild(div);
@@ -854,7 +854,7 @@ async function guardarCabeceraEdicion() {
         contadorAccionesEdicion++;
         const div = document.createElement('div');
         div.className = 'detalle-item editable-existente';
-        div.id = `accionExistente-${accion.id_detalle}`;
+        div.id = `accionExistente-${accion.id_detalle_jia}`;
         div.style.borderLeftColor = '#28a745';
         div.innerHTML = `
           <div class="detalle-item-header">
@@ -863,19 +863,19 @@ async function guardarCabeceraEdicion() {
               <span class="badge-existente" style="background: #28a745;">📌 Existente</span>
             </div>
             <div>
-              <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionAccion('${accion.id_detalle}')" id="btnEditarAccion-${accion.id_detalle}">✏️ Editar</button>
-              <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionAccion('${accion.id_detalle}')" id="btnGuardarEditAccion-${accion.id_detalle}" style="display:none;">💾 Guardar</button>
-              <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionExistente('${accion.id_detalle}')">🗑️ Eliminar</button>
+              <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionAccion('${accion.id_detalle_jia}')" id="btnEditarAccion-${accion.id_detalle_jia}">✏️ Editar</button>
+              <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionAccion('${accion.id_detalle_jia}')" id="btnGuardarEditAccion-${accion.id_detalle_jia}" style="display:none;">💾 Guardar</button>
+              <button type="button" class="btn-eliminar-detalle" onclick="eliminarAccionExistente('${accion.id_detalle_jia}')">🗑️ Eliminar</button>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Fecha</label>
-              <input type="date" id="fechaAccionExist-${accion.id_detalle}" value="${accion.fecha}" disabled>
+              <input type="date" id="fechaAccionExist-${accion.id_detalle_jia}" value="${accion.fecha}" disabled>
             </div>
             <div class="form-group">
               <label>Carácter</label>
-              <select id="caracterAccionExist-${accion.id_detalle}" disabled>
+              <select id="caracterAccionExist-${accion.id_detalle_jia}" disabled>
                 <option value="PSICOFÍSICO" ${accion.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
                 <option value="TÉCNICO" ${accion.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
                 <option value="OPERATIVO" ${accion.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
@@ -886,7 +886,7 @@ async function guardarCabeceraEdicion() {
           </div>
           <div class="form-group">
             <label>Descripción</label>
-            <textarea id="descripcionAccionExist-${accion.id_detalle}" disabled>${accion.descripcion}</textarea>
+            <textarea id="descripcionAccionExist-${accion.id_detalle_jia}" disabled>${accion.descripcion}</textarea>
           </div>
         `;
         containerAcciones.appendChild(div);
@@ -951,7 +951,7 @@ async function guardarEdicionDetalle(idDetalle) {
   mostrarOverlay('Actualizando...');
 
   try {
-    const { error } = await supabase.from('detalle_jia').update({ subtipo, caracter, descripcion }).eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').update({ subtipo, caracter, descripcion }).eq('id_detalle_jia', idDetalle);
     if (error) throw error;
 
     ocultarOverlay();
@@ -974,7 +974,7 @@ async function eliminarDetalleExistente(idDetalle) {
   if (!confirmar) return;
   mostrarOverlay('Eliminando...');
   try {
-    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle_jia', idDetalle);
     if (error) throw error;
     ocultarOverlay();
     const elemento = document.getElementById(`detalleExistente-${idDetalle}`);
@@ -1010,7 +1010,7 @@ async function guardarEdicionAccion(idDetalle) {
   mostrarOverlay('Actualizando...');
 
   try {
-    const { error } = await supabase.from('detalle_jia').update({ fecha, caracter, descripcion }).eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').update({ fecha, caracter, descripcion }).eq('id_detalle_jia', idDetalle);
     if (error) throw error;
 
     ocultarOverlay();
@@ -1033,7 +1033,7 @@ async function eliminarAccionExistente(idDetalle) {
   if (!confirmar) return;
   mostrarOverlay('Eliminando...');
   try {
-    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle', idDetalle);
+    const { error } = await supabase.from('detalle_jia').delete().eq('id_detalle_jia', idDetalle);
     if (error) throw error;
     ocultarOverlay();
     const elemento = document.getElementById(`accionExistente-${idDetalle}`);
@@ -1112,15 +1112,15 @@ async function guardarDetalleEdicion(id) {
     const codigo = codigoActualEdicion;
     const { data: jia } = await supabase.from('jia').select('fecha, periodo').eq('codigo', codigo).single();
 
-    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle').order('id_detalle', { ascending: false }).limit(1).single();
+    const { data: ultimoDetalle } = await supabase.from('detalle_jia').select('id_detalle_jia').order('id_detalle_jia', { ascending: false }).limit(1).single();
     let nuevoIdDetalle = 'DET-00001';
     if (ultimoDetalle) {
-      const numeroActual = parseInt(ultimoDetalle.id_detalle.split('-')[1]);
+      const numeroActual = parseInt(ultimoDetalle.id_detalle_jia.split('-')[1]);
       nuevoIdDetalle = `DET-${(numeroActual + 1).toString().padStart(5, '0')}`;
     }
 
     const { error } = await supabase.from('detalle_jia').insert([{
-      id_detalle: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo,
+      id_detalle_jia: nuevoIdDetalle, usuarioreg: usuario, unidad, tipo: 'JIA', codigo,
       subtipo, fechareg: new Date().toISOString(), fecha: jia.fecha, periodo: parseInt(jia.periodo),
       caracter, descripcion: descripcionDet
     }]);
