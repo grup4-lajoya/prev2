@@ -813,9 +813,9 @@ async function guardarCabeceraEdicion() {
             <span class="badge-existente">📌 Existente</span>
           </div>
           <div>
-            <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle}')" id="btnEditarDet-${det.id_detalle}">✏️ Editar</button>
-            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle}')" id="btnGuardarEditDet-${det.id_detalle}" style="display:none;">💾 Guardar</button>
-            <button type="button" class="btn-eliminar-detalle" onclick="eliminarDetalleExistente('${det.id_detalle}')">🗑️ Eliminar</button>
+            <button type="button" class="btn-editar-detalle" onclick="habilitarEdicionDetalle('${det.id_detalle_jia}')" id="btnEditarDet-${det.id_detalle_jia}">✏️ Editar</button>
+            <button type="button" class="btn-guardar-detalle" onclick="guardarEdicionDetalle('${det.id_detalle_jia}')" id="btnGuardarEditDet-${det.id_detalle:jia}" style="display:none;">💾 Guardar</button>
+            <button type="button" class="btn-eliminar-detalle" data-id="${det.id_detalle_jia}" onclick="eliminarDetalleExistente(this.dataset.id)">🗑️ Eliminar</button>
           </div>
         </div>
         <div class="form-row">
