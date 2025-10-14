@@ -702,11 +702,7 @@ async function eliminarRegistro(index) {
   
   const confirmar = await mostrarConfirmacion(
     `¿Está seguro de eliminar el registro <strong>${codigo}</strong> de la unidad <strong>${unidadRegistro}</strong>?<br><br>` +
-    `<strong>⚠️ ATENCIÓN:</strong> Se eliminará:<br>` +
-    `• La JIAT completa<br>` +
-    `• Todos los detalles (conclusiones, causas, recomendaciones)<br>` +
-    `• Todas las acciones tomadas<br><br>` +
-    `<strong>Esta acción NO se puede deshacer.</strong>`,
+    `<Se eliminará todo:<br>`,
     '🗑️ Confirmar Eliminación de JIAT'
   );
   
