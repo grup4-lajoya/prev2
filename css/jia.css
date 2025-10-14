@@ -759,7 +759,6 @@ tbody tr:hover {
   max-width: 500px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   animation: slideDown 0.3s;
-  overflow: hidden;
 }
 
 .modal-confirmacion-header {
@@ -789,12 +788,11 @@ tbody tr:hover {
 }
 
 .modal-confirmacion-footer {
-  padding: 20px 20px 20px 20px;
+  padding: 20px;
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 15px;
   border-top: 1px solid #ddd;
-  border-radius: 0 0 10px 10px;
 }
 
 #mensajeConfirmacion {
