@@ -778,6 +778,9 @@ tbody tr:hover {
   font-size: 1rem;
   line-height: 1.6;
   color: #333;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: left;
 }
 
 .modal-confirmacion-footer {
@@ -786,6 +789,15 @@ tbody tr:hover {
   justify-content: flex-end;
   gap: 10px;
   border-top: 1px solid #ddd;
+}
+/* Resetear estilos heredados en el modal de confirmación */
+#modalConfirmacion * {
+  white-space: normal !important;
+}
+
+#mensajeConfirmacion {
+  white-space: normal !important;
+  word-wrap: break-word !important;
 }
 
 .btn-confirmar-si {
