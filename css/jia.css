@@ -699,6 +699,14 @@ tbody tr:hover {
   line-height: 1.6;
 }
 
+/* Resetear para modal de confirmación */
+#modalConfirmacion .detalle-item-readonly-descripcion,
+#mensajeConfirmacion {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  line-height: 1.6 !important;
+}
+
 .btn-eliminar-detalle {
   padding: 6px 12px;
   background-color: #dc3545;
@@ -834,4 +842,7 @@ tbody tr:hover {
   background-color: #5a6268;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(108, 117, 125, 0.4);
+}
+#modalConfirmacion * {
+  white-space: normal !important;
 }
