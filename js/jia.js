@@ -805,7 +805,7 @@ async function guardarCabeceraEdicion() {
       contadorDetallesEdicion++;
       const div = document.createElement('div');
       div.className = 'detalle-item editable-existente';
-      div.id = `detalleExistente-${det.id_detalle}`;
+      div.id = `detalleExistente-${det.id_detalle_jia}`;
       div.innerHTML = `
         <div class="detalle-item-header">
           <div class="detalle-titulo">
