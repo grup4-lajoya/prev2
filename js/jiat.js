@@ -582,7 +582,7 @@ async function verDetalle(index) {
     const causas = detalles.filter(d => d.subtipo === 'CAUSA');
     const recomendaciones = detalles.filter(d => d.subtipo === 'RECOMENDACIÓN');
     const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
-
+    
     const data = {
       success: true,
       cabecera: {
@@ -590,13 +590,15 @@ async function verDetalle(index) {
         FECHA: formatearFechaDisplay(cabecera.fecha),
         UNIDAD: cabecera.unidad,
         LUGAR: cabecera.lugar,
-        INVOLUCRADO: cabecera.involucrado,
+        TIPO_ACCIDENTE: cabecera.tipo_accidente,
+        CAUSA_PRINCIPAL: cabecera.causa_principal,
         FATAL: cabecera.fatal,
         DESCRIPCION: cabecera.descripcion,
         NUMERO: cabecera.numero,
         PERIODO: cabecera.periodo,
         CANTFALL: cabecera.cantfall
-      },
+        },
+     
       conclusiones: conclusiones.map(d => ({
         ID_DETALLE: d.id_detalle,
         CARACTER: d.caracter,
@@ -890,8 +892,10 @@ function mostrarDetalleCompleto(data) {
   document.getElementById('verFecha').textContent = cabecera.FECHA || '-';
   document.getElementById('verUnidad').textContent = cabecera.UNIDAD || '-';
   document.getElementById('verLugar').textContent = cabecera.LUGAR || '-';
-  document.getElementById('verInvolucrado').textContent = cabecera.INVOLUCRADO || '-';
+  document.getElementById('verTipoAccidente').textContent = cabecera.TIPO_ACCIDENTE || '-';
+  document.getElementById('verCausaPrincipal').textContent = cabecera.CAUSA_PRINCIPAL || '-';
   document.getElementById('verFatal').textContent = cabecera.FATAL || '-';
+  document.getElementById('verCantFall').textContent = cabecera.CANTFALL || '-';
   document.getElementById('verDescripcion').textContent = cabecera.DESCRIPCION || '-';
   
   const mostrarSeccion = (seccionId, listaId, datos, tipo, color) => {
