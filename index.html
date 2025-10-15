@@ -447,19 +447,23 @@
     }
 
     // Cargar iframe si tiene URL y no está cargado
-    if(urlDestino && (!iframe.src || iframe.src === window.location.href)) {
-      iframe.src = urlDestino;
-      
-      // Mostrar overlay si es página que tarda en cargar
-      if(urlDestino.includes("ippi.html") || urlDestino.includes("jiat.html")) {
-        mostrarOverlay(true);
-        let overlayTimeout = setTimeout(()=> mostrarOverlay(false), 10000);
-        iframe.onload = function() {
-          clearTimeout(overlayTimeout);
-          mostrarOverlay(false);
-        };
-      }
-    }
+if (urlDestino && (!iframe.src || iframe.src === window.location.href)) {
+  // 🔧 Agregamos parámetro único para evitar caché
+  const sep = urlDestino.includes("?") ? "&" : "?";
+  const urlActualizada = `${urlDestino}${sep}nocache=${Date.now()}`;
+  iframe.src = urlActualizada;
+
+  // Mostrar overlay si es página que tarda en cargar
+  if (urlDestino.includes("ippi.html") || urlDestino.includes("jiat.html")) {
+    mostrarOverlay(true);
+    let overlayTimeout = setTimeout(() => mostrarOverlay(false), 10000);
+    iframe.onload = function () {
+      clearTimeout(overlayTimeout);
+      mostrarOverlay(false);
+    };
+  }
+}
+
 
     iframe.style.display = "block";
 
