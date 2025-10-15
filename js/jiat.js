@@ -36,6 +36,15 @@ if (!usuario) {
   window.location.replace("login.html");
 }
 function cargarOpcionesCausaPrincipal() {
+  const tiposAccidente = [
+    'CHOQUE',
+    'ATROPELLO',
+    'VOLCADURA',
+    'CAÍDA DE PASAJEROS',
+    'INCENDIO',
+    'OTROS'
+  ];
+  
   const causasPrincipales = [
     'ERROR PERSONAL',
     'FALLA MATERIAL',
@@ -43,13 +52,23 @@ function cargarOpcionesCausaPrincipal() {
     'INDETERMINADOS'
   ];
   
-  const select = document.getElementById('causa_principal');
-  if (select) {
+  const selectTipo = document.getElementById('tipo_accidente');
+  if (selectTipo) {
+    tiposAccidente.forEach(tipo => {
+      const option = document.createElement('option');
+      option.value = tipo;
+      option.textContent = tipo;
+      selectTipo.appendChild(option);
+    });
+  }
+  
+  const selectCausa = document.getElementById('causa_principal');
+  if (selectCausa) {
     causasPrincipales.forEach(causa => {
       const option = document.createElement('option');
       option.value = causa;
       option.textContent = causa;
-      select.appendChild(option);
+      selectCausa.appendChild(option);
     });
   }
 }
@@ -95,25 +114,6 @@ function actualizarRangoFechas() {
 }
 
 // ============================================
-// FUNCIONES DE INVOLUCRADOS
-// ============================================
-
-/*function agregarInvolucrado() {
-  const container = document.getElementById('involucradosContainer');
-  const nuevoItem = document.createElement('div');
-  nuevoItem.className = 'involucrado-item';
-  nuevoItem.innerHTML = `
-    <input type="text" class="involucrado-input" placeholder="Nombre del involucrado" required>
-    <button type="button" class="btn-quitar" onclick="quitarInvolucrado(this)">×</button>
-  `;
-  container.appendChild(nuevoItem);
-}
-
-function quitarInvolucrado(btn) {
-  btn.parentElement.remove();
-}*/
-
-// ============================================
 // GUARDAR CABECERA (NUEVO REGISTRO) CON VALIDACIÓN
 // ============================================
 
@@ -122,12 +122,13 @@ async function guardarCabecera() {
   const periodo = document.getElementById('periodo').value;
   const fecha = document.getElementById('fecha').value;
   const lugar = document.getElementById('lugar').value;
+  const tipo_accidente = document.getElementById('tipo_accidente').value;
   const causa_principal = document.getElementById('causa_principal').value;
   const fatal = document.getElementById('fatal').value;
   const cantfall = document.getElementById('cantfall').value;
   const descripcion = document.getElementById('descripcion').value;
 
-  if (!numero || !periodo || !fecha || !lugar || !causa_principal || !fatal || !descripcion) {
+  if (!numero || !periodo || !fecha || !lugar || !tipo_accidente || !causa_principal || !fatal || !descripcion) {
     mostrarNotificacion('Por favor complete todos los campos obligatorios', 'error');
     return;
   }
@@ -194,6 +195,7 @@ async function guardarCabecera() {
         unidad: unidad,
         fecha: fecha,
         lugar: lugar,
+        tipo_accidente: tipo_accidente,
         causa_principal: causa_principal,
         fatal: fatal,
         cantfall: parseInt(cantfall),
