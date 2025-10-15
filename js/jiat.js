@@ -475,9 +475,10 @@ function actualizarTabla() {
       <td>
         <div class="acciones">
           <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver detalle">👁</button>
-          <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Registrar Acciones Tomadas">📋</button>
+          <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Registrar Acciones Tomadas">📋</button>          
           <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
           <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
+          <button class="btn-icono btn-imprimir" onclick="imprimirJIAT(${inicio + index})" title="Imprimir">🖨️</button>
         </div>
       </td>
     `;
@@ -628,6 +629,257 @@ async function verDetalle(index) {
     ocultarOverlay();
     console.error('Error:', error);
     mostrarNotificacion('Error al cargar la información del JIAT: ' + error.message, 'error');
+  }
+}
+
+async function imprimirJIAT(index) {
+  const registro = datosFiltrados[index];
+  const codigo = registro.CODIGO;
+  
+  mostrarOverlay('Preparando impresión...');
+  
+  try {
+    // Obtener cabecera
+    const { data: cabecera, error: errorCabecera } = await supabase
+      .from('jiat')
+      .select('*')
+      .eq('codigo', codigo)
+      .single();
+
+    if (errorCabecera) throw errorCabecera;
+
+    // Validar permisos
+    if (rol !== 'ADMIN' && rol !== 'admin' && cabecera.unidad !== unidad) {
+      throw new Error('No tiene permisos para acceder a este JIAT');
+    }
+
+    // Obtener detalles
+    const { data: detalles, error: errorDetalles } = await supabase
+      .from('detalle_accidentes')
+      .select('*')
+      .eq('codigo', codigo)
+      .order('fechareg', { ascending: true });
+
+    if (errorDetalles) throw errorDetalles;
+
+    // Organizar detalles por subtipo
+    const conclusiones = detalles.filter(d => d.subtipo === 'CONCLUSIÓN');
+    const causas = detalles.filter(d => d.subtipo === 'CAUSA');
+    const recomendaciones = detalles.filter(d => d.subtipo === 'RECOMENDACIÓN');
+    const acciones = detalles.filter(d => d.subtipo === 'ACCIÓN TOMADA');
+
+    ocultarOverlay();
+
+    // Crear ventana de impresión
+    const ventanaImpresion = window.open('', '_blank');
+    ventanaImpresion.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>JIAT - ${codigo}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            padding: 30px; 
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+          h1 { 
+            color: #333; 
+            border-bottom: 3px solid #007bff; 
+            padding-bottom: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          h2 { 
+            color: #007bff; 
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+          }
+          .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+          }
+          .info-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin: 15px 0; 
+          }
+          .info-item { 
+            padding: 10px; 
+            background: white; 
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+          }
+          .info-item strong { 
+            display: inline-block; 
+            min-width: 140px;
+            color: #495057;
+          }
+          .info-full {
+            grid-column: 1 / -1;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+          }
+          .info-full strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+          }
+          .detalle { 
+            margin: 15px 0; 
+            padding: 15px; 
+            border-left: 5px solid #17a2b8; 
+            background: #f8f9fa;
+            border-radius: 4px;
+            page-break-inside: avoid;
+          }
+          .detalle-conclusion { border-left-color: #17a2b8; }
+          .detalle-causa { border-left-color: #ffc107; }
+          .detalle-recomendacion { border-left-color: #007bff; }
+          .detalle-accion { border-left-color: #28a745; }
+          
+          .detalle-header { 
+            font-weight: bold; 
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .detalle-tipo { 
+            color: #17a2b8;
+            font-size: 1.1em;
+          }
+          .detalle-caracter {
+            background: #17a2b8;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+          }
+          .detalle-descripcion {
+            color: #495057;
+            line-height: 1.6;
+          }
+          .no-datos {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-style: italic;
+          }
+          @media print {
+            button { display: none; }
+            body { padding: 20px; }
+            .detalle { page-break-inside: avoid; }
+          }
+          .btn-imprimir {
+            margin-top: 30px; 
+            padding: 12px 30px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 5px;
+            font-size: 16px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          .btn-imprimir:hover {
+            background: #0056b3;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>📋 JUNTA DE INVESTIGACIÓN DE ACCIDENTES TERRESTRES (JIAT)</h1>
+        
+        <div class="info-section">
+          <div class="info-grid">
+            <div class="info-item"><strong>Código:</strong> ${cabecera.codigo}</div>
+            <div class="info-item"><strong>Fecha:</strong> ${formatearFechaDisplay(cabecera.fecha)}</div>
+            <div class="info-item"><strong>Unidad:</strong> ${cabecera.unidad}</div>
+            <div class="info-item"><strong>Lugar:</strong> ${cabecera.lugar}</div>
+            <div class="info-item"><strong>Tipo Accidente:</strong> ${cabecera.tipo_accidente || '-'}</div>
+            <div class="info-item"><strong>Causa Principal:</strong> ${cabecera.causa_principal || '-'}</div>
+            <div class="info-item"><strong>Fatal:</strong> ${cabecera.fatal}</div>
+            <div class="info-item"><strong>Cant. Fatalidades:</strong> ${cabecera.cantfall}</div>
+          </div>
+          
+          <div class="info-full">
+            <strong>Descripción del Accidente:</strong>
+            <div>${cabecera.descripcion}</div>
+          </div>
+        </div>
+        
+        ${conclusiones.length > 0 ? `
+          <h2>📌 CONCLUSIONES</h2>
+          ${conclusiones.map((c, i) => `
+            <div class="detalle detalle-conclusion">
+              <div class="detalle-header">
+                <span class="detalle-tipo">Conclusión #${i + 1}</span>
+                <span class="detalle-caracter" style="background: #17a2b8;">${c.caracter}</span>
+              </div>
+              <div class="detalle-descripcion">${c.descripcion}</div>
+            </div>
+          `).join('')}
+        ` : '<div class="no-datos">No hay conclusiones registradas</div>'}
+        
+        ${causas.length > 0 ? `
+          <h2>⚠️ CAUSAS</h2>
+          ${causas.map((c, i) => `
+            <div class="detalle detalle-causa">
+              <div class="detalle-header">
+                <span class="detalle-tipo" style="color: #ffc107;">Causa #${i + 1}</span>
+                <span class="detalle-caracter" style="background: #ffc107; color: #000;">${c.caracter}</span>
+              </div>
+              <div class="detalle-descripcion">${c.descripcion}</div>
+            </div>
+          `).join('')}
+        ` : '<div class="no-datos">No hay causas registradas</div>'}
+        
+        ${recomendaciones.length > 0 ? `
+          <h2>💡 RECOMENDACIONES</h2>
+          ${recomendaciones.map((r, i) => `
+            <div class="detalle detalle-recomendacion">
+              <div class="detalle-header">
+                <span class="detalle-tipo" style="color: #007bff;">Recomendación #${i + 1}</span>
+                <span class="detalle-caracter" style="background: #007bff;">${r.caracter}</span>
+              </div>
+              <div class="detalle-descripcion">${r.descripcion}</div>
+            </div>
+          `).join('')}
+        ` : '<div class="no-datos">No hay recomendaciones registradas</div>'}
+        
+        ${acciones.length > 0 ? `
+          <h2>✅ ACCIONES TOMADAS</h2>
+          ${acciones.map((a, i) => `
+            <div class="detalle detalle-accion">
+              <div class="detalle-header">
+                <span class="detalle-tipo" style="color: #28a745;">Acción #${i + 1} - 📅 ${formatearFechaDisplay(a.fecha)}</span>
+                <span class="detalle-caracter" style="background: #28a745;">${a.caracter}</span>
+              </div>
+              <div class="detalle-descripcion">${a.descripcion}</div>
+            </div>
+          `).join('')}
+        ` : '<div class="no-datos">No hay acciones tomadas registradas</div>'}
+        
+        <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Documento</button>
+      </body>
+      </html>
+    `);
+    ventanaImpresion.document.close();
+
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al preparar la impresión: ' + error.message, 'error');
   }
 }
 
