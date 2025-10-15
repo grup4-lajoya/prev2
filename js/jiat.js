@@ -36,12 +36,6 @@ if (!usuario) {
   window.location.replace("login.html");
 }
 
-console.log("=== DATOS DE SESIÓN ===");
-console.log("Usuario:", usuario);
-console.log("Unidad:", unidad);
-console.log("Rol:", rol);
-console.log("=== FIN SESIÓN ===");
-
 window.onload = function() {
   cargarPeriodos();
   cargarDatosExcel();
@@ -128,8 +122,6 @@ async function guardarCabecera() {
     mostrarNotificacion('Debe agregar al menos un involucrado', 'error');
     return;
   }*/ 
-
-  // AQUI ME QUEDEEEEEEEEEEEE
 
   const btnGuardar = document.getElementById('btnGuardarCabecera');
   btnGuardar.disabled = true;
@@ -403,11 +395,7 @@ async function cargarDatosExcel() {
     if (error) {
       throw error;
     }
-
-    console.log("=== DATOS RECIBIDOS DE SUPABASE ===");
-    console.log(data);
-    console.log("=== FIN DATOS ===");
-    
+   
     datosCompletos = data.map(registro => ({
       ...registro,
       CODIGO: registro.codigo,
@@ -417,7 +405,7 @@ async function cargarDatosExcel() {
       NUMERO: registro.numero,
       PERIODO: registro.periodo,
       LUGAR: registro.lugar,
-      INVOLUCRADO: registro.involucrado,
+      CAUSA: registro.causa_principal,
       CANTFALL: registro.cantfall,
       DESCRIPCION: registro.descripcion
     }));
@@ -461,7 +449,7 @@ function actualizarTabla() {
       <td>${registro.UNIDAD || '-'}</td>
       <td>${registro.CODIGO || '-'}</td>
       <td>${registro.FECHA || '-'}</td>
-      <td>${registro.FATAL || '-'}</td>
+      <td>${registro.CAUSA || '-'}</td>
       <td>
         <div class="acciones">
           <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver detalle">👁</button>
