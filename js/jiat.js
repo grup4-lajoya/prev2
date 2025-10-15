@@ -37,12 +37,24 @@ if (!usuario) {
 }
 function cargarOpcionesCausaPrincipal() {
   const tiposAccidente = [
-    'CHOQUE',
-    'ATROPELLO',
-    'VOLCADURA',
-    'CAÍDA DE PASAJEROS',
-    'INCENDIO',
-    'OTROS'
+    'ARMA DE FUEGO',
+    'ACC.TRÁNSITO/VEHICULAR/MOTO',
+    'ACC.TRABAJO',
+    'INCENDIO VEHÍCULO/VIVIENDA',
+    'PRECIPITACIÓN AL VACÍO',
+    'AHOGAMIENTO POR INMERSIÓN',
+    'CLIMATOLÓGICO',
+    'MATERIAL CLASE V/V-A/V-DA',
+    'ACC.FUEGO/ASCENSOR/MANIPULACIÓN',
+    'MUERTE',
+    'DESPRENDIMIENTO TANQUE COMBUSTIBLE',
+    'ASFIXIA POR SUMERSIÓN',
+    'ACC.CON EXPLOSIVO',
+    'BAYONETA/ARMA BLANCA',
+    'ACTO DEL SERVICIO',
+    'ACC.EN HORA DE DEPORTE',
+    'CURSO DE SUPERVIVENCIA',
+    'INSTRUCCIÓN'
   ];
   
   const causasPrincipales = [
