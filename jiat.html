@@ -27,7 +27,7 @@
           <th>UNIDAD</th>
           <th>CÓDIGO</th>
           <th>FECHA</th>
-          <th>FATAL</th>
+     <!-- <th>FATAL</th> -->
           <th>ACCIONES</th>
         </tr>
       </thead>
@@ -87,7 +87,7 @@
             </div>
           </div>
 
-          <div class="form-group">
+      <!--    <div class="form-group">
             <label>Involucrado(s) <span class="required">*</span></label>
             <div id="involucradosContainer" class="involucrados-container">
               <div class="involucrado-item">
@@ -95,11 +95,11 @@
               </div>
             </div>
             <button type="button" class="btn-agregar-involucrado" onclick="agregarInvolucrado()">+ Agregar Involucrado</button>
-          </div>
+          </div>  -->
 
           <div class="form-row">
             <div class="form-group">
-              <label>Fatal <span class="required">*</span></label>
+              <label>¿Fue Fatal el accidente? <span class="required">*</span></label>
               <select id="fatal" required>
                 <option value="">Seleccione</option>
                 <option value="SÍ">SÍ</option>
@@ -221,7 +221,7 @@
           <div class="info-item"><strong>Fecha:</strong><span id="verFecha">-</span></div>
           <div class="info-item"><strong>Unidad:</strong><span id="verUnidad">-</span></div>
           <div class="info-item"><strong>Lugar:</strong><span id="verLugar">-</span></div>
-          <div class="info-item"><strong>Involucrado(s):</strong><span id="verInvolucrado">-</span></div>
+    <!--  <div class="info-item"><strong>Involucrado(s):</strong><span id="verInvolucrado">-</span></div> -->
           <div class="info-item"><strong>Fatal:</strong><span id="verFatal">-</span></div>
         </div>
         <div class="info-descripcion">
@@ -304,14 +304,14 @@
           </div>
         </div>
 
-        <div class="form-group">
+  <!-- <div class="form-group">
           <label>Involucrado(s) <span class="required">*</span></label>
           <textarea id="editInvolucrado" required rows="2"></textarea>
-        </div>
+        </div> -->
 
         <div class="form-row">
           <div class="form-group">
-            <label>Fatal <span class="required">*</span></label>
+            <label>¿Fue Fatal el accidente? <span class="required">*</span></label>
             <select id="editFatal" required>
               <option value="">Seleccione</option>
               <option value="SÍ">SÍ</option>
