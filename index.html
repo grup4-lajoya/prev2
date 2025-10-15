@@ -447,7 +447,7 @@
     }
 
     // Cargar iframe si tiene URL y no está cargado
-if (urlDestino && (!iframe.src || iframe.src === window.location.href)) {
+if (urlDestino) {
   // 🔧 Agregamos parámetro único para evitar caché
   const sep = urlDestino.includes("?") ? "&" : "?";
   const urlActualizada = `${urlDestino}${sep}nocache=${Date.now()}`;
@@ -463,8 +463,6 @@ if (urlDestino && (!iframe.src || iframe.src === window.location.href)) {
     };
   }
 }
-
-
     iframe.style.display = "block";
 
     // Activar menú
