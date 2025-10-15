@@ -64,6 +64,7 @@ function cargarOpcionesCausaPrincipal() {
     'INDETERMINADOS'
   ];
   
+  // Para el modal de nuevo registro
   const selectTipo = document.getElementById('tipo_accidente');
   if (selectTipo) {
     tiposAccidente.forEach(tipo => {
@@ -81,6 +82,26 @@ function cargarOpcionesCausaPrincipal() {
       option.value = causa;
       option.textContent = causa;
       selectCausa.appendChild(option);
+    });
+  }
+  // Para el modal de editar
+  const selectTipoEdit = document.getElementById('editTipoAccidente');
+  if (selectTipoEdit) {
+    tiposAccidente.forEach(tipo => {
+      const option = document.createElement('option');
+      option.value = tipo;
+      option.textContent = tipo;
+      selectTipoEdit.appendChild(option);
+    });
+  }
+  
+  const selectCausaEdit = document.getElementById('editCausaPrincipal');
+  if (selectCausaEdit) {
+    causasPrincipales.forEach(causa => {
+      const option = document.createElement('option');
+      option.value = causa;
+      option.textContent = causa;
+      selectCausaEdit.appendChild(option);
     });
   }
 }
@@ -1354,12 +1375,14 @@ async function editarRegistro(index) {
     // ===== FIN DEL RESET =====
 
     // Cargar datos en el formulario
+    // Cargar datos en el formulario
     document.getElementById('editCodigoActual').value = codigo;
     document.getElementById('editNumero').value = cabecera.numero;
     document.getElementById('editPeriodo').value = cabecera.periodo;
     document.getElementById('editFecha').value = cabecera.fecha;
     document.getElementById('editLugar').value = cabecera.lugar;
-    document.getElementById('editInvolucrado').value = cabecera.involucrado;
+    document.getElementById('editTipoAccidente').value = cabecera.tipo_accidente || '';
+    document.getElementById('editCausaPrincipal').value = cabecera.causa_principal || '';
     document.getElementById('editFatal').value = cabecera.fatal;
     document.getElementById('editCantfall').value = cabecera.cantfall;
     document.getElementById('editDescripcion').value = cabecera.descripcion;
@@ -1377,12 +1400,13 @@ async function guardarCabeceraEdicion() {
   const codigo = document.getElementById('editCodigoActual').value;
   const fecha = document.getElementById('editFecha').value;
   const lugar = document.getElementById('editLugar').value;
-  const involucrado = document.getElementById('editInvolucrado').value;
+  const tipo_accidente = document.getElementById('editTipoAccidente').value;
+  const causa_principal = document.getElementById('editCausaPrincipal').value;
   const fatal = document.getElementById('editFatal').value;
   const cantfall = document.getElementById('editCantfall').value;
   const descripcion = document.getElementById('editDescripcion').value;
 
-  if (!fecha || !lugar || !involucrado || !fatal || !descripcion) {
+  if (!fecha || !lugar || !tipo_accidente || !causa_principal || !fatal || !descripcion) {
     mostrarNotificacion('Por favor complete todos los campos obligatorios', 'error');
     return;
   }
@@ -1400,13 +1424,14 @@ async function guardarCabeceraEdicion() {
       .update({
         fecha: fecha,
         lugar: lugar,
-        involucrado: involucrado,
+        tipo_accidente: tipo_accidente,
+        causa_principal: causa_principal,
         fatal: fatal,
         cantfall: parseInt(cantfall),
         descripcion: descripcion
       })
       .eq('codigo', codigo);
-
+    
     if (error) throw error;
 
     // Cargar detalles existentes
