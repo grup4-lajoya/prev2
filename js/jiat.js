@@ -85,7 +85,7 @@ function actualizarRangoFechas() {
 // FUNCIONES DE INVOLUCRADOS
 // ============================================
 
-function agregarInvolucrado() {
+/*function agregarInvolucrado() {
   const container = document.getElementById('involucradosContainer');
   const nuevoItem = document.createElement('div');
   nuevoItem.className = 'involucrado-item';
@@ -98,7 +98,7 @@ function agregarInvolucrado() {
 
 function quitarInvolucrado(btn) {
   btn.parentElement.remove();
-}
+}*/
 
 // ============================================
 // GUARDAR CABECERA (NUEVO REGISTRO) CON VALIDACIÓN
@@ -118,7 +118,7 @@ async function guardarCabecera() {
     return;
   }
 
-  const involucradosInputs = document.querySelectorAll('.involucrado-input');
+/*  const involucradosInputs = document.querySelectorAll('.involucrado-input');
   const involucrados = Array.from(involucradosInputs)
     .map(input => input.value.trim())
     .filter(val => val !== '')
@@ -127,7 +127,9 @@ async function guardarCabecera() {
   if (!involucrados) {
     mostrarNotificacion('Debe agregar al menos un involucrado', 'error');
     return;
-  }
+  }*/ 
+
+  // AQUI ME QUEDEEEEEEEEEEEE
 
   const btnGuardar = document.getElementById('btnGuardarCabecera');
   btnGuardar.disabled = true;
