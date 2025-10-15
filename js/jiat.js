@@ -35,9 +35,28 @@ const rol = localStorage.getItem("rol") || "";
 if (!usuario) {
   window.location.replace("login.html");
 }
+function cargarOpcionesCausaPrincipal() {
+  const causasPrincipales = [
+    'ERROR PERSONAL',
+    'FALLA MATERIAL',
+    'DIVERSOS',
+    'INDETERMINADOS'
+  ];
+  
+  const select = document.getElementById('causa_principal');
+  if (select) {
+    causasPrincipales.forEach(causa => {
+      const option = document.createElement('option');
+      option.value = causa;
+      option.textContent = causa;
+      select.appendChild(option);
+    });
+  }
+}
 
 window.onload = function() {
   cargarPeriodos();
+  cargarOpcionesCausaPrincipal();
   cargarDatosExcel();
 };
 
@@ -103,25 +122,15 @@ async function guardarCabecera() {
   const periodo = document.getElementById('periodo').value;
   const fecha = document.getElementById('fecha').value;
   const lugar = document.getElementById('lugar').value;
+  const causa_principal = document.getElementById('causa_principal').value;
   const fatal = document.getElementById('fatal').value;
   const cantfall = document.getElementById('cantfall').value;
   const descripcion = document.getElementById('descripcion').value;
 
-  if (!numero || !periodo || !fecha || !lugar || !fatal || !descripcion) {
+  if (!numero || !periodo || !fecha || !lugar || !causa_principal || !fatal || !descripcion) {
     mostrarNotificacion('Por favor complete todos los campos obligatorios', 'error');
     return;
   }
-
-/*  const involucradosInputs = document.querySelectorAll('.involucrado-input');
-  const involucrados = Array.from(involucradosInputs)
-    .map(input => input.value.trim())
-    .filter(val => val !== '')
-    .join(', ');
-
-  if (!involucrados) {
-    mostrarNotificacion('Debe agregar al menos un involucrado', 'error');
-    return;
-  }*/ 
 
   const btnGuardar = document.getElementById('btnGuardarCabecera');
   btnGuardar.disabled = true;
@@ -134,13 +143,12 @@ async function guardarCabecera() {
       .select('codigo, unidad')
       .eq('numero', numero)
       .eq('periodo', periodo)
-      .eq('unidad', unidad); // Solo valida en la unidad del usuario
+      .eq('unidad', unidad);
 
     if (errorValidacion) {
       throw errorValidacion;
     }
 
-    // Si existe al menos un registro con ese número+periodo en esta unidad
     if (existentes && existentes.length > 0) {
       btnGuardar.disabled = false;
       btnGuardar.textContent = '💾 Guardar y Continuar';
@@ -186,7 +194,7 @@ async function guardarCabecera() {
         unidad: unidad,
         fecha: fecha,
         lugar: lugar,
-        involucrado: involucrados,
+        causa_principal: causa_principal,
         fatal: fatal,
         cantfall: parseInt(cantfall),
         descripcion: descripcion
