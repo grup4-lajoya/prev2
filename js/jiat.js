@@ -1101,13 +1101,13 @@ async function registrarAcciones(index) {
     contadorAcciones = 0;
 
     // Mostrar información en el modal
-    document.getElementById('infoCodigo').textContent = cabecera.codigo;
-    document.getElementById('infoFecha').textContent = formatearFechaDisplay(cabecera.fecha);
-    document.getElementById('infoUnidad').textContent = cabecera.unidad;
-    document.getElementById('infoLugar').textContent = cabecera.lugar;
-    document.getElementById('infoInvolucrado').textContent = cabecera.involucrado;
-    document.getElementById('infoFatal').textContent = cabecera.fatal;
-    document.getElementById('infoDescripcion').textContent = cabecera.descripcion;
+      document.getElementById('infoCodigo').textContent = cabecera.codigo;
+      document.getElementById('infoFecha').textContent = formatearFechaDisplay(cabecera.fecha);
+      document.getElementById('infoUnidad').textContent = cabecera.unidad;
+      document.getElementById('infoLugar').textContent = cabecera.lugar;
+      // document.getElementById('infoInvolucrado').textContent = cabecera.involucrado; // COMENTAR O ELIMINAR
+      document.getElementById('infoFatal').textContent = cabecera.fatal;
+      document.getElementById('infoDescripcion').textContent = cabecera.descripcion;
 
     // Mostrar detalles existentes
     mostrarDetallesEnModal('detallesConclusiones', 'listaConclusiones', conclusiones, '📌');
