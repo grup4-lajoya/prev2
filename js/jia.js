@@ -51,6 +51,12 @@ function cargarPeriodos() {
   });
 }
 function cargarOpcionesCausaPrincipal() {
+  const tiposAccidente = [
+    'LEVE',
+    'GRAVE',
+    'FATAL'
+  ];
+  
   const causasPrincipales = [
     'ERROR PERSONAL',
     'FALLA MATERIAL',
@@ -61,6 +67,28 @@ function cargarOpcionesCausaPrincipal() {
     'INDETERMINADOS'
   ];
   
+  // Cargar tipos de accidente
+  const selectTipo = document.getElementById('tipo_accidente');
+  if (selectTipo) {
+    tiposAccidente.forEach(tipo => {
+      const option = document.createElement('option');
+      option.value = tipo;
+      option.textContent = tipo;
+      selectTipo.appendChild(option);
+    });
+  }
+  
+  const selectTipoEdit = document.getElementById('editTipoAccidente');
+  if (selectTipoEdit) {
+    tiposAccidente.forEach(tipo => {
+      const option = document.createElement('option');
+      option.value = tipo;
+      option.textContent = tipo;
+      selectTipoEdit.appendChild(option);
+    });
+  }
+  
+  // Cargar causas principales
   const selectCausa = document.getElementById('causa_principal');
   if (selectCausa) {
     causasPrincipales.forEach(causa => {
