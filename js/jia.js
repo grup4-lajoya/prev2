@@ -893,14 +893,12 @@ async function registrarAcciones(index) {
     codigoJIAAcciones = codigo;
     periodoJIAAcciones = cabecera.periodo;
     contadorAcciones = 0;
-
     document.getElementById('infoCodigo').textContent = cabecera.codigo;
     document.getElementById('infoFecha').textContent = formatearFechaDisplay(cabecera.fecha);
     document.getElementById('infoUnidad').textContent = cabecera.unidad;
     document.getElementById('infoLugar').textContent = cabecera.lugar;
     document.getElementById('infoTipoAccidente').textContent = cabecera.tipo_accidente || '-';
     document.getElementById('infoTipoAeronave').textContent = cabecera.tipo_aeronave || '-';
-    document.getElementById('infoInvolucrado').textContent = cabecera.involucrado;
     document.getElementById('infoFatal').textContent = cabecera.fatal;
     document.getElementById('infoDescripcion').textContent = cabecera.descripcion;
 
