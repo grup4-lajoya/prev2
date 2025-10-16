@@ -294,7 +294,7 @@ async function cargarDatosExcel() {
       CODIGO: registro.codigo,
       UNIDAD: registro.unidad,
       FECHA: formatearFechaDisplay(registro.fecha),
-      FATAL: registro.fatal
+      CAUSA: registro.causa_principal
     }));
     datosFiltrados = [...datosCompletos];
     loadingEl.style.display = 'none';
@@ -325,21 +325,21 @@ function actualizarTabla() {
     const numeroGlobal = inicio + index + 1;
     const fila = document.createElement('tr');
     fila.innerHTML = `
-      <td>${numeroGlobal}</td>
-      <td>${registro.UNIDAD || '-'}</td>
-      <td>${registro.CODIGO || '-'}</td>
-      <td>${registro.FECHA || '-'}</td>
-      <td>${registro.FATAL || '-'}</td>
-      <td>
-        <div class="acciones">
-          <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver">👁</button>
-          <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Acciones">📋</button>
-          <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
-          <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(fila);
+  <td>${numeroGlobal}</td>
+  <td>${registro.UNIDAD || '-'}</td>
+  <td>${registro.CODIGO || '-'}</td>
+  <td>${registro.FECHA || '-'}</td>
+  <td>${registro.CAUSA || '-'}</td>
+  <td>
+    <div class="acciones">
+      <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver">👁</button>
+      <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Acciones">📋</button>
+      <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
+      <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
+    </div>
+  </td>
+`;
+     tbody.appendChild(fila);
   });
   actualizarPaginacion();
   actualizarInfoRegistros();
