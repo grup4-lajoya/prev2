@@ -112,41 +112,56 @@ function cargarOpcionesCausaPrincipal() {
 }
 async function cargarAeronaves() {
   try {
-    // Obtener aeronaves de la unidad del usuario logueado
+    console.log('Cargando aeronaves para unidad:', unidad);
+    
+    // Obtener aeronaves activas de la unidad del usuario logueado
     const { data: aeronaves, error } = await supabase
       .from('aeronave')
       .select('*')
       .eq('unidad', unidad)
-      .order('nombre', { ascending: true });
+      .eq('activo', true);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error completo de Supabase:', error);
+      throw error;
+    }
+
+    console.log('Aeronaves obtenidas:', aeronaves);
 
     // Cargar en el select de nuevo registro
     const selectAeronave = document.getElementById('tipo_aeronave');
     if (selectAeronave) {
-      // Limpiar opciones existentes excepto la primera
       selectAeronave.innerHTML = '<option value="">Seleccione</option>';
       
-      aeronaves.forEach(aeronave => {
+      if (aeronaves && aeronaves.length > 0) {
+        aeronaves.forEach(aero => {
+          const option = document.createElement('option');
+          option.value = aero.aeronave;  // Guardará en jia.tipo_aeronave
+          option.textContent = aero.aeronave;  // Lo que verá el usuario
+          selectAeronave.appendChild(option);
+        });
+      } else {
         const option = document.createElement('option');
-        option.value = aeronave.nombre; // o el campo que uses para identificar
-        option.textContent = aeronave.nombre; // o el campo que quieras mostrar
+        option.value = '';
+        option.textContent = 'No hay aeronaves disponibles para esta unidad';
+        option.disabled = true;
         selectAeronave.appendChild(option);
-      });
+      }
     }
 
     // Cargar en el select de edición
     const selectAeronaveEdit = document.getElementById('editTipoAeronave');
     if (selectAeronaveEdit) {
-      // Limpiar opciones existentes excepto la primera
       selectAeronaveEdit.innerHTML = '<option value="">Seleccione</option>';
       
-      aeronaves.forEach(aeronave => {
-        const option = document.createElement('option');
-        option.value = aeronave.nombre;
-        option.textContent = aeronave.nombre;
-        selectAeronaveEdit.appendChild(option);
-      });
+      if (aeronaves && aeronaves.length > 0) {
+        aeronaves.forEach(aero => {
+          const option = document.createElement('option');
+          option.value = aero.aeronave;
+          option.textContent = aero.aeronave;
+          selectAeronaveEdit.appendChild(option);
+        });
+      }
     }
 
   } catch (error) {
