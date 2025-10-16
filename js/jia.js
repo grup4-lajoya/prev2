@@ -49,6 +49,37 @@ function cargarPeriodos() {
     }
   });
 }
+function cargarOpcionesCausaPrincipal() {
+  const causasPrincipales = [
+    'ERROR PERSONAL',
+    'FALLA MATERIAL',
+    'SUPERFICIE DEL AERÓDROMO',
+    'FALLA EQUIPOS CONEXOS',
+    'MALAS CONDICIONES METEOROLÓGICAS',
+    'DIVERSOS',
+    'INDETERMINADOS'
+  ];
+  
+  const selectCausa = document.getElementById('causa_principal');
+  if (selectCausa) {
+    causasPrincipales.forEach(causa => {
+      const option = document.createElement('option');
+      option.value = causa;
+      option.textContent = causa;
+      selectCausa.appendChild(option);
+    });
+  }
+  
+  const selectCausaEdit = document.getElementById('editCausaPrincipal');
+  if (selectCausaEdit) {
+    causasPrincipales.forEach(causa => {
+      const option = document.createElement('option');
+      option.value = causa;
+      option.textContent = causa;
+      selectCausaEdit.appendChild(option);
+    });
+  }
+}
 
 function actualizarRangoFechas() {
   const periodo = document.getElementById('periodo').value;
