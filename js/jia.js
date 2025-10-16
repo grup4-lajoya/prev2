@@ -32,6 +32,7 @@ if (!usuario) window.location.replace("login.html");
 window.onload = function() {
   cargarPeriodos();
   cargarOpcionesCausaPrincipal();
+  cargarAeronaves();
   cargarDatosExcel();
 };
 
@@ -107,6 +108,50 @@ function cargarOpcionesCausaPrincipal() {
       option.textContent = causa;
       selectCausaEdit.appendChild(option);
     });
+  }
+}
+async function cargarAeronaves() {
+  try {
+    // Obtener aeronaves de la unidad del usuario logueado
+    const { data: aeronaves, error } = await supabase
+      .from('aeronave')
+      .select('*')
+      .eq('unidad', unidad)
+      .order('nombre', { ascending: true });
+
+    if (error) throw error;
+
+    // Cargar en el select de nuevo registro
+    const selectAeronave = document.getElementById('tipo_aeronave');
+    if (selectAeronave) {
+      // Limpiar opciones existentes excepto la primera
+      selectAeronave.innerHTML = '<option value="">Seleccione</option>';
+      
+      aeronaves.forEach(aeronave => {
+        const option = document.createElement('option');
+        option.value = aeronave.nombre; // o el campo que uses para identificar
+        option.textContent = aeronave.nombre; // o el campo que quieras mostrar
+        selectAeronave.appendChild(option);
+      });
+    }
+
+    // Cargar en el select de edición
+    const selectAeronaveEdit = document.getElementById('editTipoAeronave');
+    if (selectAeronaveEdit) {
+      // Limpiar opciones existentes excepto la primera
+      selectAeronaveEdit.innerHTML = '<option value="">Seleccione</option>';
+      
+      aeronaves.forEach(aeronave => {
+        const option = document.createElement('option');
+        option.value = aeronave.nombre;
+        option.textContent = aeronave.nombre;
+        selectAeronaveEdit.appendChild(option);
+      });
+    }
+
+  } catch (error) {
+    console.error('Error al cargar aeronaves:', error);
+    mostrarNotificacion('Error al cargar sistemas: ' + error.message, 'error');
   }
 }
 
