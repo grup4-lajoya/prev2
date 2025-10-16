@@ -532,7 +532,6 @@ async function verDetalle(index) {
     document.getElementById('verCausaPrincipal').textContent = cabecera.causa_principal || '-';
     document.getElementById('verFase').textContent = cabecera.fase || '-';
     document.getElementById('verTipoVuelo').textContent = cabecera.tipo_vuelo || '-';
-    document.getElementById('verInvolucrado').textContent = cabecera.involucrado;
     document.getElementById('verFatal').textContent = cabecera.fatal;
     document.getElementById('verDescripcion').textContent = cabecera.descripcion;
 
