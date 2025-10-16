@@ -1108,7 +1108,6 @@ async function editarRegistro(index) {
     document.getElementById('editCausaPrincipal').value = cabecera.causa_principal || '';
     document.getElementById('editFase').value = cabecera.fase || '';
     document.getElementById('editTipoVuelo').value = cabecera.tipo_vuelo || '';
-    document.getElementById('editInvolucrado').value = cabecera.involucrado;
     document.getElementById('editFatal').value = cabecera.fatal;
     document.getElementById('editCantfall').value = cabecera.cantfall;
     document.getElementById('editDescripcion').value = cabecera.descripcion;
@@ -1132,12 +1131,12 @@ async function guardarCabeceraEdicion() {
   const causa_principal = document.getElementById('editCausaPrincipal').value;
   const fase = document.getElementById('editFase').value;
   const tipo_vuelo = document.getElementById('editTipoVuelo').value;
-  const involucrado = document.getElementById('editInvolucrado').value;
+  // const involucrado = document.getElementById('editInvolucrado').value; // ELIMINAR ESTA LÍNEA
   const fatal = document.getElementById('editFatal').value;
   const cantfall = document.getElementById('editCantfall').value;
   const descripcion = document.getElementById('editDescripcion').value;
-
-  if (!fecha || !lugar || !tipo_accidente || !tipo_aeronave || !tipo_lesion || !tipo_dano || !causa_principal || !fase || !tipo_vuelo || !involucrado || !fatal || !descripcion) {
+  
+  if (!fecha || !lugar || !tipo_accidente || !tipo_aeronave || !tipo_lesion || !tipo_dano || !causa_principal || !fase || !tipo_vuelo || !fatal || !descripcion) {
     mostrarNotificacion('Complete todos los campos obligatorios', 'error');
     return;
   }
@@ -1149,9 +1148,10 @@ async function guardarCabeceraEdicion() {
 
   try {
     const { error } = await supabase.from('jia').update({
-      fecha, lugar, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano,
-      causa_principal, fase, tipo_vuelo, involucrado, fatal, cantfall: parseInt(cantfall), descripcion
-    }).eq('codigo', codigo);
+        fecha, lugar, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano,
+        causa_principal, fase, tipo_vuelo, fatal, cantfall: parseInt(cantfall), descripcion
+        // NO incluir involucrado aquí
+      }).eq('codigo', codigo);
 
     if (error) throw error;
 
