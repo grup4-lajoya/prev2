@@ -31,6 +31,7 @@ if (!usuario) window.location.replace("login.html");
 
 window.onload = function() {
   cargarPeriodos();
+  cargarOpcionesCausaPrincipal();
   cargarDatosExcel();
 };
 
