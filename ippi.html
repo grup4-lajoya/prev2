@@ -3,891 +3,159 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Consulta de Informes de Peligros Potenciales e Incidentes</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f6fa;
-    margin: 0;
-    padding: 0;
-  }
-
-  h2 {
-    text-align: center;
-    color: #002147;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-    overflow-x: auto;
-    position: relative;
-  }
-
-  .filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-
-  .filters input, .filters select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
-
-  .filters button {
-    padding: 8px 16px;
-    background-color: #0056A6;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .filters button:hover {
-    background-color: #003366;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    table-layout: fixed;
-  }
-
-  th {
-    background-color: #003366;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    text-align: center;
-    padding: 6px;
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  td {
-    border: 1px solid #ddd;
-    padding: 6px 8px;
-    font-size: 0.82rem;
-    vertical-align: top;
-    word-wrap: break-word;
-    white-space: normal;
-  }
-
-  td.asunto, td.lugar, td.reporta, td.acciones, td.descripcion, td.recomendaciones {
-    text-align: left;
-  }
-
-  td.descripcion, td.recomendaciones {
-    max-height: 100px;
-    overflow-y: auto;
-    padding-right: 6px;
-  }
-
-  td.imagenes-cell {
-    max-height: 120px;
-    overflow-y: auto;
-    white-space: normal;
-    text-align: center;
-    padding: 4px;
-  }
-
-  .thumbnail-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-  }
-
-  .thumbnail {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 2px solid #ddd;
-    transition: transform 0.2s, border-color 0.2s;
-  }
-
-  .thumbnail:hover {
-    transform: scale(1.1);
-    border-color: #0056A6;
-  }
-
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-
-  th:nth-child(1) { width: 3%; }   
-  th:nth-child(2) { width: 8%; }   
-  th:nth-child(3) { width: 12%; }  
-  th:nth-child(4) { width: 10%; }  
-  th:nth-child(5) { width: 16%; }  
-  th:nth-child(6) { width: 14%; }  
-  th:nth-child(7) { width: 10%; }  
-  th:nth-child(8) { width: 9%; }   
-  th:nth-child(9) { width: 8%; }   
-  th:nth-child(10){ width: 14%; }  
-  th:nth-child(11){ width: 6%; }   
-
-  .action-icons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 4px;
-    transition: transform 0.2s;
-  }
-
-  .icon-btn:hover {
-    transform: scale(1.2);
-  }
-
-  .icon-edit { color: #0056A6; }
-  .icon-delete { color: #dc3545; }
-
-  .pagination {
-    margin-top: 10px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-  }
-  .pagination button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    background-color: #003366;
-    color: white;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-  .pagination button.active {
-    background-color: #0056A6;
-    font-weight: bold;
-  }
-  .pagination button:hover:not(.active) {
-    background-color: #0056A6;
-  }
-  .pagination button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-  .pagination span {
-    padding: 0 10px;
-    color: #003366;
-  }
-
-  #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.95);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.2rem;
-    color: #003366;
-    z-index: 9999;
-    display: none;
-  }
-
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #003366;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    overflow: auto;
-  }
-
-  .modal-content-img {
-    margin: auto;
-    display: block;
-    max-width: 90%;
-    max-height: 90vh;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 4px;
-    object-fit: contain;
-    background: white;
-  }
-
-  .modal-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.2rem;
-  }
-
-  .modal-close {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 10001;
-    transition: color 0.3s;
-  }
-
-  .modal-close:hover {
-    color: #ccc;
-  }
-
-  .modal-edit {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    overflow: auto;
-  }
-
-  .modal-edit-content {
-    background-color: white;
-    margin: 5% auto;
-    padding: 30px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 600px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  }
-
-  .modal-edit h3 {
-    color: #002147;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-    border-bottom: 2px solid #0056A6;
-    padding-bottom: 10px;
-  }
-
-  .form-group {
-    margin-bottom: 20px;
-  }
-
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #002147;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  .form-group select,
-  .form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-family: Arial, sans-serif;
-    box-sizing: border-box;
-  }
-
-  .form-group textarea {
-    min-height: 100px;
-    resize: vertical;
-  }
-
-  .form-group select:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: #0056A6;
-  }
-
-  .modal-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 25px;
-  }
-
-  .btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: background-color 0.3s;
-  }
-
-  .btn-primary {
-    background-color: #0056A6;
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background-color: #003366;
-  }
-
-  .btn-secondary {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .btn-secondary:hover {
-    background-color: #5a6268;
-  }
-
-  .btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-</style>
+<title>IPPI - Informes de Peligros Potenciales e Incidentes</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/ippi.css">
 </head>
 <body>
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  <div id="loading-text">Cargando datos, por favor espere...</div>
-</div>
-
-<div id="imageModal" class="modal">
-  <span class="modal-close" onclick="cerrarModalImagen()">&times;</span>
-  <div class="modal-loading" id="modalLoading">Cargando imagen...</div>
-  <img class="modal-content-img" id="modalImage" style="display:none;">
-</div>
-
-<div id="editModal" class="modal-edit">
-  <div class="modal-edit-content">
-    <h3>Editar Registro</h3>
-    
-    <div class="form-group">
-      <label for="editEstado">Estado:</label>
-      <select id="editEstado">
-        <option value="Abierto">Abierto</option>
-        <option value="En proceso">En proceso</option>
-        <option value="Cerrado">Cerrado</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="editAcciones">Acciones Tomadas:</label>
-      <textarea id="editAcciones" placeholder="Describa las acciones tomadas..."></textarea>
-    </div>
-
-    <div class="modal-buttons">
-      <button class="btn btn-secondary" onclick="cerrarModalEdicion()">Cancelar</button>
-      <button class="btn btn-primary" id="btnGuardarEdicion" onclick="guardarEdicion()">Guardar</button>
-    </div>
-  </div>
-</div>
 
 <div class="container">
-  <h2>CONSULTA DE INFORMES DE PELIGROS POTENCIALES E INCIDENTES</h2>
+  <h1>IPPI - Informes de Peligros Potenciales e Incidentes</h1>
   
-  <div class="filters">
-    <input type="text" id="filtroAsunto" placeholder="Buscar por asunto..." onkeyup="aplicarFiltros()">
-    <input type="text" id="filtroLugar" placeholder="Buscar por lugar..." onkeyup="aplicarFiltros()">
+  <div class="buscador">
+    <input type="text" id="buscar" placeholder="Buscar por asunto, lugar o fecha...">
     <select id="filtroEstado" onchange="aplicarFiltros()">
       <option value="">Todos los estados</option>
       <option value="Abierto">Abierto</option>
       <option value="En proceso">En proceso</option>
       <option value="Cerrado">Cerrado</option>
     </select>
-    <button onclick="forzarRecarga()">🔄 Recargar datos</button>
+    <span class="info-registros" id="infoRegistros"></span>
   </div>
 
-  <table id="data-table">
-    <thead>
-      <tr>
-        <th>N°</th>
-        <th>FECHA Y HORA</th>
-        <th>ASUNTO</th>
-        <th>LUGAR</th>
-        <th>DESCRIPCIÓN</th>
-        <th>RECOMENDACIONES</th>
-        <th>REPORTA</th>
-        <th>IMÁGENES</th>
-        <th>ESTADO</th>
-        <th>ACCIONES TOMADAS</th>
-        <th>ACCIÓN</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <div class="pagination" id="pagination"></div>
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando datos...</div>
+    <table id="tablaIPPI" style="display:none;">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>FECHA Y HORA</th>
+          <th>ASUNTO</th>
+          <th>LUGAR</th>
+          <th>DESCRIPCIÓN</th>
+          <th>REPORTA</th>
+          <th>ESTADO</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
 </div>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
-const filasPorPagina = 15;
-let datosOriginales = [];
-let datosFiltrados = [];
-let paginaActual = 1;
-let cargaInicial = true;
-let filaEditando = null;
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
 
-function formatearFecha(fecha) {
-  if(!fecha) return "";
-  const d = new Date(fecha);
-  const dia = d.getDate().toString().padStart(2,"0");
-  const mes = (d.getMonth()+1).toString().padStart(2,"0");
-  const anio = d.getFullYear();
-  const hora = d.getHours().toString().padStart(2,"0");
-  const min = d.getMinutes().toString().padStart(2,"0");
-  return `${dia}/${mes}/${anio} ${hora}:${min}`;
-}
-
-function mostrarOverlay(show, texto = "Cargando datos, por favor espere...") {
-  document.getElementById("loading-overlay").style.display = show ? "flex" : "none";
-  document.getElementById("loading-text").textContent = texto;
-}
-
-async function cargarDatos(forzar = false) {
-  try {
-    mostrarOverlay(true, cargaInicial ? "Cargando datos por primera vez..." : "Actualizando datos...");
-    
-    const url = forzar ? `${SCRIPT_URL}?t=${Date.now()}` : SCRIPT_URL;
-    const response = await fetch(url, {
-      method: 'GET',
-      cache: forzar ? 'no-cache' : 'default'
-    });
-    
-    if(!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
-    
-    datosOriginales = await response.json();
-    
-    if(datosOriginales.error) {
-      throw new Error(datosOriginales.error);
-    }
-    
-   
-    datosFiltrados = [...datosOriginales];
-    mostrarPagina(1);
-    cargaInicial = false;
-    
-  } catch (error) {
-    console.error("Error cargando los datos:", error);
-    alert("Error al cargar los datos: " + error.message + "\nPor favor, recargue la página.");
-  } finally {
-    mostrarOverlay(false);
-  }
-}
-
-function forzarRecarga() {
-  cargarDatos(true);
-}
-
-function aplicarFiltros() {
-  const filtroAsunto = document.getElementById("filtroAsunto").value.toLowerCase();
-  const filtroLugar = document.getElementById("filtroLugar").value.toLowerCase();
-  const filtroEstado = document.getElementById("filtroEstado").value;
-
-  datosFiltrados = datosOriginales.filter(row => {
-    const cumpleAsunto = !filtroAsunto || (row["informe"] || "").toLowerCase().includes(filtroAsunto);
-    const cumpleLugar = !filtroLugar || (row["lugar"] || "").toLowerCase().includes(filtroLugar);
-    const cumpleEstado = !filtroEstado || (row["estado"] || "") === filtroEstado;
-    
-    return cumpleAsunto && cumpleLugar && cumpleEstado;
-  });
-
-  mostrarPagina(1);
-}
-
-function extraerIdDrive(url) {
-  if(!url) return null;
-  
-  const patterns = [
-    /\/d\/([a-zA-Z0-9_-]+)/,
-    /id=([a-zA-Z0-9_-]+)/,
-    /\/file\/d\/([a-zA-Z0-9_-]+)/,
-    /open\?id=([a-zA-Z0-9_-]+)/,
-    /^([a-zA-Z0-9_-]{25,})$/
-  ];
-  
-  for(let pattern of patterns) {
-    const match = url.match(pattern);
-    if(match) return match[1];
-  }
-  
-  return null;
-}
-
-function crearURLVisualizacion(url) {
-  const id = extraerIdDrive(url);
-  if(!id) return url;
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w200`;
-}
-
-function crearURLCompleta(url) {
-  const id = extraerIdDrive(url);
-  if(!id) return url;
-  return `https://drive.google.com/uc?export=view&id=${id}`;
-}
-
-function mostrarPagina(pagina) {
-  const tbody = document.querySelector("#data-table tbody");
-  tbody.innerHTML = "";
-  paginaActual = pagina;
-
-  const inicio = (pagina - 1) * filasPorPagina;
-  const fin = inicio + filasPorPagina;
-  const paginaDatos = datosFiltrados.slice(inicio, fin);
-
-  if(paginaDatos.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="11" style="text-align:center; padding:20px; color:#666;">No se encontraron registros</td>`;
-    tbody.appendChild(tr);
-    document.getElementById("pagination").innerHTML = "";
-    return;
-  }
-
-  paginaDatos.forEach((row, index) => {
-    let imagenesHTML = "";
-    if(row["archivos"]){
-      const urls = row["archivos"].split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>👁 Ver Detalle del IPPI</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
       
-      imagenesHTML = '<div class="thumbnail-container">';
-      urls.forEach(url => {
-        const urlMiniatura = crearURLVisualizacion(url);
-        const urlCompleta = crearURLCompleta(url);
-        
-        imagenesHTML += `
-          <img class="thumbnail" 
-               src="${urlMiniatura}" 
-               onclick="abrirImagen('${urlCompleta}')" 
-               onerror="this.onerror=null; this.src='https://via.placeholder.com/60?text=Error'"
-               title="Click para ampliar"
-               loading="lazy">
-        `;
-      });
-      imagenesHTML += '</div>';
-    }
-
-    const indiceOriginal = datosOriginales.indexOf(row);
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${inicio + index + 1}</td>
-      <td>${formatearFecha(row["marca temporal"])}</td>
-      <td class="asunto">${row["informe"] || ""}</td>
-      <td class="lugar">${row["lugar"] || ""}</td>
-      <td class="descripcion">${row["descripcion"] || ""}</td>
-      <td class="recomendaciones">${row["recomendaciones"] || ""}</td>
-      <td class="reporta">${row["nombre"] || ""}</td>
-      <td class="imagenes-cell">${imagenesHTML || '<span style="color:#999;">Sin imágenes</span>'}</td>
-      <td>${row["estado"] || ""}</td>
-      <td class="acciones">${row["accion tomada"] || ""}</td>
-      <td>
-        <div class="action-icons">
-          <button class="icon-btn icon-edit" onclick="abrirModalEdicion(${indiceOriginal})" title="Editar">✏️</button>
-          <button class="icon-btn icon-delete" onclick="eliminarRegistro(${indiceOriginal})" title="Eliminar">🗑️</button>
+      <div class="seccion info-jia">
+        <div class="seccion-titulo">📋 Información del Informe</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Fecha y Hora:</strong><span id="verFecha">-</span></div>
+          <div class="info-item"><strong>Asunto:</strong><span id="verAsunto">-</span></div>
+          <div class="info-item"><strong>Lugar:</strong><span id="verLugar">-</span></div>
+          <div class="info-item"><strong>Reporta:</strong><span id="verReporta">-</span></div>
+          <div class="info-item"><strong>Estado:</strong><span id="verEstado">-</span></div>
         </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+        
+        <div class="info-descripcion">
+          <strong>Descripción:</strong>
+          <p id="verDescripcion">-</p>
+        </div>
 
-  renderizarPaginacion();
-}
+        <div class="info-descripcion">
+          <strong>Recomendaciones:</strong>
+          <p id="verRecomendaciones">-</p>
+        </div>
 
-function renderizarPaginacion() {
-  const totalPaginas = Math.ceil(datosFiltrados.length / filasPorPagina);
-  const pagDiv = document.getElementById("pagination");
-  pagDiv.innerHTML = "";
+        <div class="info-descripcion">
+          <strong>Acciones Tomadas:</strong>
+          <p id="verAccionesTomadas">-</p>
+        </div>
 
-  if(totalPaginas <= 1) return;
+        <div id="verSeccionImagenes" style="display:none;">
+          <strong>Imágenes:</strong>
+          <div id="verImagenes" class="imagenes-grid"></div>
+        </div>
+      </div>
 
-  const btnPrev = document.createElement("button");
-  btnPrev.textContent = "‹ Anterior";
-  btnPrev.disabled = paginaActual === 1;
-  btnPrev.addEventListener("click", () => mostrarPagina(paginaActual - 1));
-  pagDiv.appendChild(btnPrev);
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
 
-  let inicio = Math.max(1, paginaActual - 2);
-  let fin = Math.min(totalPaginas, inicio + 4);
-  
-  if(fin - inicio < 4) {
-    inicio = Math.max(1, fin - 4);
-  }
-
-  if(inicio > 1) {
-    const btn1 = document.createElement("button");
-    btn1.textContent = "1";
-    btn1.addEventListener("click", () => mostrarPagina(1));
-    pagDiv.appendChild(btn1);
-    
-    if(inicio > 2) {
-      const span = document.createElement("span");
-      span.textContent = "...";
-      pagDiv.appendChild(span);
-    }
-  }
-
-  for(let i = inicio; i <= fin; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    btn.classList.toggle("active", i === paginaActual);
-    btn.addEventListener("click", () => mostrarPagina(i));
-    pagDiv.appendChild(btn);
-  }
-
-  if(fin < totalPaginas) {
-    if(fin < totalPaginas - 1) {
-      const span = document.createElement("span");
-      span.textContent = "...";
-      pagDiv.appendChild(span);
-    }
-    
-    const btnLast = document.createElement("button");
-    btnLast.textContent = totalPaginas;
-    btnLast.addEventListener("click", () => mostrarPagina(totalPaginas));
-    pagDiv.appendChild(btnLast);
-  }
-
-  const btnNext = document.createElement("button");
-  btnNext.textContent = "Siguiente ›";
-  btnNext.disabled = paginaActual === totalPaginas;
-  btnNext.addEventListener("click", () => mostrarPagina(paginaActual + 1));
-  pagDiv.appendChild(btnNext);
-
-  const info = document.createElement("span");
-  info.style.marginLeft = "15px";
-  const desde = (paginaActual - 1) * filasPorPagina + 1;
-  const hasta = Math.min(paginaActual * filasPorPagina, datosFiltrados.length);
-  info.textContent = `Mostrando ${desde}-${hasta} de ${datosFiltrados.length} registros`;
-  pagDiv.appendChild(info);
-}
-
-function abrirModalEdicion(indiceOriginal) {
-  const registro = datosOriginales[indiceOriginal];
-  
-  if(!registro) {
-    alert("Error: Registro no encontrado");
-    return;
-  }
-
-  filaEditando = indiceOriginal;
-  
-  document.getElementById("editEstado").value = registro["estado"] || "Abierto";
-  document.getElementById("editAcciones").value = registro["accion tomada"] || "";
-  
-  document.getElementById("editModal").style.display = "block";
-}
-
-function cerrarModalEdicion() {
-  document.getElementById("editModal").style.display = "none";
-  filaEditando = null;
-}
-
-async function guardarEdicion() {
-  if(filaEditando === null || filaEditando === undefined) return;
-
-  const registro = datosOriginales[filaEditando];
-  const estado = document.getElementById("editEstado").value;
-  const acciones = document.getElementById("editAcciones").value;
-
-  const btnGuardar = document.getElementById("btnGuardarEdicion");
-  btnGuardar.disabled = true;
-  btnGuardar.textContent = "Guardando...";
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'update');
-    formData.append('row', registro._filaExcel);
-    formData.append('estado', estado);
-    formData.append('accionTomada', acciones);
-    
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
-    });
-    
-    const result = await response.json();
-    
-    if(result.status === "ok") {
-      alert("Registro actualizado correctamente");
-      cerrarModalEdicion();
-      cargarDatos(true);
-    } else {
-      throw new Error(result.error || "Error desconocido");
-    }
-    
-  } catch(err){
-    alert("Error al guardar: " + err.message);
-  } finally {
-    btnGuardar.disabled = false;
-    btnGuardar.textContent = "Guardar";
-  }
-}
-
-async function eliminarRegistro(indiceOriginal) {
-  const registro = datosOriginales[indiceOriginal];
-  
-  if(!registro) {
-    alert("Error: Registro no encontrado");
-    return;
-  }
-
-  const mensaje = `¿Está seguro de que desea eliminar este registro?\n\nAsunto: ${registro["informe"]}\nLugar: ${registro["lugar"]}\n\nEsta acción no se puede deshacer.`;
-  
-  if(!confirm(mensaje)) {
-    return;
-  }
-
-  mostrarOverlay(true, "Eliminando registro...");
-
-  try {
-    const formData = new FormData();
-    formData.append('action', 'delete');
-    formData.append('row', registro._filaExcel);
-    
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
-    });
-    
-    const result = await response.json();
-    
-    if(result.status === "ok") {
-      alert("Registro eliminado correctamente");
-      cargarDatos(true);
-    } else {
-      throw new Error(result.error || "Error desconocido");
-    }
-    
-  } catch(err){
-    alert("Error al eliminar: " + err.message);
-  } finally {
-    mostrarOverlay(false);
-  }
-}
-
-function abrirImagen(url) {
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImage");
-  const loading = document.getElementById("modalLoading");
-  
-  modal.style.display = "block";
-  loading.style.display = "block";
-  modalImg.style.display = "none";
-  modalImg.src = "";
-  
-  const img = new Image();
-  
-  img.onload = function() {
-    modalImg.src = url;
-    modalImg.style.display = "block";
-    loading.style.display = "none";
-  };
-  
-  img.onerror = function() {
-    const id = extraerIdDrive(url);
-    if(id) {
-      const urlAlternativa = `https://lh3.googleusercontent.com/d/${id}`;
-      const img2 = new Image();
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>✏️ Editar IPPI</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
+    </div>
+    <div class="modal-body">
       
-      img2.onload = function() {
-        modalImg.src = urlAlternativa;
-        modalImg.style.display = "block";
-        loading.style.display = "none";
-      };
+      <input type="hidden" id="editFila">
       
-      img2.onerror = function() {
-        loading.innerHTML = "❌ Error al cargar la imagen<br><small>Verifica que el archivo sea público</small>";
-        setTimeout(() => cerrarModalImagen(), 3000);
-      };
-      
-      img2.src = urlAlternativa;
-    } else {
-      loading.innerHTML = "❌ Error al cargar la imagen<br><small>URL no válida</small>";
-      setTimeout(() => cerrarModalImagen(), 3000);
-    }
-  };
-  
-  img.src = url;
-}
+      <div class="form-group">
+        <label>Estado <span class="required">*</span></label>
+        <select id="editEstado" required>
+          <option value="Abierto">Abierto</option>
+          <option value="En proceso">En proceso</option>
+          <option value="Cerrado">Cerrado</option>
+        </select>
+      </div>
 
-function cerrarModalImagen() {
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImage");
-  const loading = document.getElementById("modalLoading");
-  
-  modal.style.display = "none";
-  modalImg.src = "";
-  modalImg.style.display = "none";
-  loading.style.display = "block";
-  loading.innerHTML = "Cargando imagen...";
-}
+      <div class="form-group">
+        <label>Acciones Tomadas</label>
+        <textarea id="editAccionesTomadas" rows="6"></textarea>
+      </div>
 
-window.onclick = function(event) {
-  const modalImg = document.getElementById("imageModal");
-  const modalEdit = document.getElementById("editModal");
-  
-  if (event.target == modalImg) {
-    cerrarModalImagen();
-  }
-  if (event.target == modalEdit) {
-    cerrarModalEdicion();
-  }
-}
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cancelar</button>
+      <button type="button" class="btn-guardar-cabecera" onclick="guardarEdicion()" id="btnGuardarEdicion">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === "Escape") {
-    cerrarModalImagen();
-    cerrarModalEdicion();
-  }
-});
+<!-- MODAL CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
 
-window.onload = cargarDatos;
-</script>
+<!-- MODAL IMAGEN -->
+<div id="imageModal" class="modal">
+  <span class="close" onclick="cerrarModalImagen()" style="position:absolute;top:20px;right:40px;font-size:40px;color:white;cursor:pointer;z-index:10001;">&times;</span>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:1.2rem;" id="modalLoading">Cargando imagen...</div>
+  <img style="margin:auto;display:block;max-width:90%;max-height:90vh;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:4px;" id="modalImage">
+</div>
+
+<script src="js/ippi.js"></script>
 </body>
 </html>
