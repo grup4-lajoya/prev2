@@ -29,6 +29,131 @@ const rol = localStorage.getItem("rol") || "";
 
 if (!usuario) window.location.replace("login.html");
 
+// ============================================
+// SISTEMA DE MANTENIMIENTO DE SESIÓN
+// ============================================
+
+// Configuración
+const TIEMPO_INACTIVIDAD = 30 * 60 * 1000; // 30 minutos
+const TIEMPO_ADVERTENCIA = 5 * 60 * 1000;  // 5 minutos antes de cerrar
+let tiempoUltimaActividad = Date.now();
+let intervaloVerificacion;
+let advertenciaMostrada = false;
+
+// Función para renovar la marca de tiempo de actividad
+function renovarActividad() {
+  tiempoUltimaActividad = Date.now();
+  advertenciaMostrada = false;
+  localStorage.setItem("ultimaActividad", tiempoUltimaActividad.toString());
+}
+
+// Función para verificar inactividad
+function verificarInactividad() {
+  const tiempoTranscurrido = Date.now() - tiempoUltimaActividad;
+  const tiempoRestante = TIEMPO_INACTIVIDAD - tiempoTranscurrido;
+  
+  // Si está cerca de expirar, mostrar advertencia
+  if (tiempoRestante <= TIEMPO_ADVERTENCIA && tiempoRestante > 0 && !advertenciaMostrada) {
+    advertenciaMostrada = true;
+    const minutos = Math.ceil(tiempoRestante / 60000);
+    
+    if (confirm(`⚠️ Su sesión expirará en ${minutos} minuto(s) por inactividad.\n\n¿Desea continuar trabajando?`)) {
+      renovarActividad();
+    }
+  }
+  
+  // Si expiró, cerrar sesión
+  if (tiempoRestante <= 0) {
+    cerrarSesionPorInactividad();
+  }
+}
+
+// Función para cerrar sesión por inactividad
+function cerrarSesionPorInactividad() {
+  clearInterval(intervaloVerificacion);
+  localStorage.clear();
+  alert('⏱️ Su sesión ha expirado por inactividad.');
+  window.location.replace("login.html");
+}
+
+// Eventos que renuevan la actividad
+const eventosActividad = [
+  'mousedown', 'mousemove', 'keypress', 'scroll', 
+  'touchstart', 'click', 'focus'
+];
+
+eventosActividad.forEach(evento => {
+  document.addEventListener(evento, renovarActividad, true);
+});
+
+// Verificar cada 30 segundos
+intervaloVerificacion = setInterval(verificarInactividad, 30000);
+
+// Inicializar la última actividad
+renovarActividad();
+
+// ============================================
+// SINCRONIZACIÓN ENTRE TABS
+// ============================================
+
+// Detectar cuando otra tab cierra sesión
+window.addEventListener('storage', function(e) {
+  if (e.key === 'usuario' && e.newValue === null) {
+    alert('⚠️ La sesión se cerró en otra pestaña.');
+    window.location.replace("login.html");
+  }
+  
+  // Sincronizar última actividad entre tabs
+  if (e.key === 'ultimaActividad' && e.newValue) {
+    tiempoUltimaActividad = parseInt(e.newValue);
+    advertenciaMostrada = false;
+  }
+});
+
+// ============================================
+// VALIDACIÓN PERIÓDICA CON SUPABASE
+// ============================================
+
+async function validarSesionConServidor() {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('usuario, rol, unidad')
+      .eq('usuario', usuario)
+      .single();
+    
+    if (error || !data) {
+      localStorage.clear();
+      alert('⚠️ Su sesión ya no es válida.');
+      window.location.replace("login.html");
+      return false;
+    }
+    
+    // Verificar que los datos no hayan cambiado
+    if (data.rol !== rol || data.unidad !== unidad) {
+      localStorage.setItem("rol", data.rol);
+      localStorage.setItem("unidad", data.unidad);
+      alert('ℹ️ Sus permisos han sido actualizados. La página se recargará.');
+      location.reload();
+    }
+    
+    return true;
+  } catch (err) {
+    // No cerrar sesión si hay error de red
+    return true;
+  }
+}
+
+// Validar cada 5 minutos
+setInterval(validarSesionConServidor, 5 * 60 * 1000);
+
+// Validar inmediatamente al cargar
+validarSesionConServidor();
+
+// ============================================
+// FIN DEL SISTEMA DE MANTENIMIENTO DE SESIÓN
+// ============================================
+
 window.onload = function() {
   cargarPeriodos();
   cargarOpcionesCausaPrincipal();
