@@ -93,8 +93,9 @@
   const urlParams = new URLSearchParams(window.location.search);
   const fromLogout = urlParams.get('logout');
   
-  if(fromLogout === 'true') {
+if(fromLogout === 'true') {
     localStorage.clear();
+    sessionStorage.clear();
     
     const mensajeLogout = document.getElementById('mensajeLogout');
     mensajeLogout.textContent = '✔ Sesión cerrada exitosamente';
@@ -105,9 +106,16 @@
     setTimeout(() => {
       mensajeLogout.style.display = 'none';
     }, 3000);
-  } else if(localStorage.getItem("usuario")) {
-    window.location.replace("index.html");
-  }
+  
+ } else if(localStorage.getItem("usuario")) {
+    // Solo redirigir si está entrando directamente al login
+    const paginaOrigen = document.referrer;
+    
+    // Si no viene de ninguna página o viene de fuera del dominio
+    if (!paginaOrigen || (!paginaOrigen.includes('jia.html') && !paginaOrigen.includes('jiat.html'))) {
+        window.location.replace("index.html");
+    }
+}
 
   // Función para mostrar error
   function mostrarError(mensaje) {
@@ -155,17 +163,25 @@
         return;
       }
       
-      if (data) {
-        // Guardar datos de sesión
-        localStorage.setItem("usuario", usuario);
-        localStorage.setItem("datos", data.datos || "");
-        localStorage.setItem("rol", data.rol || "");
-        localStorage.setItem("correo", data.correo || "");
-        localStorage.setItem("unidad", data.unidad || "");
-        
-        // Redirigir al sistema
-        window.location.replace("index.html");
-      } else {
+if (data) {
+    // Limpiar cualquier sesión previa
+    localStorage.clear();
+    
+    // Guardar datos de sesión
+    localStorage.setItem("usuario", usuario);
+    localStorage.setItem("datos", data.datos || "");
+    localStorage.setItem("rol", data.rol || "");
+    localStorage.setItem("correo", data.correo || "");
+    localStorage.setItem("unidad", data.unidad || "");
+    
+    // Guardar timestamp de inicio de sesión
+    const tiempoInicio = Date.now();
+    localStorage.setItem("sesionInicio", tiempoInicio.toString());
+    localStorage.setItem("ultimaActividad", tiempoInicio.toString());
+    
+    // Redirigir al sistema
+    window.location.replace("index.html");
+} else {
         mostrarError("Usuario o clave incorrectos");
       }
       
