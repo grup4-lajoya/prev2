@@ -51,6 +51,7 @@ function cargarPeriodos() {
     }
   });
 }
+
 function cargarOpcionesCausaPrincipal() {
   const tiposAccidente = [
     'LEVE',
@@ -110,6 +111,7 @@ function cargarOpcionesCausaPrincipal() {
     });
   }
 }
+
 async function cargarAeronaves() {
   try {
     console.log('Cargando aeronaves para unidad:', unidad);
@@ -178,6 +180,40 @@ function actualizarRangoFechas() {
     inputFecha.max = `${periodo}-12-31`;
     inputFecha.value = '';
   }
+}
+
+// ============================================
+// NUEVA FUNCIÓN: Actualizar opciones de Carácter según Asunto
+// ============================================
+function actualizarOpcionesCaracter(id, esEdicion = false) {
+  const prefijo = esEdicion ? 'Edit' : '';
+  const subtipoSelect = document.getElementById(`subtipo${prefijo}${id}`);
+  const caracterSelect = document.getElementById(`caracter${prefijo}${id}`);
+  
+  if (!subtipoSelect || !caracterSelect) return;
+  
+  const subtipo = subtipoSelect.value;
+  
+  // Limpiar opciones actuales
+  caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+  
+  let opciones = [];
+  
+  if (subtipo === 'CAUSA') {
+    // Opciones específicas para CAUSA
+    opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+  } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+    // Opciones para CONCLUSIÓN y RECOMENDACIÓN
+    opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD', 'LEGAL'];
+  }
+  
+  // Agregar las opciones al select
+  opciones.forEach(opcion => {
+    const option = document.createElement('option');
+    option.value = opcion;
+    option.textContent = opcion;
+    caracterSelect.appendChild(option);
+  });
 }
 
 function agregarInvolucrado() {
@@ -256,12 +292,12 @@ async function guardarCabecera() {
     periodoJIAActual = periodo;
 
     const { error } = await supabase.from('jia').insert([{
-  codigo, usuarioreg: usuario, tipo: 'JIA', numero: parseInt(numero), periodo: parseInt(periodo),
-  unidad, fecha, lugar, involucrado: null, fatal, cantfall: parseInt(cantfall),
-  descripcion, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano, causa_principal, fase, tipo_vuelo
-  }]);
+      codigo, usuarioreg: usuario, tipo: 'JIA', numero: parseInt(numero), periodo: parseInt(periodo),
+      unidad, fecha, lugar, involucrado: null, fatal, cantfall: parseInt(cantfall),
+      descripcion, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano, causa_principal, fase, tipo_vuelo
+    }]);
 
-  if (error) throw error;
+    if (error) throw error;
 
     cabeceraGuardada = true;
     const seccionCabecera = document.getElementById('seccionCabecera');
@@ -305,7 +341,7 @@ function agregarDetalle() {
     <div class="form-row">
       <div class="form-group">
         <label>Asunto <span class="required">*</span></label>
-        <select id="subtipo${contadorDetalles}" required>
+        <select id="subtipo${contadorDetalles}" required onchange="actualizarOpcionesCaracter(${contadorDetalles})">
           <option value="">Seleccione</option>
           <option value="CONCLUSIÓN">CONCLUSIÓN</option>
           <option value="CAUSA">CAUSA</option>
@@ -315,12 +351,7 @@ function agregarDetalle() {
       <div class="form-group">
         <label>Carácter <span class="required">*</span></label>
         <select id="caracter${contadorDetalles}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
+          <option value="">Seleccione primero un asunto</option>
         </select>
       </div>
     </div>
@@ -437,22 +468,22 @@ function actualizarTabla() {
     const numeroGlobal = inicio + index + 1;
     const fila = document.createElement('tr');
     fila.innerHTML = `
-  <td>${numeroGlobal}</td>
-  <td>${registro.UNIDAD || '-'}</td>
-  <td>${registro.CODIGO || '-'}</td>
-  <td>${registro.FECHA || '-'}</td>
-  <td>${registro.CAUSA || '-'}</td>
-  <td>
-  <div class="acciones">
-    <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver">👁</button>
-    <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Acciones">📋</button>
-    <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
-    <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
-    <button class="btn-icono btn-imprimir" onclick="imprimirJIA(${inicio + index})" title="Imprimir">🖨️</button>
-  </div>
-</td>
-`;
-     tbody.appendChild(fila);
+      <td>${numeroGlobal}</td>
+      <td>${registro.UNIDAD || '-'}</td>
+      <td>${registro.CODIGO || '-'}</td>
+      <td>${registro.FECHA || '-'}</td>
+      <td>${registro.CAUSA || '-'}</td>
+      <td>
+        <div class="acciones">
+          <button class="btn-icono btn-ver" onclick="verDetalle(${inicio + index})" title="Ver">👁</button>
+          <button class="btn-icono btn-acciones" onclick="registrarAcciones(${inicio + index})" title="Acciones">📋</button>
+          <button class="btn-icono btn-editar" onclick="editarRegistro(${inicio + index})" title="Editar">✏️</button>
+          <button class="btn-icono btn-eliminar" onclick="eliminarRegistro(${inicio + index})" title="Eliminar">🗑️</button>
+          <button class="btn-icono btn-imprimir" onclick="imprimirJIA(${inicio + index})" title="Imprimir">🖨️</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(fila);
   });
   actualizarPaginacion();
   actualizarInfoRegistros();
@@ -1118,6 +1149,60 @@ async function editarRegistro(index) {
   }
 }
 
+// ============================================
+// NUEVAS FUNCIONES: Para detalles existentes en edición
+// ============================================
+function cargarOpcionesCaracterExistente(idDetalle, subtipo, caracterActual) {
+  const caracterSelect = document.getElementById(`caracterExist-${idDetalle}`);
+  if (!caracterSelect) return;
+  
+  caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+  
+  let opciones = [];
+  
+  if (subtipo === 'CAUSA') {
+    opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+  } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+    opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD', 'LEGAL'];
+  }
+  
+  opciones.forEach(opcion => {
+    const option = document.createElement('option');
+    option.value = opcion;
+    option.textContent = opcion;
+    if (opcion === caracterActual) {
+      option.selected = true;
+    }
+    caracterSelect.appendChild(option);
+  });
+}
+
+function actualizarOpcionesCaracterExistente(idDetalle) {
+  const subtipoSelect = document.getElementById(`subtipoExist-${idDetalle}`);
+  const caracterSelect = document.getElementById(`caracterExist-${idDetalle}`);
+  
+  if (!subtipoSelect || !caracterSelect) return;
+  
+  const subtipo = subtipoSelect.value;
+  
+  caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+  
+  let opciones = [];
+  
+  if (subtipo === 'CAUSA') {
+    opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+  } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+    opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD', 'LEGAL'];
+  }
+  
+  opciones.forEach(opcion => {
+    const option = document.createElement('option');
+    option.value = opcion;
+    option.textContent = opcion;
+    caracterSelect.appendChild(option);
+  });
+}
+
 async function guardarCabeceraEdicion() {
   const codigo = document.getElementById('editCodigoActual').value;
   const fecha = document.getElementById('editFecha').value;
@@ -1129,7 +1214,6 @@ async function guardarCabeceraEdicion() {
   const causa_principal = document.getElementById('editCausaPrincipal').value;
   const fase = document.getElementById('editFase').value;
   const tipo_vuelo = document.getElementById('editTipoVuelo').value;
-  // const involucrado = document.getElementById('editInvolucrado').value; // ELIMINAR ESTA LÍNEA
   const fatal = document.getElementById('editFatal').value;
   const cantfall = document.getElementById('editCantfall').value;
   const descripcion = document.getElementById('editDescripcion').value;
@@ -1146,10 +1230,9 @@ async function guardarCabeceraEdicion() {
 
   try {
     const { error } = await supabase.from('jia').update({
-        fecha, lugar, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano,
-        causa_principal, fase, tipo_vuelo, fatal, cantfall: parseInt(cantfall), descripcion
-        // NO incluir involucrado aquí
-      }).eq('codigo', codigo);
+      fecha, lugar, tipo_accidente, tipo_aeronave, tipo_lesion, tipo_dano,
+      causa_principal, fase, tipo_vuelo, fatal, cantfall: parseInt(cantfall), descripcion
+    }).eq('codigo', codigo);
 
     if (error) throw error;
 
@@ -1182,7 +1265,7 @@ async function guardarCabeceraEdicion() {
         <div class="form-row">
           <div class="form-group">
             <label>Asunto</label>
-            <select id="subtipoExist-${det.id_detalle_jia}" disabled>
+            <select id="subtipoExist-${det.id_detalle_jia}" disabled onchange="actualizarOpcionesCaracterExistente('${det.id_detalle_jia}')">
               <option value="CONCLUSIÓN" ${det.subtipo === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
               <option value="CAUSA" ${det.subtipo === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
               <option value="RECOMENDACIÓN" ${det.subtipo === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
@@ -1191,11 +1274,7 @@ async function guardarCabeceraEdicion() {
           <div class="form-group">
             <label>Carácter</label>
             <select id="caracterExist-${det.id_detalle_jia}" disabled>
-              <option value="PSICOFÍSICO" ${det.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-              <option value="TÉCNICO" ${det.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-              <option value="OPERATIVO" ${det.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-              <option value="PSICOLÓGICO" ${det.caracter === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-              <option value="SALUD" ${det.caracter === 'SALUD' ? 'selected' : ''}>SALUD</option>
+              <!-- Las opciones se cargarán dinámicamente -->
             </select>
           </div>
         </div>
@@ -1205,6 +1284,9 @@ async function guardarCabeceraEdicion() {
         </div>
       `;
       containerDetalles.appendChild(div);
+      
+      // NUEVO: Después de agregar el div, cargar las opciones correctas
+      cargarOpcionesCaracterExistente(det.id_detalle_jia, det.subtipo, det.caracter);
     });
 
     const containerAcciones = document.getElementById('editAccionesContainer');
@@ -1329,8 +1411,9 @@ async function guardarEdicionDetalle(idDetalle) {
     mostrarNotificacion('Error: ' + error.message, 'error');
   }
 }
+
 async function eliminarDetalleExistente(idDetalle) {
- const confirmar = await mostrarConfirmacion('¿Eliminar este detalle?<br><br><strong>No se puede deshacer.</strong>', '🗑️ Confirmar');
+  const confirmar = await mostrarConfirmacion('¿Eliminar este detalle?<br><br><strong>No se puede deshacer.</strong>', '🗑️ Confirmar');
   if (!confirmar) {
     console.log('Usuario canceló');
     return;
@@ -1342,7 +1425,7 @@ async function eliminarDetalleExistente(idDetalle) {
       .from('detalle_jia')
       .delete()
       .eq('id_detalle_jia', idDetalle)
-      .select(); // ← AGREGAR .select() para ver qué se eliminó
+      .select();
     
     console.log('Resultado DELETE:', { error, data });
     
@@ -1441,7 +1524,7 @@ function agregarDetalleEdicion() {
     <div class="form-row">
       <div class="form-group">
         <label>Asunto <span class="required">*</span></label>
-        <select id="subtipoEdit${contadorDetallesEdicion}" required>
+        <select id="subtipoEdit${contadorDetallesEdicion}" required onchange="actualizarOpcionesCaracter(${contadorDetallesEdicion}, true)">
           <option value="">Seleccione</option>
           <option value="CONCLUSIÓN">CONCLUSIÓN</option>
           <option value="CAUSA">CAUSA</option>
@@ -1451,12 +1534,7 @@ function agregarDetalleEdicion() {
       <div class="form-group">
         <label>Carácter <span class="required">*</span></label>
         <select id="caracterEdit${contadorDetallesEdicion}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
+          <option value="">Seleccione primero un asunto</option>
         </select>
       </div>
     </div>
