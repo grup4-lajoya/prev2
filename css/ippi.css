@@ -57,6 +57,24 @@ th {
   text-transform: uppercase;
 }
 
+/* Anchos específicos de columnas */
+th:nth-child(1) { width: 4%; }   /* N° */
+th:nth-child(2) { width: 10%; }  /* FECHA Y HORA */
+th:nth-child(3) { width: 12%; }  /* ASUNTO */
+th:nth-child(4) { width: 10%; }  /* LUGAR */
+th:nth-child(5) { width: 30%; }  /* DESCRIPCIÓN - MÁS ANCHA */
+th:nth-child(6) { width: 12%; }  /* REPORTA */
+th:nth-child(7) { width: 8%; }   /* ESTADO */
+th:nth-child(8) { width: 14%; }  /* ACCIONES */
+
+/* Estilo especial para la celda de descripción */
+td:nth-child(5) {
+  max-width: 400px;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
 tbody tr:hover {
   background-color: #f0f4ff;
 }
@@ -567,4 +585,50 @@ tbody tr:nth-child(even) {
   th, td {
     padding: 8px;
   }
+}
+
+/* Modal de imagen en pantalla completa */
+#imageModal {
+  background-color: rgba(0, 0, 0, 0.95);
+}
+
+#imageModal .close {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+  z-index: 10001;
+  transition: color 0.3s;
+}
+
+#imageModal .close:hover {
+  color: #ccc;
+}
+
+#imageModal #modalLoading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
+  z-index: 10000;
+}
+
+#imageModal #modalImage {
+  margin: auto;
+  display: block;
+  max-width: 90%;
+  max-height: 90vh;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  object-fit: contain;
+  background: transparent;
+  z-index: 10000;
 }
