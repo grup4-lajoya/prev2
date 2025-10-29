@@ -122,7 +122,7 @@ function actualizarTabla() {
       <td>${formatearFecha(registro["marca temporal"])}</td>
       <td>${registro["informe"] || "-"}</td>
       <td>${registro["lugar"] || "-"}</td>
-      <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${(registro["descripcion"] || "-").substring(0, 100)}${registro["descripcion"] && registro["descripcion"].length > 100 ? '...' : ''}</td>
+      <td style="white-space: normal; word-wrap: break-word;">${(registro["descripcion"] || "-").substring(0, 200)}${registro["descripcion"] && registro["descripcion"].length > 200 ? '...' : ''}</td>
       <td>${registro["nombre"] || "-"}</td>
       <td><span style="padding:4px 8px; border-radius:4px; background:${registro["estado"] === 'Cerrado' ? '#28a745' : registro["estado"] === 'En proceso' ? '#ffc107' : '#dc3545'}; color:white; font-size:0.85em;">${registro["estado"] || "Abierto"}</span></td>
       <td>
@@ -190,17 +190,24 @@ function actualizarInfoRegistros() {
 
 function extraerIdDrive(url) {
   if(!url) return null;
+  
+  // Limpiar espacios y saltos de línea
+  url = url.trim();
+  
   const patterns = [
     /\/d\/([a-zA-Z0-9_-]+)/,
     /id=([a-zA-Z0-9_-]+)/,
     /\/file\/d\/([a-zA-Z0-9_-]+)/,
     /open\?id=([a-zA-Z0-9_-]+)/,
+    /\/uc\?.*id=([a-zA-Z0-9_-]+)/,
     /^([a-zA-Z0-9_-]{25,})$/
   ];
+  
   for(let pattern of patterns) {
     const match = url.match(pattern);
     if(match) return match[1];
   }
+  
   return null;
 }
 
@@ -213,7 +220,9 @@ function crearURLVisualizacion(url) {
 function crearURLCompleta(url) {
   const id = extraerIdDrive(url);
   if(!id) return url;
-  return `https://drive.google.com/uc?export=view&id=${id}`;
+  
+  // Intentar múltiples formatos de URL
+  return `https://lh3.googleusercontent.com/d/${id}`;
 }
 
 async function verDetalle(indiceOriginal) {
@@ -280,17 +289,49 @@ function abrirImagen(url) {
   loading.style.display = "block";
   modalImg.style.display = "none";
   
-  const img = new Image();
-  img.onload = function() {
-    modalImg.src = url;
-    modalImg.style.display = "block";
-    loading.style.display = "none";
-  };
-  img.onerror = function() {
-    loading.innerHTML = "❌ Error al cargar la imagen";
+  const id = extraerIdDrive(url);
+  
+  if(!id) {
+    loading.innerHTML = "❌ URL de imagen no válida";
     setTimeout(() => cerrarModalImagen(), 2000);
-  };
-  img.src = url;
+    return;
+  }
+  
+  // Lista de URLs alternativas para intentar
+  const urlsAlternativas = [
+    `https://lh3.googleusercontent.com/d/${id}`,
+    `https://drive.google.com/uc?export=view&id=${id}`,
+    `https://drive.google.com/thumbnail?id=${id}&sz=w1000`,
+    url // URL original como último recurso
+  ];
+  
+  let intentoActual = 0;
+  
+  function intentarCargarImagen() {
+    if(intentoActual >= urlsAlternativas.length) {
+      loading.innerHTML = "❌ No se pudo cargar la imagen<br><small>Verifica que el archivo sea público en Google Drive</small>";
+      setTimeout(() => cerrarModalImagen(), 3000);
+      return;
+    }
+    
+    const urlActual = urlsAlternativas[intentoActual];
+    const img = new Image();
+    
+    img.onload = function() {
+      modalImg.src = urlActual;
+      modalImg.style.display = "block";
+      loading.style.display = "none";
+    };
+    
+    img.onerror = function() {
+      intentoActual++;
+      intentarCargarImagen();
+    };
+    
+    img.src = urlActual;
+  }
+  
+  intentarCargarImagen();
 }
 
 function cerrarModalImagen() {
