@@ -150,10 +150,13 @@
 </div>
 
 <!-- MODAL IMAGEN -->
-<div id="imageModal" class="modal">
-  <span class="close" onclick="cerrarModalImagen()" style="position:absolute;top:20px;right:40px;font-size:40px;color:white;cursor:pointer;z-index:10001;">&times;</span>
-  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:1.2rem;" id="modalLoading">Cargando imagen...</div>
-  <img style="margin:auto;display:block;max-width:90%;max-height:90vh;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:4px;" id="modalImage">
+<div id="imageModal" class="modal" style="background-color: rgba(0,0,0,0.95);">
+  <span class="close" onclick="cerrarModalImagen()">&times;</span>
+  <div id="modalLoading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:1.2rem;text-align:center;z-index:10000;">
+    <div style="margin-bottom: 15px;">Cargando imagen...</div>
+    <div class="spinner" style="border-color: #f3f3f3; border-top-color: white; margin: 0 auto;"></div>
+  </div>
+  <img id="modalImage" style="display:none;margin:auto;max-width:90%;max-height:90vh;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:4px;object-fit:contain;z-index:10000;">
 </div>
 
 <script src="js/ippi.js"></script>
