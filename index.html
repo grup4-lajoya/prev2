@@ -30,6 +30,8 @@
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
+    padding: 0 280px; /* Espacio para userInfo (izq) y logoutButton (der) */
+    min-height: 60px;
   }
   
   nav.visible {
@@ -40,7 +42,10 @@
     list-style:none; 
     margin:0; 
     padding:0; 
-    display:flex; 
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex: 1;
   }
   nav li { 
     margin:0;
@@ -48,12 +53,13 @@
   }
   nav a { 
     display:block; 
-    padding:16px 24px; 
+    padding:16px 18px; 
     color:#fff; 
     text-decoration:none; 
     font-weight:600; 
     letter-spacing:0.5px; 
-    transition: background-color 0.3s,color 0.3s; 
+    transition: background-color 0.3s,color 0.3s;
+    font-size: 0.95rem;
   }
   nav a:hover { background-color:#003366; color:#e6e6e6; }
   nav a.active { background-color:#0056A6; color:#fff; }
@@ -128,7 +134,8 @@
   #logoutButton { 
     position:absolute; 
     right:20px; 
-    top:15px; 
+    top:50%;
+    transform: translateY(-50%);
     padding:8px 12px; 
     border:none; 
     border-radius:6px; 
@@ -136,7 +143,9 @@
     color:#fff; 
     cursor:pointer; 
     font-weight: 500;
+    font-size: 0.9rem;
     transition: background 0.3s;
+    z-index: 1001;
   }
   #logoutButton:hover { background:#003366; }
 
@@ -146,12 +155,16 @@
     top: 50%;
     transform: translateY(-50%);
     color: #fff;
-    font-size: 14px;
+    font-size: 0.85rem;
     font-weight: 500;
-    background-color: rgba(0, 33, 71, 0.8);
-    padding: 8px 16px;
+    background-color: rgba(0, 33, 71, 0.9);
+    padding: 6px 12px;
     border-radius: 6px;
     z-index: 1001;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   #loading-overlay {
@@ -197,6 +210,60 @@
     margin: 20px;
     border: 1px solid #f5c6cb;
     text-align: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 1400px) {
+    nav {
+      padding: 0 260px;
+    }
+    #userInfo {
+      font-size: 0.8rem;
+      padding: 5px 10px;
+      max-width: 220px;
+    }
+    nav a {
+      padding: 14px 16px;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    nav {
+      padding: 0 240px;
+    }
+    #userInfo {
+      font-size: 0.75rem;
+      max-width: 200px;
+    }
+    nav a {
+      padding: 14px 14px;
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 992px) {
+    nav {
+      flex-direction: column;
+      padding: 10px;
+    }
+    
+    #userInfo {
+      position: static;
+      transform: none;
+      margin-bottom: 10px;
+      max-width: 100%;
+    }
+    
+    nav ul {
+      width: 100%;
+    }
+    
+    #logoutButton {
+      position: static;
+      transform: none;
+      margin-top: 10px;
+    }
   }
 </style>
 </head>
