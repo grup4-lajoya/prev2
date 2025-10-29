@@ -271,7 +271,6 @@ async function guardarCabecera() {
 // ============================================
 // FUNCIONES DE DETALLES (NUEVO REGISTRO)
 // ============================================
-
 function agregarDetalle() {
   if (!cabeceraGuardada) {
     mostrarNotificacion('Primero debe guardar los datos principales', 'error');
@@ -299,7 +298,7 @@ function agregarDetalle() {
     <div class="form-row">
       <div class="form-group">
         <label>Asunto <span class="required">*</span></label>
-        <select class="detalle-subtipo" id="subtipo${contadorDetalles}" required>
+        <select class="detalle-subtipo" id="subtipo${contadorDetalles}" required onchange="actualizarOpcionesCaracter(${contadorDetalles})">
           <option value="">Seleccione</option>
           <option value="CONCLUSIÓN">CONCLUSIÓN</option>
           <option value="CAUSA">CAUSA</option>
@@ -310,12 +309,7 @@ function agregarDetalle() {
       <div class="form-group">
         <label>Carácter <span class="required">*</span></label>
         <select class="detalle-caracter" id="caracter${contadorDetalles}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
+          <option value="">Seleccione primero un asunto</option>
         </select>
       </div>
     </div>
@@ -327,7 +321,36 @@ function agregarDetalle() {
   `;
   container.appendChild(detalleDiv);
 }
-
+function actualizarOpcionesCaracter(id, esEdicion = false) {
+  const prefijo = esEdicion ? 'Edit' : '';
+  const subtipoSelect = document.getElementById(`subtipo${prefijo}${id}`);
+  const caracterSelect = document.getElementById(`caracter${prefijo}${id}`);
+  
+  if (!subtipoSelect || !caracterSelect) return;
+  
+  const subtipo = subtipoSelect.value;
+  
+  // Limpiar opciones actuales
+  caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+  
+  let opciones = [];
+  
+  if (subtipo === 'CAUSA') {
+    // Opciones específicas para CAUSA
+    opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+  } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+    // Opciones para CONCLUSIÓN y RECOMENDACIÓN
+    opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD', 'LEGAL'];
+  }
+  
+  // Agregar las opciones al select
+  opciones.forEach(opcion => {
+    const option = document.createElement('option');
+    option.value = opcion;
+    option.textContent = opcion;
+    caracterSelect.appendChild(option);
+  });
+}
 async function guardarDetalle(id) {
   const subtipo = document.getElementById(`subtipo${id}`).value;
   const caracter = document.getElementById(`caracter${id}`).value;
@@ -1480,33 +1503,82 @@ async function guardarCabeceraEdicion() {
         <div class="form-row">
           <div class="form-group">
             <label>Asunto</label>
-            <select id="subtipoExist-${det.id_detalle}" disabled>
+            <select id="subtipoExist-${det.id_detalle}" disabled onchange="actualizarOpcionesCaracterExistente('${det.id_detalle}')">
               <option value="CONCLUSIÓN" ${det.subtipo === 'CONCLUSIÓN' ? 'selected' : ''}>CONCLUSIÓN</option>
               <option value="CAUSA" ${det.subtipo === 'CAUSA' ? 'selected' : ''}>CAUSA</option>
               <option value="RECOMENDACIÓN" ${det.subtipo === 'RECOMENDACIÓN' ? 'selected' : ''}>RECOMENDACIÓN</option>
             </select>
           </div>
-
+      
           <div class="form-group">
             <label>Carácter</label>
             <select id="caracterExist-${det.id_detalle}" disabled>
-              <option value="PSICOFÍSICO" ${det.caracter === 'PSICOFÍSICO' ? 'selected' : ''}>PSICOFÍSICO</option>
-              <option value="TÉCNICO" ${det.caracter === 'TÉCNICO' ? 'selected' : ''}>TÉCNICO</option>
-              <option value="OPERATIVO" ${det.caracter === 'OPERATIVO' ? 'selected' : ''}>OPERATIVO</option>
-              <option value="PSICOLÓGICO" ${det.caracter === 'PSICOLÓGICO' ? 'selected' : ''}>PSICOLÓGICO</option>
-              <option value="SALUD" ${det.caracter === 'SALUD' ? 'selected' : ''}>SALUD</option>
+              <!-- Las opciones se cargarán dinámicamente -->
             </select>
           </div>
         </div>
-
+      
         <div class="form-group">
           <label>Descripción</label>
           <textarea id="descripcionExist-${det.id_detalle}" disabled>${det.descripcion}</textarea>
         </div>
       `;
       containerDetalles.appendChild(div);
+      
+      // NUEVO: Después de agregar el div, cargar las opciones correctas
+      cargarOpcionesCaracterExistente(det.id_detalle, det.subtipo, det.caracter);
     });
-
+        function cargarOpcionesCaracterExistente(idDetalle, subtipo, caracterActual) {
+      const caracterSelect = document.getElementById(`caracterExist-${idDetalle}`);
+      if (!caracterSelect) return;
+      
+      caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+      
+      let opciones = [];
+      
+      if (subtipo === 'CAUSA') {
+        opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+      } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+        opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD', 'LEGAL'];
+      }
+      
+      opciones.forEach(opcion => {
+        const option = document.createElement('option');
+        option.value = opcion;
+        option.textContent = opcion;
+        if (opcion === caracterActual) {
+          option.selected = true;
+        }
+        caracterSelect.appendChild(option);
+      });
+    }
+    
+    function actualizarOpcionesCaracterExistente(idDetalle) {
+      const subtipoSelect = document.getElementById(`subtipoExist-${idDetalle}`);
+      const caracterSelect = document.getElementById(`caracterExist-${idDetalle}`);
+      
+      if (!subtipoSelect || !caracterSelect) return;
+      
+      const subtipo = subtipoSelect.value;
+      const caracterActual = caracterSelect.value;
+      
+      caracterSelect.innerHTML = '<option value="">Seleccione</option>';
+      
+      let opciones = [];
+      
+      if (subtipo === 'CAUSA') {
+        opciones = ['PRINCIPAL', 'SECUNDARIA', 'CONTRIBUTORIA'];
+      } else if (subtipo === 'CONCLUSIÓN' || subtipo === 'RECOMENDACIÓN') {
+        opciones = ['PSICOFÍSICO', 'TÉCNICO', 'OPERATIVO', 'PSICOLÓGICO', 'SALUD'];
+      }
+      
+      opciones.forEach(opcion => {
+        const option = document.createElement('option');
+        option.value = opcion;
+        option.textContent = opcion;
+        caracterSelect.appendChild(option);
+      });
+    }
     // Mostrar acciones existentes EDITABLES/ELIMINABLES
     const containerAcciones = document.getElementById('editAccionesContainer');
     containerAcciones.innerHTML = '';
@@ -1615,9 +1687,13 @@ async function guardarCabeceraEdicion() {
 
 // Habilitar edición de detalle existente
 function habilitarEdicionDetalle(idDetalle) {
-  document.getElementById(`subtipoExist-${idDetalle}`).disabled = false;
-  document.getElementById(`caracterExist-${idDetalle}`).disabled = false;
-  document.getElementById(`descripcionExist-${idDetalle}`).disabled = false;
+  const subtipoSelect = document.getElementById(`subtipoExist-${idDetalle}`);
+  const caracterSelect = document.getElementById(`caracterExist-${idDetalle}`);
+  const descripcionTextarea = document.getElementById(`descripcionExist-${idDetalle}`);
+  
+  subtipoSelect.disabled = false;
+  caracterSelect.disabled = false;
+  descripcionTextarea.disabled = false;
   
   document.getElementById(`btnEditarDet-${idDetalle}`).style.display = 'none';
   document.getElementById(`btnGuardarEditDet-${idDetalle}`).style.display = 'inline-block';
@@ -1917,8 +1993,6 @@ function cerrarModalEditar() {
     }
   }
 }
-
-
 function agregarDetalleEdicion() {
   if (!cabeceraEdicionGuardada) {
     mostrarNotificacion('Primero debe guardar los cambios en los datos principales', 'error');
@@ -1946,7 +2020,7 @@ function agregarDetalleEdicion() {
     <div class="form-row">
       <div class="form-group">
         <label>Asunto <span class="required">*</span></label>
-        <select id="subtipoEdit${contadorDetallesEdicion}" required>
+        <select id="subtipoEdit${contadorDetallesEdicion}" required onchange="actualizarOpcionesCaracter(${contadorDetallesEdicion}, true)">
           <option value="">Seleccione</option>
           <option value="CONCLUSIÓN">CONCLUSIÓN</option>
           <option value="CAUSA">CAUSA</option>
@@ -1957,12 +2031,7 @@ function agregarDetalleEdicion() {
       <div class="form-group">
         <label>Carácter <span class="required">*</span></label>
         <select id="caracterEdit${contadorDetallesEdicion}" required>
-          <option value="">Seleccione</option>
-          <option value="PSICOFÍSICO">PSICOFÍSICO</option>
-          <option value="TÉCNICO">TÉCNICO</option>
-          <option value="OPERATIVO">OPERATIVO</option>
-          <option value="PSICOLÓGICO">PSICOLÓGICO</option>
-          <option value="SALUD">SALUD</option>
+          <option value="">Seleccione primero un asunto</option>
         </select>
       </div>
     </div>
@@ -1974,7 +2043,6 @@ function agregarDetalleEdicion() {
   `;
   container.appendChild(detalleDiv);
 }
-
 async function guardarDetalleEdicion(id) {
   const subtipo = document.getElementById(`subtipoEdit${id}`).value;
   const caracter = document.getElementById(`caracterEdit${id}`).value;
