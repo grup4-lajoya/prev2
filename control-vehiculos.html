@@ -87,11 +87,18 @@
             💡 Seleccione al personal propietario del vehículo
           </div>
           
-          <div class="form-group">
+         <div class="form-group">
             <label>Buscar Personal de la Base <span class="required">*</span></label>
-            <select id="selectPersonal" class="select-busqueda" required>
-              <option value="">Escriba para buscar...</option>
-            </select>
+            <input 
+              type="text" 
+              id="inputPersonal" 
+              class="select-busqueda" 
+              list="listaPersonal" 
+              placeholder="Escriba el nombre o DNI..."
+              autocomplete="off"
+              required>
+            <datalist id="listaPersonal"></datalist>
+            <input type="hidden" id="idPersonalSeleccionado">
           </div>
           
           <div id="infoPersonalSeleccionado" class="info-seleccionado" style="display:none;">
