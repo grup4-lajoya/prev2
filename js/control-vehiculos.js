@@ -235,46 +235,109 @@ async function cargarPersonalParaSelect() {
     if (error) throw error;
 
     listaPersonalCompleta = personal;
-
-    const input = document.getElementById('inputPersonal');
-    const dropdown = document.getElementById('sugerenciasPersonal');
     
-    if (!input || !dropdown) {
-      console.error('No se encontraron elementos del autocomplete');
-      return;
-    }
+    console.log('✅ Cargados', personal.length, 'registros');
 
-    // Evento input para filtrar
-    input.addEventListener('input', function() {
-      const texto = this.value.toLowerCase().trim();
-      
-      if (texto.length < 2) {
-        dropdown.classList.remove('active');
-        return;
-      }
-
-      // Filtrar personal
-      const resultados = listaPersonalCompleta.filter(p => 
-        p.nombre.toLowerCase().includes(texto) ||
-        p.dni.includes(texto) ||
-        p.nsa.toLowerCase().includes(texto)
-      );
-
-      mostrarSugerencias(resultados, dropdown, input);
-    });
-
-    // Cerrar dropdown al hacer clic fuera
-    document.addEventListener('click', function(e) {
-      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.remove('active');
-      }
-    });
+    configurarAutocomplete();
 
   } catch (error) {
     console.error('Error al cargar personal:', error);
     mostrarNotificacion('Error al cargar personal: ' + error.message, 'error');
   }
 }
+
+function configurarAutocomplete() {
+  const input = document.getElementById('inputPersonal');
+  const dropdown = document.getElementById('sugerenciasPersonal');
+  
+  if (!input || !dropdown) {
+    console.error('Elementos no encontrados');
+    return;
+  }
+
+  // Limpiar eventos anteriores
+  const nuevoInput = input.cloneNode(true);
+  input.parentNode.replaceChild(nuevoInput, input);
+  
+  const inputFinal = document.getElementById('inputPersonal');
+
+  // Evento de escritura
+  inputFinal.addEventListener('input', function() {
+    const texto = this.value.trim();
+    
+    if (texto.length === 0) {
+      dropdown.innerHTML = '';
+      dropdown.classList.remove('active');
+      return;
+    }
+
+    buscarYMostrar(texto, dropdown, inputFinal);
+  });
+
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', function(e) {
+    if (!inputFinal.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
+  });
+}
+
+function buscarYMostrar(texto, dropdown, input) {
+  const textoLower = texto.toLowerCase();
+  
+  const resultados = listaPersonalCompleta.filter(p => {
+    return p.nombre.toLowerCase().includes(textoLower) ||
+           p.dni.includes(texto) ||
+           p.nsa.includes(texto);
+  });
+
+  dropdown.innerHTML = '';
+  
+  if (resultados.length === 0) {
+    dropdown.innerHTML = '<div class="sin-resultados">No se encontraron resultados</div>';
+    dropdown.classList.add('active');
+    return;
+  }
+
+  resultados.slice(0, 20).forEach(persona => {
+    const item = document.createElement('div');
+    item.className = 'sugerencia-item';
+    item.innerHTML = `
+      <span class="sugerencia-nombre">${persona.nombre}</span>
+      <span class="sugerencia-datos">NSA: ${persona.nsa} | DNI: ${persona.dni} | ${persona.unidad || 'Sin unidad'}</span>
+    `;
+    
+    item.onclick = function() {
+      seleccionarPersona(persona, input, dropdown);
+    };
+    
+    dropdown.appendChild(item);
+  });
+  
+  dropdown.classList.add('active');
+}
+
+function seleccionarPersona(persona, input, dropdown) {
+  propietarioSeleccionado = {
+    id: persona.id,
+    dni: persona.dni,
+    nsa: persona.nsa,
+    nombre: persona.nombre,
+    unidad: persona.unidad
+  };
+
+  input.value = `${persona.nombre} - NSA: ${persona.nsa}`;
+  dropdown.classList.remove('active');
+
+  document.getElementById('idPersonalSeleccionado').value = persona.id;
+  document.getElementById('dniSeleccionado').textContent = persona.dni;
+  document.getElementById('nombreSeleccionado').textContent = persona.nombre;
+  document.getElementById('unidadSeleccionado').textContent = persona.unidad || 'Sin unidad';
+  
+  document.getElementById('infoPersonalSeleccionado').style.display = 'block';
+  document.getElementById('btnConfirmarPropietario').disabled = false;
+}
+
 
 function mostrarSugerencias(resultados, dropdown, input) {
   dropdown.innerHTML = '';
