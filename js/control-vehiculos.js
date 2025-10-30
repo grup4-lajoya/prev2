@@ -43,12 +43,12 @@ async function cargarDatosVehiculos() {
     loadingEl.innerHTML = 'Cargando vehículos... ⏳';
     
     // Consultar vehículos con tipo_propietario = 'Personal'
-    let query = supabase
-      .from('vehiculo_seguridad')
-      .select('*')
-      .eq('tipo_propietario', 'Personal')
-      .eq('activo', true)
-      .order('created_at', { ascending: false });
+  let query = supabase
+    .from('vehiculo_seguridad')
+    .select('*')
+    .eq('tipo_propietario', 'personal')  // ← EN MINÚSCULA
+    .eq('activo', true)
+    .order('created_at', { ascending: false });
 
     const { data: vehiculos, error: errorVehiculos } = await query;
     
@@ -499,25 +499,25 @@ async function guardarVehiculo() {
     }
 
     // Insertar vehículo
-    const { data, error } = await supabase
-      .from('vehiculo_seguridad')
-      .insert([{
-        id_propietario: propietarioSeleccionado.id,
-        tipo_propietario: 'Personal',
-        tipo_vehiculo: tipoVehiculo,
-        tipo_propiedad: tipoPropiedad,
-        placa: placa,
-        marca: marca || null,
-        modelo: modelo || null,
-        color: color || null,
-        fec_venc_soat: fecVencSoat,
-        fec_venc_revtecnica: fecVencRevTecnica,
-        fec_venc_brev: fecVencBrev,
-        estado: estado,
-        activo: true,
-        temporal: false
-      }])
-      .select();
+const { data, error } = await supabase
+  .from('vehiculo_seguridad')
+  .insert([{
+    id_propietario: propietarioSeleccionado.id,
+    tipo_propietario: 'personal',  // ← EN MINÚSCULA
+    tipo_vehiculo: tipoVehiculo,
+    tipo_propiedad: tipoPropiedad,
+    placa: placa,
+    marca: marca || null,
+    modelo: modelo || null,
+    color: color || null,
+    fec_venc_soat: fecVencSoat,
+    fec_venc_revtecnica: fecVencRevTecnica,
+    fec_venc_brev: fecVencBrev,
+    estado: estado,
+    activo: true,
+    temporal: false
+  }])
+  .select();
 
     ocultarOverlay();
 
@@ -714,26 +714,26 @@ async function eliminarVehiculo(index) {
   const vehiculo = datosFiltrados[index];
   
   const confirmar = await mostrarConfirmacion(
-    `¿Está seguro de eliminar el vehículo <strong>${vehiculo.placa}</strong>?<br><br>Esta acción NO se puede deshacer.`,
-    '🗑️ Confirmar Eliminación'
+    `¿Está seguro de eliminar el vehículo <strong>${vehiculo.placa}</strong>?<br><br>⚠️ Esta acción es PERMANENTE y NO se puede deshacer.`,
+    '🗑️ Confirmar Eliminación Permanente'
   );
 
   if (!confirmar) return;
 
-  mostrarOverlay('Eliminando vehículo...');
+  mostrarOverlay('Eliminando vehículo permanentemente...');
 
   try {
-    // Eliminación lógica (activo = false)
+    // Eliminación REAL (DELETE)
     const { error } = await supabase
       .from('vehiculo_seguridad')
-      .update({ activo: false })
+      .delete()
       .eq('id', vehiculo.id);
 
     ocultarOverlay();
 
     if (error) throw error;
 
-    mostrarNotificacion('✓ Vehículo eliminado correctamente', 'success');
+    mostrarNotificacion('✓ Vehículo eliminado permanentemente', 'success');
     cargarDatosVehiculos();
 
   } catch (error) {
