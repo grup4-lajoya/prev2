@@ -467,7 +467,7 @@ async function guardarVehiculo() {
     return;
   }
 
-  const placa = document.getElementById('placa').value.trim().toUpperCase();
+  const placa = document.getElementById('placa').value.trim().toUpperCase().replace(/[-\s]/g, '');
   const tipoVehiculo = document.getElementById('tipoVehiculo').value;
   const tipoPropiedad = document.getElementById('tipoPropiedad').value;
   const marca = document.getElementById('marca').value.trim();
@@ -658,7 +658,7 @@ async function editarVehiculo(index) {
 
 async function actualizarVehiculo() {
   const idVehiculo = document.getElementById('editIdVehiculo').value;
-  const placa = document.getElementById('editPlaca').value.trim().toUpperCase();
+  const placa = document.getElementById('editPlaca').value.trim().toUpperCase().replace(/[-\s]/g, '');
   const tipoVehiculo = document.getElementById('editTipoVehiculo').value;
   const tipoPropiedad = document.getElementById('editTipoPropiedad').value;
   const marca = document.getElementById('editMarca').value.trim();
