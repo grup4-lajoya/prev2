@@ -484,45 +484,46 @@ async function guardarVehiculo() {
   }
 
   mostrarOverlay('Guardando vehículo...');
-try {
-  // Verificar que la placa NO exista ACTIVA
-  const { data: existente, error: errorVerificar } = await supabase
-    .from('vehiculo_seguridad')
-    .select('id, placa')
-    .eq('placa', placa)
-    .eq('activo', true)
-    .maybeSingle();  // ← IMPORTANTE: maybeSingle() no lanza error si no encuentra
 
-  if (errorVerificar) {
-    console.error('Error al verificar placa:', errorVerificar);
-  }
+  try {
+    // Verificar que la placa NO exista ACTIVA
+    const { data: existente, error: errorVerificar } = await supabase
+      .from('vehiculo_seguridad')
+      .select('id, placa')
+      .eq('placa', placa)
+      .eq('activo', true)
+      .maybeSingle();
 
-  if (existente) {
-    ocultarOverlay();
-    mostrarNotificacion(`❌ La placa ${placa} ya está registrada y activa en el sistema`, 'error');
-    return;
-  }
+    if (errorVerificar) {
+      console.error('Error al verificar placa:', errorVerificar);
+    }
+
+    if (existente) {
+      ocultarOverlay();
+      mostrarNotificacion(`❌ La placa ${placa} ya está registrada y activa en el sistema`, 'error');
+      return;
+    }
 
     // Insertar vehículo
-const { data, error } = await supabase
-  .from('vehiculo_seguridad')
-  .insert([{
-    id_propietario: propietarioSeleccionado.id,
-    tipo_propietario: 'personal',  // ← EN MINÚSCULA
-    tipo_vehiculo: tipoVehiculo,
-    tipo_propiedad: tipoPropiedad,
-    placa: placa,
-    marca: marca || null,
-    modelo: modelo || null,
-    color: color || null,
-    fec_venc_soat: fecVencSoat,
-    fec_venc_revtecnica: fecVencRevTecnica,
-    fec_venc_brev: fecVencBrev,
-    estado: estado,
-    activo: true,
-    temporal: false
-  }])
-  .select();
+    const { data, error } = await supabase
+      .from('vehiculo_seguridad')
+      .insert([{
+        id_propietario: propietarioSeleccionado.id,
+        tipo_propietario: 'personal',
+        tipo_vehiculo: tipoVehiculo,
+        tipo_propiedad: tipoPropiedad,
+        placa: placa,
+        marca: marca || null,
+        modelo: modelo || null,
+        color: color || null,
+        fec_venc_soat: fecVencSoat,
+        fec_venc_revtecnica: fecVencRevTecnica,
+        fec_venc_brev: fecVencBrev,
+        estado: estado,
+        activo: true,
+        temporal: false
+      }])
+      .select();
 
     ocultarOverlay();
 
