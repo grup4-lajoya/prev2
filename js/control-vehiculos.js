@@ -58,22 +58,22 @@ async function cargarDatosVehiculos() {
     const idsPropietarios = [...new Set(vehiculos.map(v => v.id_propietario))];
 
     // Consultar datos de personal
-    const { data: personal, error: errorPersonal } = await supabase
+     const { data: personal, error: errorPersonal } = await supabase
       .from('personal')
-      .select('id, nombres, apellidos, dni, unidad')
+      .select('id, nombre, dni, unidad')
       .in('id', idsPropietarios);
 
     if (errorPersonal) throw errorPersonal;
 
     // Crear mapa de propietarios
-    const mapaPropietarios = {};
-    personal.forEach(p => {
-      mapaPropietarios[p.id] = {
-        nombreCompleto: `${p.apellidos}, ${p.nombres}`,
-        dni: p.dni,
-        unidad: p.unidad
-      };
-    });
+      const mapaPropietarios = {};
+      personal.forEach(p => {
+        mapaPropietarios[p.id] = {
+          nombreCompleto: p.nombre,
+          dni: p.dni,
+          unidad: p.unidad
+        };
+      });
 
     // Enriquecer datos de vehículos
     datosCompletos = vehiculos.map(v => ({
@@ -221,10 +221,11 @@ function aplicarFiltros() {
 
 async function cargarPersonalParaSelect() {
   try {
-    const { data: personal, error } = await supabase
-      .from('personal')
-      .select('id, nombres, apellidos, dni, unidad')
-      .order('apellidos', { ascending: true });
+      const { data: personal, error } = await supabase
+        .from('personal')
+        .select('id, nombre, dni, unidad')
+        .eq('activo', true)
+        .order('nombre', { ascending: true });
 
     if (error) throw error;
 
@@ -234,10 +235,9 @@ async function cargarPersonalParaSelect() {
     personal.forEach(p => {
       const option = document.createElement('option');
       option.value = p.id;
-      option.textContent = `${p.apellidos}, ${p.nombres} - DNI: ${p.dni}`;
+      option.textContent = `${p.nombre} - DNI: ${p.dni}`;
       option.dataset.dni = p.dni;
-      option.dataset.nombres = p.nombres;
-      option.dataset.apellidos = p.apellidos;
+      option.dataset.nombre = p.nombre;
       option.dataset.unidad = p.unidad;
       select.appendChild(option);
     });
@@ -247,17 +247,14 @@ async function cargarPersonalParaSelect() {
       const selectedOption = this.options[this.selectedIndex];
       
       if (this.value) {
-        propietarioSeleccionado = {
+          propietarioSeleccionado = {
           id: this.value,
           dni: selectedOption.dataset.dni,
-          nombres: selectedOption.dataset.nombres,
-          apellidos: selectedOption.dataset.apellidos,
-          unidad: selectedOption.dataset.unidad,
-          nombreCompleto: `${selectedOption.dataset.apellidos}, ${selectedOption.dataset.nombres}`
+          nombre: selectedOption.dataset.nombre,
+          unidad: selectedOption.dataset.unidad
         };
-
         document.getElementById('dniSeleccionado').textContent = propietarioSeleccionado.dni;
-        document.getElementById('nombreSeleccionado').textContent = propietarioSeleccionado.nombreCompleto;
+        document.getElementById('nombreSeleccionado').textContent = propietarioSeleccionado.nombre;
         document.getElementById('unidadSeleccionado').textContent = propietarioSeleccionado.unidad;
         document.getElementById('idPropietarioSeleccionado').value = propietarioSeleccionado.id;
         
@@ -337,7 +334,7 @@ function confirmarPropietario() {
   seccionVehiculo.classList.remove('bloqueada');
   document.getElementById('mensajeBloqueoVehiculo').style.display = 'none';
   
-  document.getElementById('nombrePropietarioConfirmado').textContent = propietarioSeleccionado.nombreCompleto;
+  document.getElementById('nombrePropietarioConfirmado').textContent = propietarioSeleccionado.nombre;
   document.getElementById('propietarioConfirmado').style.display = 'block';
   document.getElementById('btnGuardarVehiculo').disabled = false;
 
@@ -443,7 +440,7 @@ async function verDetalle(index) {
     // Obtener datos del propietario
     const { data: propietario, error: errorPropietario } = await supabase
       .from('personal')
-      .select('nombres, apellidos, dni, unidad')
+      .select('nombre, dni, unidad')
       .eq('id', data.id_propietario)
       .single();
 
@@ -460,7 +457,7 @@ async function verDetalle(index) {
     document.getElementById('verColor').textContent = data.color || '-';
     document.getElementById('verEstado').textContent = data.estado ? 'Activo' : 'Inactivo';
 
-    document.getElementById('verNombreCompleto').textContent = `${propietario.apellidos}, ${propietario.nombres}`;
+    document.getElementById('verNombreCompleto').textContent = propietario.nombre;
     document.getElementById('verDni').textContent = propietario.dni || '-';
     document.getElementById('verUnidad').textContent = propietario.unidad || '-';
 
@@ -501,11 +498,11 @@ async function editarVehiculo(index) {
     if (error) throw error;
 
     // Obtener propietario
-    const { data: propietario, error: errorPropietario } = await supabase
-      .from('personal')
-      .select('nombres, apellidos, dni, unidad')
-      .eq('id', data.id_propietario)
-      .single();
+ const { data: propietario, error: errorPropietario } = await supabase
+  .from('personal')
+  .select('nombre, dni, unidad')
+  .eq('id', data.id_propietario)
+  .single();
 
     if (errorPropietario) throw errorPropietario;
 
@@ -513,7 +510,7 @@ async function editarVehiculo(index) {
 
     // Cargar datos en el formulario de edición
     document.getElementById('editIdVehiculo').value = data.id;
-    document.getElementById('editNombreCompleto').textContent = `${propietario.apellidos}, ${propietario.nombres}`;
+    document.getElementById('editNombreCompleto').textContent = propietario.nombre;
     document.getElementById('editDni').textContent = propietario.dni;
     document.getElementById('editUnidad').textContent = propietario.unidad;
 
