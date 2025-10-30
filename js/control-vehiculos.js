@@ -76,13 +76,16 @@ async function cargarDatosVehiculos() {
       });
 
     // Enriquecer datos de vehículos
-    datosCompletos = vehiculos.map(v => ({
-      ...v,
-      nombreCompleto: mapaPropietarios[v.id_propietario]?.nombreCompleto || 'N/A',
-      dniPropietario: mapaPropietarios[v.id_propietario]?.dni || 'N/A',
-      unidadPropietario: mapaPropietarios[v.id_propietario]?.unidad || 'N/A',
-      marcaModelo: [v.marca, v.modelo].filter(Boolean).join(' ') || 'N/A'
-    }));
+       datosCompletos = vehiculos.map(v => {
+      const propietario = mapaPropietarios[v.id_propietario];
+      return {
+        ...v,
+        nombreCompleto: propietario?.nombreCompleto || 'Sin propietario',
+        dniPropietario: propietario?.dni || 'N/A',
+        unidadPropietario: propietario?.unidad || 'N/A',
+        marcaModelo: [v.marca, v.modelo].filter(Boolean).join(' ') || 'N/A'
+      };
+    });
 
     datosFiltrados = [...datosCompletos];
     
@@ -230,6 +233,10 @@ async function cargarPersonalParaSelect() {
     if (error) throw error;
 
     const datalist = document.getElementById('listaPersonal');
+    if (!datalist) {
+      console.error('No se encontró el elemento listaPersonal');
+      return;
+    }
     datalist.innerHTML = '';
     
     let mapaPersonal = {};
@@ -250,7 +257,11 @@ async function cargarPersonalParaSelect() {
     });
 
     // Evento cuando selecciona del datalist
-    const input = document.getElementById('inputPersonal');
+   const input = document.getElementById('inputPersonal');
+    if (!input) {
+      console.error('No se encontró el elemento inputPersonal');
+      return;
+    }
     
     input.addEventListener('input', function() {
       const valorSeleccionado = this.value;
