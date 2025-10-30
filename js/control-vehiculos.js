@@ -221,46 +221,69 @@ function aplicarFiltros() {
 
 async function cargarPersonalParaSelect() {
   try {
-      const { data: personal, error } = await supabase
-        .from('personal')
-        .select('id, nombre, dni, unidad')
-        .eq('activo', true)
-        .order('nombre', { ascending: true });
+    const { data: personal, error } = await supabase
+      .from('personal')
+      .select('id, nombre, dni, unidad')
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
 
     if (error) throw error;
 
-    const select = document.getElementById('selectPersonal');
-    select.innerHTML = '<option value="">Escriba para buscar...</option>';
+    const datalist = document.getElementById('listaPersonal');
+    datalist.innerHTML = '';
+    
+    let mapaPersonal = {};
 
     personal.forEach(p => {
       const option = document.createElement('option');
-      option.value = p.id;
-      option.textContent = `${p.nombre} - DNI: ${p.dni}`;
-      option.dataset.dni = p.dni;
-      option.dataset.nombre = p.nombre;
-      option.dataset.unidad = p.unidad;
-      select.appendChild(option);
+      option.value = `${p.nombre} - DNI: ${p.dni}`;
+      option.dataset.id = p.id;
+      datalist.appendChild(option);
+      
+      // Guardar en mapa para búsqueda rápida
+      mapaPersonal[`${p.nombre} - DNI: ${p.dni}`] = {
+        id: p.id,
+        nombre: p.nombre,
+        dni: p.dni,
+        unidad: p.unidad
+      };
     });
 
-    // Evento de selección
-    select.addEventListener('change', function() {
-      const selectedOption = this.options[this.selectedIndex];
+    // Evento cuando selecciona del datalist
+    const input = document.getElementById('inputPersonal');
+    
+    input.addEventListener('input', function() {
+      const valorSeleccionado = this.value;
       
-      if (this.value) {
-          propietarioSeleccionado = {
-          id: this.value,
-          dni: selectedOption.dataset.dni,
-          nombre: selectedOption.dataset.nombre,
-          unidad: selectedOption.dataset.unidad
+      if (mapaPersonal[valorSeleccionado]) {
+        const personaSeleccionada = mapaPersonal[valorSeleccionado];
+        
+        propietarioSeleccionado = {
+          id: personaSeleccionada.id,
+          dni: personaSeleccionada.dni,
+          nombre: personaSeleccionada.nombre,
+          unidad: personaSeleccionada.unidad
         };
-        document.getElementById('dniSeleccionado').textContent = propietarioSeleccionado.dni;
-        document.getElementById('nombreSeleccionado').textContent = propietarioSeleccionado.nombre;
-        document.getElementById('unidadSeleccionado').textContent = propietarioSeleccionado.unidad;
-        document.getElementById('idPropietarioSeleccionado').value = propietarioSeleccionado.id;
+
+        document.getElementById('idPersonalSeleccionado').value = personaSeleccionada.id;
+        document.getElementById('dniSeleccionado').textContent = personaSeleccionada.dni;
+        document.getElementById('nombreSeleccionado').textContent = personaSeleccionada.nombre;
+        document.getElementById('unidadSeleccionado').textContent = personaSeleccionada.unidad;
         
         document.getElementById('infoPersonalSeleccionado').style.display = 'block';
         document.getElementById('btnConfirmarPropietario').disabled = false;
       } else {
+        propietarioSeleccionado = null;
+        document.getElementById('idPersonalSeleccionado').value = '';
+        document.getElementById('infoPersonalSeleccionado').style.display = 'none';
+        document.getElementById('btnConfirmarPropietario').disabled = true;
+      }
+    });
+
+    // Evento blur para validar selección
+    input.addEventListener('blur', function() {
+      if (!mapaPersonal[this.value]) {
+        this.value = '';
         propietarioSeleccionado = null;
         document.getElementById('infoPersonalSeleccionado').style.display = 'none';
         document.getElementById('btnConfirmarPropietario').disabled = true;
@@ -283,7 +306,8 @@ function nuevoRegistro() {
   propietarioConfirmado = false;
   
   document.getElementById('formNuevo').reset();
-  document.getElementById('selectPersonal').value = '';
+  document.getElementById('inputPersonal').value = '';
+  document.getElementById('idPersonalSeleccionado').value = '';
   document.getElementById('infoPersonalSeleccionado').style.display = 'none';
   document.getElementById('btnConfirmarPropietario').disabled = true;
   
