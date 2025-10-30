@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Vehículos de la Unidad</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/control-vehiculos.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>🚗 Control de Vehículos de la Unidad</h1>
+  
+  <div class="controles-superiores">
+    <div class="buscador">
+      <input type="text" id="buscar" placeholder="Buscar por placa, propietario...">
+    </div>
+    
+    <div class="filtros">
+      <select id="filtroTipoVehiculo">
+        <option value="">Todos los tipos</option>
+        <option value="AUTO">Automóvil</option>
+        <option value="CAMIONETA">Camioneta</option>
+        <option value="MOTO">Motocicleta</option>
+        <option value="CAMIÓN">Camión</option>
+        <option value="BUS">Bus</option>
+        <option value="OTRO">Otro</option>
+      </select>
+      
+      <select id="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="true">Activo</option>
+        <option value="false">Inactivo</option>
+      </select>
+    </div>
+    
+    <span class="info-registros" id="infoRegistros"></span>
+  </div>
+
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando datos...</div>
+    <table id="tablaVehiculos" style="display:none;">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>PLACA</th>
+          <th>TIPO VEHÍCULO</th>
+          <th>MARCA/MODELO</th>
+          <th>PROPIETARIO</th>
+          <th>ESTADO</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
+</div>
+
+<button class="btn-flotante" onclick="nuevoRegistro()" title="Registrar Vehículo">+</button>
+
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
+
+<!-- MODAL NUEVO REGISTRO -->
+<div id="modalNuevo" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🚗 Registrar Vehículo</h2>
+      <span class="close" onclick="cerrarModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevo">
+        
+        <!-- PASO 1: SELECCIONAR PROPIETARIO (SOLO PERSONAL) -->
+        <div class="seccion" id="seccionPropietario">
+          <div class="seccion-titulo">👤 Paso 1: Seleccionar Propietario</div>
+          
+          <div class="mensaje-info">
+            💡 Seleccione al personal propietario del vehículo
+          </div>
+          
+          <div class="form-group">
+            <label>Buscar Personal de la Base <span class="required">*</span></label>
+            <select id="selectPersonal" class="select-busqueda" required>
+              <option value="">Escriba para buscar...</option>
+            </select>
+          </div>
+          
+          <div id="infoPersonalSeleccionado" class="info-seleccionado" style="display:none;">
+            <p><strong>DNI:</strong> <span id="dniSeleccionado"></span></p>
+            <p><strong>Nombre Completo:</strong> <span id="nombreSeleccionado"></span></p>
+            <p><strong>Unidad:</strong> <span id="unidadSeleccionado"></span></p>
+            <input type="hidden" id="idPropietarioSeleccionado">
+          </div>
+
+          <button type="button" class="btn-guardar-seccion" onclick="confirmarPropietario()" id="btnConfirmarPropietario" disabled>
+            ✅ Confirmar Propietario
+          </button>
+        </div>
+
+        <!-- PASO 2: DATOS DEL VEHÍCULO -->
+        <div class="seccion bloqueada" id="seccionVehiculo">
+          <div class="seccion-titulo">🚗 Paso 2: Datos del Vehículo</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoVehiculo">
+            🔒 Seleccione primero al propietario.
+          </div>
+
+          <div id="formularioVehiculo">
+            <div class="propietario-confirmado" id="propietarioConfirmado" style="display:none;">
+              <strong>Propietario:</strong> <span id="nombrePropietarioConfirmado"></span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Placa <span class="required">*</span></label>
+                <input type="text" id="placa" required maxlength="7" style="text-transform: uppercase;" placeholder="Ej: ABC-123">
+              </div>
+              <div class="form-group">
+                <label>Tipo de Vehículo <span class="required">*</span></label>
+                <select id="tipoVehiculo" required>
+                  <option value="">Seleccione</option>
+                  <option value="AUTO">Automóvil</option>
+                  <option value="CAMIONETA">Camioneta</option>
+                  <option value="MOTO">Motocicleta</option>
+                  <option value="CAMIÓN">Camión</option>
+                  <option value="BUS">Bus</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Tipo de Propiedad <span class="required">*</span></label>
+                <select id="tipoPropiedad" required>
+                  <option value="">Seleccione</option>
+                  <option value="PARTICULAR">Particular</option>
+                  <option value="UNIDAD">Unidad</option>
+                  </select>
+              </div>
+              <div class="form-group">
+                <label>Marca</label>
+                <input type="text" id="marca" placeholder="Opcional">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Modelo</label>
+                <input type="text" id="modelo" placeholder="Opcional">
+              </div>
+              <div class="form-group">
+                <label>Color</label>
+                <input type="text" id="color" placeholder="Opcional">
+              </div>
+            </div>
+
+            <div class="seccion-vencimientos">
+              <h4>📅 VENCIMIENTOS</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>SOAT</label>
+                  <input type="date" id="fecVencSoat">
+                </div>
+                <div class="form-group">
+                  <label>Revisión Técnica</label>
+                  <input type="date" id="fecVencRevTecnica">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Brevete</label>
+                  <input type="date" id="fecVencBrev">
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="estado" checked>
+                    Vehículo Activo
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn-guardar-final" onclick="guardarVehiculo()" id="btnGuardarVehiculo" disabled>
+              💾 Guardar Vehículo
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>👁 Detalle del Vehículo</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">🚗 Información del Vehículo</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Placa:</strong><span id="verPlaca">-</span></div>
+          <div class="info-item"><strong>Tipo Vehículo:</strong><span id="verTipoVehiculo">-</span></div>
+          <div class="info-item"><strong>Tipo Propiedad:</strong><span id="verTipoPropiedad">-</span></div>
+          <div class="info-item"><strong>Marca:</strong><span id="verMarca">-</span></div>
+          <div class="info-item"><strong>Modelo:</strong><span id="verModelo">-</span></div>
+          <div class="info-item"><strong>Color:</strong><span id="verColor">-</span></div>
+          <div class="info-item"><strong>Estado:</strong><span id="verEstado">-</span></div>
+        </div>
+      </div>
+
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">👤 Información del Propietario</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Nombre Completo:</strong><span id="verNombreCompleto">-</span></div>
+          <div class="info-item"><strong>DNI:</strong><span id="verDni">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="verUnidad">-</span></div>
+        </div>
+      </div>
+
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">📅 Vencimientos</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>SOAT:</strong><span id="verSoat">-</span></div>
+          <div class="info-item"><strong>Rev. Técnica:</strong><span id="verRevTecnica">-</span></div>
+          <div class="info-item"><strong>Brevete:</strong><span id="verBrevete">-</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>✏️ Editar Vehículo</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formEditar">
+        
+        <input type="hidden" id="editIdVehiculo">
+        
+        <div class="seccion">
+          <div class="seccion-titulo">👤 Propietario (solo lectura)</div>
+          <div class="mensaje-info">
+            ℹ️ No se puede cambiar el propietario. Si necesita hacerlo, elimine este registro y cree uno nuevo.
+          </div>
+          <div class="info-propietario-readonly">
+            <p><strong>Nombre Completo:</strong> <span id="editNombreCompleto"></span></p>
+            <p><strong>DNI:</strong> <span id="editDni"></span></p>
+            <p><strong>Unidad:</strong> <span id="editUnidad"></span></p>
+          </div>
+        </div>
+
+        <div class="seccion">
+          <div class="seccion-titulo">🚗 Datos del Vehículo</div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Placa <span class="required">*</span></label>
+              <input type="text" id="editPlaca" required maxlength="7" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+              <label>Tipo de Vehículo <span class="required">*</span></label>
+              <select id="editTipoVehiculo" required>
+                <option value="">Seleccione</option>
+                <option value="AUTO">Automóvil</option>
+                <option value="CAMIONETA">Camioneta</option>
+                <option value="MOTO">Motocicleta</option>
+                <option value="CAMIÓN">Camión</option>
+                <option value="BUS">Bus</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo de Propiedad <span class="required">*</span></label>
+              <select id="editTipoPropiedad" required>
+                <option value="">Seleccione</option>
+                <option value="PARTICULAR">Particular</option>
+                <option value="UNIDAD">Unidad</option>
+               </select>
+            </div>
+            <div class="form-group">
+              <label>Marca</label>
+              <input type="text" id="editMarca">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Modelo</label>
+              <input type="text" id="editModelo">
+            </div>
+            <div class="form-group">
+              <label>Color</label>
+              <input type="text" id="editColor">
+            </div>
+          </div>
+
+          <div class="seccion-vencimientos">
+            <h4>📅 VENCIMIENTOS</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>SOAT</label>
+                <input type="date" id="editFecVencSoat">
+              </div>
+              <div class="form-group">
+                <label>Revisión Técnica</label>
+                <input type="date" id="editFecVencRevTecnica">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Brevete</label>
+                <input type="date" id="editFecVencBrev">
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editEstado">
+                  Vehículo Activo
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn-guardar-final" onclick="actualizarVehiculo()">
+            💾 Actualizar Vehículo
+          </button>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/control-vehiculos.js"></script>
+</body>
+</html>
