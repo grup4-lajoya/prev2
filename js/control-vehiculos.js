@@ -419,7 +419,7 @@ function nuevoRegistro() {
   document.querySelectorAll('#seccionPropietario input, #seccionPropietario select, #seccionPropietario button').forEach(el => {
     el.disabled = false;
   });
-  
+  configurarAutocomplete();
   document.getElementById('modalNuevo').style.display = 'block';
 }
 
