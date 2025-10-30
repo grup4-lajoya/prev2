@@ -222,82 +222,51 @@ function aplicarFiltros() {
 // CARGAR PERSONAL PARA SELECT
 // ============================================
 
+let listaPersonalCompleta = [];
+
 async function cargarPersonalParaSelect() {
   try {
     const { data: personal, error } = await supabase
       .from('personal')
-      .select('id, nombre, dni, unidad')
+      .select('id, nombre, dni, nsa, unidad')
       .eq('activo', true)
       .order('nombre', { ascending: true });
 
     if (error) throw error;
 
-    const datalist = document.getElementById('listaPersonal');
-    if (!datalist) {
-      console.error('No se encontró el elemento listaPersonal');
+    listaPersonalCompleta = personal;
+
+    const input = document.getElementById('inputPersonal');
+    const dropdown = document.getElementById('sugerenciasPersonal');
+    
+    if (!input || !dropdown) {
+      console.error('No se encontraron elementos del autocomplete');
       return;
     }
-    datalist.innerHTML = '';
-    
-    let mapaPersonal = {};
 
-    personal.forEach(p => {
-      const option = document.createElement('option');
-      option.value = `${p.nombre} - DNI: ${p.dni}`;
-      option.dataset.id = p.id;
-      datalist.appendChild(option);
-      
-      // Guardar en mapa para búsqueda rápida
-      mapaPersonal[`${p.nombre} - DNI: ${p.dni}`] = {
-        id: p.id,
-        nombre: p.nombre,
-        dni: p.dni,
-        unidad: p.unidad
-      };
-    });
-
-    // Evento cuando selecciona del datalist
-   const input = document.getElementById('inputPersonal');
-    if (!input) {
-      console.error('No se encontró el elemento inputPersonal');
-      return;
-    }
-    
+    // Evento input para filtrar
     input.addEventListener('input', function() {
-      const valorSeleccionado = this.value;
+      const texto = this.value.toLowerCase().trim();
       
-      if (mapaPersonal[valorSeleccionado]) {
-        const personaSeleccionada = mapaPersonal[valorSeleccionado];
-        
-        propietarioSeleccionado = {
-          id: personaSeleccionada.id,
-          dni: personaSeleccionada.dni,
-          nombre: personaSeleccionada.nombre,
-          unidad: personaSeleccionada.unidad
-        };
-
-        document.getElementById('idPersonalSeleccionado').value = personaSeleccionada.id;
-        document.getElementById('dniSeleccionado').textContent = personaSeleccionada.dni;
-        document.getElementById('nombreSeleccionado').textContent = personaSeleccionada.nombre;
-        document.getElementById('unidadSeleccionado').textContent = personaSeleccionada.unidad;
-        
-        document.getElementById('infoPersonalSeleccionado').style.display = 'block';
-        document.getElementById('btnConfirmarPropietario').disabled = false;
-      } else {
-        propietarioSeleccionado = null;
-        document.getElementById('idPersonalSeleccionado').value = '';
-        document.getElementById('infoPersonalSeleccionado').style.display = 'none';
-        document.getElementById('btnConfirmarPropietario').disabled = true;
+      if (texto.length < 2) {
+        dropdown.classList.remove('active');
+        return;
       }
+
+      // Filtrar personal
+      const resultados = listaPersonalCompleta.filter(p => 
+        p.nombre.toLowerCase().includes(texto) ||
+        p.dni.includes(texto) ||
+        p.nsa.toLowerCase().includes(texto)
+      );
+
+      mostrarSugerencias(resultados, dropdown, input);
     });
 
-    // Evento blur para validar selección
-    input.addEventListener('blur', function() {
-      if (!mapaPersonal[this.value]) {
-        this.value = '';
-        propietarioSeleccionado = null;
-        document.getElementById('infoPersonalSeleccionado').style.display = 'none';
-        document.getElementById('btnConfirmarPropietario').disabled = true;
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('active');
       }
     });
 
@@ -305,6 +274,54 @@ async function cargarPersonalParaSelect() {
     console.error('Error al cargar personal:', error);
     mostrarNotificacion('Error al cargar personal: ' + error.message, 'error');
   }
+}
+
+function mostrarSugerencias(resultados, dropdown, input) {
+  dropdown.innerHTML = '';
+  
+  if (resultados.length === 0) {
+    dropdown.innerHTML = '<div class="sin-resultados">No se encontraron resultados</div>';
+    dropdown.classList.add('active');
+    return;
+  }
+
+  resultados.forEach(persona => {
+    const item = document.createElement('div');
+    item.className = 'sugerencia-item';
+    item.innerHTML = `
+      <span class="sugerencia-nombre">${persona.nombre}</span>
+      <span class="sugerencia-datos">NSA: ${persona.nsa} | DNI: ${persona.dni} | ${persona.unidad || 'Sin unidad'}</span>
+    `;
+    
+    item.addEventListener('click', function() {
+      seleccionarPersona(persona, input, dropdown);
+    });
+    
+    dropdown.appendChild(item);
+  });
+  
+  dropdown.classList.add('active');
+}
+
+function seleccionarPersona(persona, input, dropdown) {
+  propietarioSeleccionado = {
+    id: persona.id,
+    dni: persona.dni,
+    nsa: persona.nsa,
+    nombre: persona.nombre,
+    unidad: persona.unidad
+  };
+
+  input.value = `${persona.nombre} - NSA: ${persona.nsa}`;
+  dropdown.classList.remove('active');
+
+  document.getElementById('idPersonalSeleccionado').value = persona.id;
+  document.getElementById('dniSeleccionado').textContent = persona.dni;
+  document.getElementById('nombreSeleccionado').textContent = persona.nombre;
+  document.getElementById('unidadSeleccionado').textContent = persona.unidad || 'Sin unidad';
+  
+  document.getElementById('infoPersonalSeleccionado').style.display = 'block';
+  document.getElementById('btnConfirmarPropietario').disabled = false;
 }
 
 // ============================================
@@ -319,6 +336,7 @@ function nuevoRegistro() {
   document.getElementById('formNuevo').reset();
   document.getElementById('inputPersonal').value = '';
   document.getElementById('idPersonalSeleccionado').value = '';
+  document.getElementById('sugerenciasPersonal').classList.remove('active');
   document.getElementById('infoPersonalSeleccionado').style.display = 'none';
   document.getElementById('btnConfirmarPropietario').disabled = true;
   
