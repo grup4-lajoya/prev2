@@ -484,19 +484,24 @@ async function guardarVehiculo() {
   }
 
   mostrarOverlay('Guardando vehículo...');
+try {
+  // Verificar que la placa NO exista ACTIVA
+  const { data: existente, error: errorVerificar } = await supabase
+    .from('vehiculo_seguridad')
+    .select('id, placa')
+    .eq('placa', placa)
+    .eq('activo', true)
+    .maybeSingle();  // ← IMPORTANTE: maybeSingle() no lanza error si no encuentra
 
-  try {
-    // Verificar que la placa no exista
-    const { data: existente, error: errorVerificar } = await supabase
-      .from('vehiculo_seguridad')
-      .select('id')
-      .eq('placa', placa)
-      .eq('activo', true)
-      .single();
+  if (errorVerificar) {
+    console.error('Error al verificar placa:', errorVerificar);
+  }
 
-    if (existente) {
-      throw new Error(`La placa ${placa} ya está registrada`);
-    }
+  if (existente) {
+    ocultarOverlay();
+    mostrarNotificacion(`❌ La placa ${placa} ya está registrada y activa en el sistema`, 'error');
+    return;
+  }
 
     // Insertar vehículo
 const { data, error } = await supabase
@@ -714,26 +719,27 @@ async function eliminarVehiculo(index) {
   const vehiculo = datosFiltrados[index];
   
   const confirmar = await mostrarConfirmacion(
-    `¿Está seguro de eliminar el vehículo <strong>${vehiculo.placa}</strong>?<br><br>⚠️ Esta acción es PERMANENTE y NO se puede deshacer.`,
-    '🗑️ Confirmar Eliminación Permanente'
+    `¿Está seguro de eliminar el vehículo <strong>${vehiculo.placa}</strong>?<br><br>
+    ℹ️ El vehículo quedará inactivo y podrá ser registrado nuevamente en el futuro.`,
+    '🗑️ Confirmar Eliminación'
   );
 
   if (!confirmar) return;
 
-  mostrarOverlay('Eliminando vehículo permanentemente...');
+  mostrarOverlay('Desactivando vehículo...');
 
   try {
-    // Eliminación REAL (DELETE)
+    // Eliminación LÓGICA (activo = false)
     const { error } = await supabase
       .from('vehiculo_seguridad')
-      .delete()
+      .update({ activo: false })
       .eq('id', vehiculo.id);
 
     ocultarOverlay();
 
     if (error) throw error;
 
-    mostrarNotificacion('✓ Vehículo eliminado permanentemente', 'success');
+    mostrarNotificacion('✓ Vehículo eliminado correctamente. Puede ser registrado nuevamente.', 'success');
     cargarDatosVehiculos();
 
   } catch (error) {
