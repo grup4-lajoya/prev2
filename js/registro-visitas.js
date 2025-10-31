@@ -264,10 +264,11 @@ async function cargarVisitasAutorizadas() {
     loadingEl.innerHTML = 'Cargando visitas autorizadas... ⏳';
     loadingEl.style.display = 'block';
     
-    // Consultar TODAS las visitas (activas e inactivas) para que aparezcan en el historial
+// Consultar solo las visitas ACTIVAS (estado = true)
     const { data: visitas, error: errorVisitas } = await supabase
       .from('visitas_autorizadas')
       .select('*')
+      .eq('estado', true)  // ✅ Solo mostrar visitas activas
       .order('created_at', { ascending: false });
     
     if (errorVisitas) throw errorVisitas;
@@ -772,77 +773,135 @@ function nuevaVisita() {
   opcionVehiculo = 'sin_vehiculo';
   
   // Reset formulario
-  document.getElementById('formNueva').reset();
+  const formNueva = document.getElementById('formNueva');
+  if (formNueva) formNueva.reset();
+  
   // Reset específico de las opciones de vehículo
-  document.getElementById('opcionSinVehiculo').checked = true;
-  document.getElementById('contenedorVehiculoExistente').style.display = 'none';
-  document.getElementById('contenedorVehiculoNuevo').style.display = 'none';
+  const opcionSinVehiculo = document.getElementById('opcionSinVehiculo');
+  if (opcionSinVehiculo) opcionSinVehiculo.checked = true;
+  
+  const contenedorExistente = document.getElementById('contenedorVehiculoExistente');
+  if (contenedorExistente) contenedorExistente.style.display = 'none';
+  
+  const contenedorNuevo = document.getElementById('contenedorVehiculoNuevo');
+  if (contenedorNuevo) contenedorNuevo.style.display = 'none';
   
   // Limpiar campos de vehículo
-  document.getElementById('inputVehiculo').value = '';
-  document.getElementById('idVehiculoSeleccionado').value = '';
-  document.getElementById('infoVehiculoSeleccionado').style.display = 'none';
-  document.getElementById('sugerenciasVehiculo').classList.remove('active');
+  const inputVehiculo = document.getElementById('inputVehiculo');
+  if (inputVehiculo) inputVehiculo.value = '';
+  
+  const idVehiculoSel = document.getElementById('idVehiculoSeleccionado');
+  if (idVehiculoSel) idVehiculoSel.value = '';
+  
+  const infoVehiculoSel = document.getElementById('infoVehiculoSeleccionado');
+  if (infoVehiculoSel) infoVehiculoSel.style.display = 'none';
+  
+  const sugerenciasVeh = document.getElementById('sugerenciasVehiculo');
+  if (sugerenciasVeh) sugerenciasVeh.classList.remove('active');
   
   // Limpiar campos de nuevo vehículo
-  document.getElementById('nuevaPlaca').value = '';
-  document.getElementById('nuevoTipoVehiculo').value = '';
-  document.getElementById('nuevaMarca').value = '';
-  document.getElementById('nuevoModelo').value = '';
-  document.getElementById('nuevoColor').value = '';
+  const nuevaPlaca = document.getElementById('nuevaPlaca');
+  if (nuevaPlaca) nuevaPlaca.value = '';
   
-  document.getElementById('inputVisitante').value = '';
-  document.getElementById('idVisitanteSeleccionado').value = '';
-  document.getElementById('sugerenciasVisitante').classList.remove('active');
-  document.getElementById('infoVisitanteSeleccionado').style.display = 'none';
-  document.getElementById('btnConfirmarVisitante').disabled = true;
+  const nuevoTipo = document.getElementById('nuevoTipoVehiculo');
+  if (nuevoTipo) nuevoTipo.value = '';
+  
+  const nuevaMarca = document.getElementById('nuevaMarca');
+  if (nuevaMarca) nuevaMarca.value = '';
+  
+  const nuevoModelo = document.getElementById('nuevoModelo');
+  if (nuevoModelo) nuevoModelo.value = '';
+  
+  const nuevoColor = document.getElementById('nuevoColor');
+  if (nuevoColor) nuevoColor.value = '';
+  
+  // Limpiar campos de visitante
+  const inputVisitante = document.getElementById('inputVisitante');
+  if (inputVisitante) inputVisitante.value = '';
+  
+  const idVisitanteSel = document.getElementById('idVisitanteSeleccionado');
+  if (idVisitanteSel) idVisitanteSel.value = '';
+  
+  const sugerenciasVis = document.getElementById('sugerenciasVisitante');
+  if (sugerenciasVis) sugerenciasVis.classList.remove('active');
+  
+  const infoVisitanteSel = document.getElementById('infoVisitanteSeleccionado');
+  if (infoVisitanteSel) infoVisitanteSel.style.display = 'none';
+  
+  const btnConfirmar = document.getElementById('btnConfirmarVisitante');
+  if (btnConfirmar) btnConfirmar.disabled = true;
   
   // Reset indicadores de pasos
-  document.getElementById('indicadorPaso1').classList.add('active');
-  document.getElementById('indicadorPaso1').classList.remove('completed');
-  document.getElementById('indicadorPaso2').classList.remove('active', 'completed');
-  document.getElementById('indicadorPaso3').classList.remove('active', 'completed');
+  const indicador1 = document.getElementById('indicadorPaso1');
+  if (indicador1) {
+    indicador1.classList.add('active');
+    indicador1.classList.remove('completed');
+  }
+  
+  const indicador2 = document.getElementById('indicadorPaso2');
+  if (indicador2) indicador2.classList.remove('active', 'completed');
+  
+  const indicador3 = document.getElementById('indicadorPaso3');
+  if (indicador3) indicador3.classList.remove('active', 'completed');
   
   // Habilitar sección 1
   const seccionVisitante = document.getElementById('seccionVisitante');
-  seccionVisitante.classList.remove('bloqueada', 'guardada');
-  const badgeVisitante = seccionVisitante.querySelector('.badge-guardado');
-  if (badgeVisitante) badgeVisitante.remove();
-  
-  document.querySelectorAll('#seccionVisitante input, #seccionVisitante button').forEach(el => {
-    el.disabled = false;
-  });
+  if (seccionVisitante) {
+    seccionVisitante.classList.remove('bloqueada', 'guardada');
+    const badgeVisitante = seccionVisitante.querySelector('.badge-guardado');
+    if (badgeVisitante) badgeVisitante.remove();
+    
+    seccionVisitante.querySelectorAll('input, button').forEach(el => {
+      el.disabled = false;
+    });
+  }
   
   // Bloquear sección 2
   const seccionVehiculo = document.getElementById('seccionVehiculo');
-  seccionVehiculo.classList.add('bloqueada');
-  seccionVehiculo.classList.remove('guardada');
-  const badgeVehiculo = seccionVehiculo.querySelector('.badge-guardado');
-  if (badgeVehiculo) badgeVehiculo.remove();
-  
-  document.getElementById('mensajeBloqueoVehiculo').style.display = 'block';
-  document.getElementById('formularioVehiculo').style.display = 'none';
-  
-  // Habilitar radio buttons del paso 2
-  document.querySelectorAll('#seccionVehiculo input[type="radio"]').forEach(radio => {
-    radio.disabled = false;
-  });
+  if (seccionVehiculo) {
+    seccionVehiculo.classList.add('bloqueada');
+    seccionVehiculo.classList.remove('guardada');
+    const badgeVehiculo = seccionVehiculo.querySelector('.badge-guardado');
+    if (badgeVehiculo) badgeVehiculo.remove();
+    
+    const mensajeBloqueo = document.getElementById('mensajeBloqueoVehiculo');
+    if (mensajeBloqueo) mensajeBloqueo.style.display = 'block';
+    
+    const formularioVeh = document.getElementById('formularioVehiculo');
+    if (formularioVeh) formularioVeh.style.display = 'none';
+    
+    // Habilitar radio buttons del paso 2
+    seccionVehiculo.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.disabled = false;
+    });
+  }
   
   // Bloquear sección 3
   const seccionAutorizacion = document.getElementById('seccionAutorizacion');
-  seccionAutorizacion.classList.add('bloqueada');
-  document.getElementById('mensajeBloqueoAutorizacion').style.display = 'block';
-  document.getElementById('formularioAutorizacion').style.display = 'none';
+  if (seccionAutorizacion) {
+    seccionAutorizacion.classList.add('bloqueada');
+    
+    const mensajeBloq3 = document.getElementById('mensajeBloqueoAutorizacion');
+    if (mensajeBloq3) mensajeBloq3.style.display = 'block';
+    
+    const formularioAut = document.getElementById('formularioAutorizacion');
+    if (formularioAut) formularioAut.style.display = 'none';
+  }
+  
+  // Ocultar elementos de confirmación
+  const visitanteConf = document.getElementById('visitanteConfirmado');
+  if (visitanteConf) visitanteConf.style.display = 'none';
+  
+  const resumenConf = document.getElementById('resumenConfirmado');
+  if (resumenConf) resumenConf.style.display = 'none';
   
   // Reconfigurar autocomplete
   configurarAutocompleteVisitante();
   configurarAutocompleteVehiculo();
   
   // Abrir modal
-  document.getElementById('modalNueva').style.display = 'block';
-  // Asegurar que el visitante confirmado esté oculto
-  document.getElementById('visitanteConfirmado').style.display = 'none';
-  document.getElementById('resumenConfirmado').style.display = 'none';
+  const modalNueva = document.getElementById('modalNueva');
+  if (modalNueva) modalNueva.style.display = 'block';
 }
 
 // ============================================
