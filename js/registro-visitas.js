@@ -1019,6 +1019,11 @@ function avanzarPaso3() {
   const hoy = new Date().toISOString().split('T')[0];
   document.getElementById('fechaInicio').min = hoy;
   document.getElementById('fechaFin').min = hoy;
+// Mostrar el nombre que se guardará
+  const nombreOrigenMostrar = document.getElementById('nombreOrigenMostrar');
+  if (nombreOrigenMostrar) {
+    nombreOrigenMostrar.textContent = visitanteSeleccionado.nombre_origen || 'Sin origen';
+  }
 
   mostrarNotificacion('✓ Paso 2 completado. Ahora complete los datos de la autorización.', 'success');
 }
