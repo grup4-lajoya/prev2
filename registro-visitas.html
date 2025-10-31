@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Visitas Autorizadas</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/control-visitas.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>👥 Control de Visitas Autorizadas</h1>
+  
+  <div class="controles-superiores">
+    <div class="buscador">
+      <input type="text" id="buscar" placeholder="Buscar por nombre, DNI, NSA...">
+    </div>
+    
+    <div class="filtros">
+      <select id="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="activa">Activas</option>
+        <option value="vencida">Vencidas</option>
+        <option value="proxima">Próximas</option>
+      </select>
+      
+      <select id="filtroOrigen">
+        <option value="">Todos los orígenes</option>
+        <option value="unidad">Unidades</option>
+        <option value="empresa">Empresas</option>
+      </select>
+    </div>
+    
+    <span class="info-registros" id="infoRegistros"></span>
+  </div>
+
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando visitas autorizadas... ⏳</div>
+    <table id="tablaVisitas" style="display:none;">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>VISITANTE</th>
+          <th>DNI/NSA</th>
+          <th>ORIGEN</th>
+          <th>VEHÍCULO</th>
+          <th>FECHA INICIO</th>
+          <th>FECHA FIN</th>
+          <th>ESTADO</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
+</div>
+
+<button class="btn-flotante" onclick="nuevaVisita()" title="Registrar Visita">+</button>
+
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
+
+<!-- MODAL NUEVA VISITA -->
+<div id="modalNueva" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2>👥 Registrar Visita Autorizada</h2>
+      <span class="close" onclick="cerrarModal()">&times;</span>
+    </div>
+    
+    <!-- INDICADOR DE PASOS -->
+    <div class="wizard-steps">
+      <div class="step active" id="indicadorPaso1">
+        <div class="step-number">1</div>
+        <div class="step-label">Visitante</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPaso2">
+        <div class="step-number">2</div>
+        <div class="step-label">Vehículo</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPaso3">
+        <div class="step-number">3</div>
+        <div class="step-label">Autorización</div>
+      </div>
+    </div>
+    
+    <div class="modal-body">
+      <form id="formNueva">
+        
+        <!-- ============================================
+             PASO 1: SELECCIONAR/REGISTRAR VISITANTE
+             ============================================ -->
+        <div class="seccion" id="seccionVisitante">
+          <div class="seccion-titulo">👤 Paso 1: Seleccionar Visitante</div>
+          
+          <div class="mensaje-info">
+            💡 Seleccione a la persona que visitará la unidad. Si no está registrada, puede agregarla usando el botón verde.
+          </div>
+          
+          <div class="form-group">
+            <label>Buscar Persona Foránea <span class="required">*</span></label>
+            <div class="autocomplete-wrapper">
+              <input 
+                type="text" 
+                id="inputVisitante" 
+                class="input-autocomplete" 
+                placeholder="Escriba DNI, NSA, Pasaporte o nombre..."
+                autocomplete="off"
+                required>
+              <div id="sugerenciasVisitante" class="sugerencias-dropdown"></div>
+            </div>
+            <input type="hidden" id="idVisitanteSeleccionado">
+          </div>
+          
+          <button type="button" class="btn-nuevo-registro" onclick="abrirModalNuevoForaneo()">
+            ➕ Registrar Nueva Persona
+          </button>
+          
+          <div id="infoVisitanteSeleccionado" class="info-seleccionado" style="display:none;">
+            <p><strong>Nombre:</strong> <span id="nombreVisitante"></span></p>
+            <p><strong>DNI:</strong> <span id="dniVisitante"></span></p>
+            <p><strong>NSA:</strong> <span id="nsaVisitante"></span></p>
+            <p><strong>Pasaporte:</strong> <span id="pasaporteVisitante"></span></p>
+            <p><strong>Origen:</strong> <span id="origenVisitante"></span></p>
+          </div>
+
+          <button type="button" class="btn-guardar-seccion" onclick="confirmarVisitante()" id="btnConfirmarVisitante" disabled>
+            ✅ Confirmar Visitante
+          </button>
+        </div>
+
+        <!-- ============================================
+             PASO 2: SELECCIONAR/REGISTRAR VEHÍCULO (OPCIONAL)
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionVehiculo">
+          <div class="seccion-titulo">🚗 Paso 2: Vehículo (Opcional)</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoVehiculo">
+            🔒 Confirme primero al visitante.
+          </div>
+
+          <div id="formularioVehiculo" style="display:none;">
+            <div class="visitante-confirmado" id="visitanteConfirmado" style="display:none;">
+              <strong>Visitante:</strong> <span id="nombreVisitanteConfirmado"></span>
+            </div>
+
+            <div class="opciones-vehiculo">
+              <label class="radio-option">
+                <input type="radio" name="opcionVehiculo" value="sin_vehiculo" checked onchange="cambiarOpcionVehiculo()">
+                <span>🚶 Sin vehículo</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="opcionVehiculo" value="existente" onchange="cambiarOpcionVehiculo()">
+                <span>🚗 Seleccionar vehículo registrado</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="opcionVehiculo" value="nuevo" onchange="cambiarOpcionVehiculo()">
+                <span>➕ Registrar nuevo vehículo</span>
+              </label>
+            </div>
+
+            <!-- SELECCIONAR VEHÍCULO EXISTENTE -->
+            <div id="contenedorVehiculoExistente" class="sub-seccion" style="display:none;">
+              <div class="form-group">
+                <label>Buscar Vehículo Registrado</label>
+                <div class="autocomplete-wrapper">
+                  <input 
+                    type="text" 
+                    id="inputVehiculo" 
+                    class="input-autocomplete" 
+                    placeholder="Escriba la placa del vehículo..."
+                    autocomplete="off">
+                  <div id="sugerenciasVehiculo" class="sugerencias-dropdown"></div>
+                </div>
+                <input type="hidden" id="idVehiculoSeleccionado">
+              </div>
+              
+              <div id="infoVehiculoSeleccionado" class="info-seleccionado" style="display:none;">
+                <p><strong>Placa:</strong> <span id="placaVehiculo"></span></p>
+                <p><strong>Tipo:</strong> <span id="tipoVehiculo"></span></p>
+                <p><strong>Marca/Modelo:</strong> <span id="marcaModeloVehiculo"></span></p>
+              </div>
+            </div>
+
+            <!-- REGISTRAR NUEVO VEHÍCULO -->
+            <div id="contenedorVehiculoNuevo" class="sub-seccion" style="display:none;">
+              <div class="mensaje-advertencia">
+                ⚠️ Este vehículo se registrará vinculado al visitante seleccionado.
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Placa <span class="required">*</span></label>
+                  <input type="text" id="nuevaPlaca" maxlength="7" style="text-transform: uppercase;" placeholder="Ej: ABC-123">
+                </div>
+                <div class="form-group">
+                  <label>Tipo de Vehículo <span class="required">*</span></label>
+                  <select id="nuevoTipoVehiculo">
+                    <option value="">Seleccione</option>
+                    <option value="AUTO">Automóvil</option>
+                    <option value="CAMIONETA">Camioneta</option>
+                    <option value="MOTO">Motocicleta</option>
+                    <option value="CAMIÓN">Camión</option>
+                    <option value="BUS">Bus</option>
+                    <option value="OTRO">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Marca</label>
+                  <input type="text" id="nuevaMarca" placeholder="Opcional">
+                </div>
+                <div class="form-group">
+                  <label>Modelo</label>
+                  <input type="text" id="nuevoModelo" placeholder="Opcional">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Color</label>
+                <input type="text" id="nuevoColor" placeholder="Opcional">
+              </div>
+            </div>
+
+            <button type="button" class="btn-guardar-seccion" onclick="confirmarVehiculo()" id="btnConfirmarVehiculo">
+              ✅ Confirmar Vehículo
+            </button>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PASO 3: DATOS DE LA AUTORIZACIÓN
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionAutorizacion">
+          <div class="seccion-titulo">📋 Paso 3: Datos de la Autorización</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoAutorizacion">
+            🔒 Complete los pasos anteriores.
+          </div>
+
+          <div id="formularioAutorizacion" style="display:none;">
+            <div class="resumen-confirmado" id="resumenConfirmado" style="display:none;">
+              <p><strong>Visitante:</strong> <span id="resumenVisitante"></span></p>
+              <p><strong>Vehículo:</strong> <span id="resumenVehiculo"></span></p>
+            </div>
+
+            <div class="form-group">
+              <label>Nombre de la Autorización <span class="required">*</span></label>
+              <input type="text" id="nombreAutorizacion" placeholder="Ej: Visita de inspección" required>
+              <small>Este nombre aparecerá en el listado y reporte</small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fecha de Inicio <span class="required">*</span></label>
+                <input type="date" id="fechaInicio" required>
+              </div>
+              <div class="form-group">
+                <label>Fecha de Fin <span class="required">*</span></label>
+                <input type="date" id="fechaFin" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Motivo de la Visita</label>
+              <textarea id="motivoVisita" rows="3" placeholder="Describa el motivo de la visita (opcional)"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="estadoVisita" checked>
+                Autorización Activa
+              </label>
+            </div>
+
+            <button type="button" class="btn-guardar-final" onclick="guardarVisita()" id="btnGuardarVisita">
+              💾 Guardar Visita Autorizada
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: REGISTRAR NUEVA PERSONA FORÁNEA
+     ============================================ -->
+<div id="modalNuevoForaneo" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>➕ Registrar Nueva Persona</h2>
+      <span class="close" onclick="cerrarModalNuevoForaneo()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevoForaneo">
+        
+        <div class="mensaje-info">
+          💡 Complete los datos de la persona que visitará la unidad
+        </div>
+
+        <div class="form-group">
+          <label>Nombre Completo <span class="required">*</span></label>
+          <input type="text" id="nuevoForaneoNombre" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>DNI</label>
+            <input type="text" id="nuevoForaneoDni" maxlength="8" placeholder="8 dígitos">
+          </div>
+          <div class="form-group">
+            <label>NSA</label>
+            <input type="text" id="nuevoForaneoNsa" placeholder="Opcional">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Pasaporte</label>
+          <input type="text" id="nuevoForaneoPasaporte" placeholder="Opcional">
+        </div>
+
+        <div class="mensaje-advertencia">
+          ⚠️ Debe ingresar al menos uno: DNI, NSA o Pasaporte
+        </div>
+
+        <div class="form-group">
+          <label>Tipo de Origen <span class="required">*</span></label>
+          <select id="nuevoForaneoTipoOrigen" required onchange="cambiarTipoOrigen()">
+            <option value="">Seleccione</option>
+            <option value="unidad">Unidad</option>
+            <option value="empresa">Empresa</option>
+          </select>
+        </div>
+
+        <!-- Seleccionar Unidad -->
+        <div id="contenedorUnidad" class="form-group" style="display:none;">
+          <label>Unidad <span class="required">*</span></label>
+          <div class="input-con-boton">
+            <select id="nuevoForaneoUnidad" class="select-con-boton">
+              <option value="">Seleccione una unidad</option>
+            </select>
+            <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaUnidad()" title="Agregar nueva unidad">
+              ➕
+            </button>
+          </div>
+        </div>
+
+        <!-- Seleccionar Empresa -->
+        <div id="contenedorEmpresa" class="form-group" style="display:none;">
+          <label>Empresa <span class="required">*</span></label>
+          <div class="input-con-boton">
+            <select id="nuevoForaneoEmpresa" class="select-con-boton">
+              <option value="">Seleccione una empresa</option>
+            </select>
+            <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaEmpresa()" title="Agregar nueva empresa">
+              ➕
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-guardar-final" onclick="guardarNuevoForaneo()">
+          💾 Guardar Persona
+        </button>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalNuevoForaneo()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: REGISTRAR NUEVA UNIDAD
+     ============================================ -->
+<div id="modalNuevaUnidad" class="modal">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>🏢 Registrar Nueva Unidad</h2>
+      <span class="close" onclick="cerrarModalNuevaUnidad()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevaUnidad">
+        <div class="form-group">
+          <label>Nombre de la Unidad <span class="required">*</span></label>
+          <input type="text" id="nuevaUnidadNombre" required placeholder="Ej: Base Aérea Las Palmas">
+        </div>
+        
+        <button type="button" class="btn-guardar-final" onclick="guardarNuevaUnidad()">
+          💾 Guardar Unidad
+        </button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalNuevaUnidad()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: REGISTRAR NUEVA EMPRESA
+     ============================================ -->
+<div id="modalNuevaEmpresa" class="modal">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>🏭 Registrar Nueva Empresa</h2>
+      <span class="close" onclick="cerrarModalNuevaEmpresa()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevaEmpresa">
+        <div class="form-group">
+          <label>RUC</label>
+          <input type="text" id="nuevaEmpresaRuc" maxlength="11" placeholder="11 dígitos (opcional)">
+        </div>
+        
+        <div class="form-group">
+          <label>Nombre de la Empresa <span class="required">*</span></label>
+          <input type="text" id="nuevaEmpresaNombre" required placeholder="Ej: Constructora SAC">
+        </div>
+        
+        <button type="button" class="btn-guardar-final" onclick="guardarNuevaEmpresa()">
+          💾 Guardar Empresa
+        </button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalNuevaEmpresa()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>👁 Detalle de Visita Autorizada</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">👤 Información del Visitante</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Nombre:</strong><span id="verNombreVisitante">-</span></div>
+          <div class="info-item"><strong>DNI:</strong><span id="verDniVisitante">-</span></div>
+          <div class="info-item"><strong>NSA:</strong><span id="verNsaVisitante">-</span></div>
+          <div class="info-item"><strong>Pasaporte:</strong><span id="verPasaporteVisitante">-</span></div>
+          <div class="info-item"><strong>Origen:</strong><span id="verOrigenVisitante">-</span></div>
+        </div>
+      </div>
+
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">🚗 Información del Vehículo</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Placa:</strong><span id="verPlacaVehiculo">-</span></div>
+          <div class="info-item"><strong>Tipo:</strong><span id="verTipoVehiculoDetalle">-</span></div>
+          <div class="info-item"><strong>Marca/Modelo:</strong><span id="verMarcaModeloDetalle">-</span></div>
+          <div class="info-item"><strong>Color:</strong><span id="verColorVehiculo">-</span></div>
+        </div>
+      </div>
+
+      <div class="seccion info-vehiculo">
+        <div class="seccion-titulo">📋 Datos de la Autorización</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Nombre:</strong><span id="verNombreAutorizacion">-</span></div>
+          <div class="info-item"><strong>Fecha Inicio:</strong><span id="verFechaInicio">-</span></div>
+          <div class="info-item"><strong>Fecha Fin:</strong><span id="verFechaFin">-</span></div>
+          <div class="info-item"><strong>Estado:</strong><span id="verEstadoVisita">-</span></div>
+          <div class="info-item" style="grid-column: 1 / -1;">
+            <strong>Motivo:</strong><span id="verMotivoVisita">-</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/control-visitas.js"></script>
+</body>
+</html>
