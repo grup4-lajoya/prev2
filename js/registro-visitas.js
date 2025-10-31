@@ -773,6 +773,24 @@ function nuevaVisita() {
   
   // Reset formulario
   document.getElementById('formNueva').reset();
+  // Reset específico de las opciones de vehículo
+  document.getElementById('opcionSinVehiculo').checked = true;
+  document.getElementById('contenedorVehiculoExistente').style.display = 'none';
+  document.getElementById('contenedorVehiculoNuevo').style.display = 'none';
+  
+  // Limpiar campos de vehículo
+  document.getElementById('inputVehiculo').value = '';
+  document.getElementById('idVehiculoSeleccionado').value = '';
+  document.getElementById('infoVehiculoSeleccionado').style.display = 'none';
+  document.getElementById('sugerenciasVehiculo').classList.remove('active');
+  
+  // Limpiar campos de nuevo vehículo
+  document.getElementById('nuevaPlaca').value = '';
+  document.getElementById('nuevoTipoVehiculo').value = '';
+  document.getElementById('nuevaMarca').value = '';
+  document.getElementById('nuevoModelo').value = '';
+  document.getElementById('nuevoColor').value = '';
+  
   document.getElementById('inputVisitante').value = '';
   document.getElementById('idVisitanteSeleccionado').value = '';
   document.getElementById('sugerenciasVisitante').classList.remove('active');
@@ -798,8 +816,17 @@ function nuevaVisita() {
   // Bloquear sección 2
   const seccionVehiculo = document.getElementById('seccionVehiculo');
   seccionVehiculo.classList.add('bloqueada');
+  seccionVehiculo.classList.remove('guardada');
+  const badgeVehiculo = seccionVehiculo.querySelector('.badge-guardado');
+  if (badgeVehiculo) badgeVehiculo.remove();
+  
   document.getElementById('mensajeBloqueoVehiculo').style.display = 'block';
   document.getElementById('formularioVehiculo').style.display = 'none';
+  
+  // Habilitar radio buttons del paso 2
+  document.querySelectorAll('#seccionVehiculo input[type="radio"]').forEach(radio => {
+    radio.disabled = false;
+  });
   
   // Bloquear sección 3
   const seccionAutorizacion = document.getElementById('seccionAutorizacion');
@@ -813,6 +840,9 @@ function nuevaVisita() {
   
   // Abrir modal
   document.getElementById('modalNueva').style.display = 'block';
+  // Asegurar que el visitante confirmado esté oculto
+  document.getElementById('visitanteConfirmado').style.display = 'none';
+  document.getElementById('resumenConfirmado').style.display = 'none';
 }
 
 // ============================================
