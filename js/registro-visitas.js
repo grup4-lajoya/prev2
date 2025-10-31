@@ -1498,14 +1498,12 @@ async function verDetalle(index) {
 // ============================================
 // EDITAR VISITA (UPDATE) - IMPLEMENTACIÓN COMPLETA
 // ============================================
-
 async function editarVisita(index) {
   const visita = datosFiltrados[index];
   
   mostrarOverlay('Cargando datos para editar...');
   
   try {
-    // Obtener datos completos
     const { data, error } = await supabase
       .from('visitas_autorizadas')
       .select('*')
@@ -1514,7 +1512,6 @@ async function editarVisita(index) {
 
     if (error) throw error;
 
-    // Obtener datos del visitante
     const { data: visitante, error: errorVisitante } = await supabase
       .from('personal_foraneo')
       .select('*')
@@ -1523,7 +1520,6 @@ async function editarVisita(index) {
 
     if (errorVisitante) throw errorVisitante;
 
-    // Obtener nombre de origen
     let nombreOrigen = 'N/A';
     if (visitante.tipo_origen === 'unidad' && visitante.id_origen) {
       const { data: unidad } = await supabase
@@ -1541,7 +1537,6 @@ async function editarVisita(index) {
       nombreOrigen = empresa ? empresa.nombre : 'Empresa desconocida';
     }
 
-    // Obtener datos del vehículo si existe
     let textoVehiculo = 'Sin vehículo';
     if (data.id_vehiculo) {
       const { data: vehiculo } = await supabase
@@ -1557,83 +1552,21 @@ async function editarVisita(index) {
 
     ocultarOverlay();
 
-    // Crear modal de edición dinámicamente
-    const modalHTML = `
-    <div id="modalEditar" class="modal" style="display: block;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>✏️ Editar Visita Autorizada</h2>
-          <span class="close" onclick="cerrarModalEditar()">&times;</span>
-        </div>
-        <div class="modal-body">
-          <form id="formEditar">
-            
-            <input type="hidden" id="editIdVisita" value="${data.id}">
-            
-            <div class="seccion">
-              <div class="seccion-titulo">👤 Información del Visitante (solo lectura)</div>
-              <div class="mensaje-info">
-                ℹ️ No se puede cambiar el visitante ni el vehículo. Si necesita hacerlo, elimine esta visita y cree una nueva.
-              </div>
-              <div class="info-propietario-readonly">
-                <p><strong>Nombre:</strong> ${visitante.nombre}</p>
-                <p><strong>DNI:</strong> ${visitante.dni || 'N/A'}</p>
-                <p><strong>NSA:</strong> ${visitante.nsa || 'N/A'}</p>
-                <p><strong>Pasaporte:</strong> ${visitante.pasaporte || 'N/A'}</p>
-                <p><strong>Origen:</strong> ${nombreOrigen}</p>
-                <p><strong>Vehículo:</strong> ${textoVehiculo}</p>
-              </div>
-            </div>
+    document.getElementById('editIdVisita').value = data.id;
+    document.getElementById('editNombreVisitante').textContent = visitante.nombre;
+    document.getElementById('editDniVisitante').textContent = visitante.dni || 'N/A';
+    document.getElementById('editNsaVisitante').textContent = visitante.nsa || 'N/A';
+    document.getElementById('editPasaporteVisitante').textContent = visitante.pasaporte || 'N/A';
+    document.getElementById('editOrigenVisitante').textContent = nombreOrigen;
+    document.getElementById('editVehiculoVisitante').textContent = textoVehiculo;
 
-            <div class="seccion">
-              <div class="seccion-titulo">📋 Datos de la Autorización (Editable)</div>
-              
-              <div class="form-group">
-                <label>Nombre de la Autorización <span class="required">*</span></label>
-                <input type="text" id="editNombreAutorizacion" value="${data.nombre}" required>
-              </div>
+    document.getElementById('editNombreAutorizacion').value = data.nombre;
+    document.getElementById('editFechaInicio').value = data.fec_inicio;
+    document.getElementById('editFechaFin').value = data.fec_fin;
+    document.getElementById('editMotivoVisita').value = data.motivo || '';
+    document.getElementById('editEstadoVisita').checked = data.estado;
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Fecha de Inicio <span class="required">*</span></label>
-                  <input type="date" id="editFechaInicio" value="${data.fec_inicio}" required>
-                </div>
-                <div class="form-group">
-                  <label>Fecha de Fin <span class="required">*</span></label>
-                  <input type="date" id="editFechaFin" value="${data.fec_fin}" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Motivo de la Visita</label>
-                <textarea id="editMotivoVisita" rows="3">${data.motivo || ''}</textarea>
-              </div>
-
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="editEstadoVisita" ${data.estado ? 'checked' : ''}>
-                  Autorización Activa
-                </label>
-              </div>
-
-              <button type="button" class="btn-guardar-final" onclick="actualizarVisita()">
-                💾 Actualizar Visita
-              </button>
-            </div>
-
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cancelar</button>
-        </div>
-      </div>
-    </div>`;
-
-    // Insertar modal en el DOM
-    const existingModal = document.getElementById('modalEditar');
-    if (existingModal) existingModal.remove();
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('modalEditar').style.display = 'block';
 
   } catch (error) {
     ocultarOverlay();
@@ -1641,7 +1574,9 @@ async function editarVisita(index) {
     mostrarNotificacion('Error al cargar datos: ' + error.message, 'error');
   }
 }
-
+function cerrarModalEditar() {
+  document.getElementById('modalEditar').style.display = 'none';
+}
 async function actualizarVisita() {
   const idVisita = document.getElementById('editIdVisita').value;
   const nombreAutorizacion = document.getElementById('editNombreAutorizacion').value.trim();
@@ -1690,12 +1625,6 @@ async function actualizarVisita() {
     mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
   }
 }
-
-function cerrarModalEditar() {
-  const modal = document.getElementById('modalEditar');
-  if (modal) modal.remove();
-}
-
 // ============================================
 // ELIMINAR VISITA (DELETE LÓGICO)
 // ============================================
