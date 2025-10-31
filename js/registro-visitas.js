@@ -1561,7 +1561,8 @@ async function editarVisita(index) {
     document.getElementById('editOrigenVisitante').textContent = nombreOrigen;
     document.getElementById('editVehiculoVisitante').textContent = textoVehiculo;
 
-    document.getElementById('editNombreAutorizacion').value = data.nombre;
+    // Mostrar el nombre de origen (no es editable, solo informativo)
+    document.getElementById('editNombreOrigen').textContent = nombreOrigen;
     document.getElementById('editFechaInicio').value = data.fec_inicio;
     document.getElementById('editFechaFin').value = data.fec_fin;
     document.getElementById('editMotivoVisita').value = data.motivo || '';
@@ -1580,14 +1581,14 @@ function cerrarModalEditar() {
 }
 async function actualizarVisita() {
   const idVisita = document.getElementById('editIdVisita').value;
-  const nombreAutorizacion = document.getElementById('editNombreAutorizacion').value.trim();
+  // El nombre NO se edita, se mantiene del origen original
   const fechaInicio = document.getElementById('editFechaInicio').value;
   const fechaFin = document.getElementById('editFechaFin').value;
   const motivo = document.getElementById('editMotivoVisita').value.trim();
   const estado = document.getElementById('editEstadoVisita').checked;
 
   // Validaciones
-  if (!nombreAutorizacion || !fechaInicio || !fechaFin) {
+  if (!fechaInicio || !fechaFin) {
     mostrarNotificacion('Complete todos los campos obligatorios', 'error');
     return;
   }
@@ -1602,14 +1603,13 @@ async function actualizarVisita() {
 
   try {
     const { error } = await supabase
-      .from('visitas_autorizadas')
-      .update({
-        nombre: nombreAutorizacion,
-        fec_inicio: fechaInicio,
-        fec_fin: fechaFin,
-        motivo: motivo || null,
-        estado: estado
-      })
+          .from('visitas_autorizadas')
+          .update({
+            fec_inicio: fechaInicio,
+            fec_fin: fechaFin,
+            motivo: motivo || null,
+            estado: estado
+          })
       .eq('id', idVisita);
 
     ocultarOverlay();
