@@ -1349,21 +1349,17 @@ async function guardarVisita() {
     return;
   }
 
-  const nombreAutorizacion = document.getElementById('nombreAutorizacion').value.trim();
+  // El nombre debe ser el origen del visitante (empresa o unidad)
+  const nombreOrigen = visitanteSeleccionado.nombre_origen || 'Sin origen';
+  
   const fechaInicio = document.getElementById('fechaInicio').value;
   const fechaFin = document.getElementById('fechaFin').value;
   const motivo = document.getElementById('motivoVisita').value.trim();
   const estado = document.getElementById('estadoVisita').checked;
 
   // Validaciones
-  if (!nombreAutorizacion || !fechaInicio || !fechaFin) {
-    mostrarNotificacion('Complete todos los campos obligatorios', 'error');
-    return;
-  }
-
-  // Validar que fecha fin >= fecha inicio
-  if (fechaFin < fechaInicio) {
-    mostrarNotificacion('La fecha de fin debe ser igual o posterior a la fecha de inicio', 'error');
+  if (!fechaInicio || !fechaFin) {
+    mostrarNotificacion('Complete las fechas de inicio y fin', 'error');
     return;
   }
 
@@ -1371,17 +1367,17 @@ async function guardarVisita() {
 
   try {
     // Insertar visita autorizada
-    const { data, error } = await supabase
-      .from('visitas_autorizadas')
-      .insert([{
-        id_visita: visitanteSeleccionado.id,
-        id_vehiculo: vehiculoSeleccionado ? vehiculoSeleccionado.id : null,
-        nombre: nombreAutorizacion,
-        fec_inicio: fechaInicio,
-        fec_fin: fechaFin,
-        motivo: motivo || null,
-        estado: estado
-      }])
+      const { data, error } = await supabase
+        .from('visitas_autorizadas')
+        .insert([{
+          id_visita: visitanteSeleccionado.id,
+          id_vehiculo: vehiculoSeleccionado ? vehiculoSeleccionado.id : null,
+          nombre: nombreOrigen,  // ✅ AHORA GUARDA EL NOMBRE DE LA EMPRESA/UNIDAD
+          fec_inicio: fechaInicio,
+          fec_fin: fechaFin,
+          motivo: motivo || null,
+          estado: estado
+        }])
       .select();
 
     ocultarOverlay();
