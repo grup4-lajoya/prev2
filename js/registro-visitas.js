@@ -32,7 +32,10 @@ const usuario = localStorage.getItem("usuario") || "";
 const unidad = localStorage.getItem("unidad") || "";
 const rol = localStorage.getItem("rol") || "";
 
-if (!usuario) window.location.replace("login.html");
+if (!usuario || !unidad) {
+  alert('⚠️ Sesión inválida. Por favor inicie sesión nuevamente.');
+  window.location.replace("login.html");
+}
 
 // ============================================
 // INICIALIZACIÓN
@@ -268,7 +271,8 @@ async function cargarVisitasAutorizadas() {
     const { data: visitas, error: errorVisitas } = await supabase
       .from('visitas_autorizadas')
       .select('*')
-      .eq('estado', true)  // ✅ Solo mostrar visitas activas
+      .eq('estado', true)
+      .eq('Unidad', unidad)
       .order('created_at', { ascending: false });
     
     if (errorVisitas) throw errorVisitas;
@@ -1470,7 +1474,8 @@ async function guardarVisita() {
           fec_inicio: fechaInicio,
           fec_fin: fechaFin,
           motivo: motivo || null,
-          estado: estado
+          estado: estado,
+          Unidad: unidad 
         }])
       .select();
 
