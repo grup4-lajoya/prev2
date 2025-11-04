@@ -661,6 +661,15 @@ function seleccionarVisitante(persona, input, dropdown) {
   
   document.getElementById('infoVisitanteSeleccionado').style.display = 'block';
   document.getElementById('btnConfirmarVisitante').disabled = false;
+
+ // Limpiar selección de vehículo anterior (por si había uno seleccionado)
+  vehiculoSeleccionado = null;
+  const inputVeh = document.getElementById('inputVehiculo');
+  if (inputVeh) inputVeh.value = '';
+  const idVehSel = document.getElementById('idVehiculoSeleccionado');
+  if (idVehSel) idVehSel.value = '';
+  const infoVeh = document.getElementById('infoVehiculoSeleccionado');
+  if (infoVeh) infoVeh.style.display = 'none';
 }
 
 // ============================================
