@@ -20,7 +20,10 @@ const usuario = localStorage.getItem("usuario") || "";
 const unidad = localStorage.getItem("unidad") || "";
 const rol = localStorage.getItem("rol") || "";
 
-if (!usuario) window.location.replace("login.html");
+if (!usuario || !unidad) {
+  alert('⚠️ Sesión inválida. Por favor inicie sesión nuevamente.');
+  window.location.replace("login.html");
+}
 
 // ============================================
 // INICIALIZACIÓN
@@ -43,12 +46,13 @@ async function cargarDatosVehiculos() {
     loadingEl.innerHTML = 'Cargando vehículos... ⏳';
     
     // Consultar vehículos con tipo_propietario = 'Personal'
-  let query = supabase
-    .from('vehiculo_seguridad')
-    .select('*')
-    .eq('tipo_propietario', 'personal')  // ← EN MINÚSCULA
-    .eq('activo', true)
-    .order('created_at', { ascending: false });
+    let query = supabase
+      .from('vehiculo_seguridad')
+      .select('*')
+      .eq('tipo_propietario', 'personal')
+      .eq('activo', true)
+      .eq('Unidad', unidad) 
+      .order('created_at', { ascending: false });
 
     const { data: vehiculos, error: errorVehiculos } = await query;
     
@@ -230,6 +234,7 @@ async function cargarPersonalParaSelect() {
       .from('personal')
       .select('id, nombre, dni, nsa, unidad')
       .eq('activo', true)
+      .eq('unidad', unidad)
       .order('nombre', { ascending: true });
 
     if (error) throw error;
@@ -521,7 +526,8 @@ async function guardarVehiculo() {
         fec_venc_brev: fecVencBrev,
         estado: estado,
         activo: true,
-        temporal: false
+        temporal: false,
+        Unidad: unidad
       }])
       .select();
 
