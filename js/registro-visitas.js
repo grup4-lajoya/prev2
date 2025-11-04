@@ -1045,7 +1045,8 @@ async function confirmarVehiculo() {
           color: color || null,
           estado: true,
           activo: true,
-          temporal: false
+          temporal: false,
+          Unidad: unidad 
         }])
         .select()
         .single();
