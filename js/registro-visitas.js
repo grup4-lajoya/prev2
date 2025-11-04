@@ -239,7 +239,7 @@ async function cargarVehiculos() {
     const { data, error } = await supabase
       .from('vehiculo_seguridad')
       .select('*')
-      .eq('tipo_propietario', 'foraneo')
+      .in('tipo_propietario', ['personal_foraneo', 'foraneo'])
       .eq('activo', true)
       .order('placa', { ascending: true });
 
@@ -1068,7 +1068,7 @@ async function confirmarVehiculo() {
         .from('vehiculo_seguridad')
         .insert([{
           id_propietario: visitanteSeleccionado.id,
-          tipo_propietario: 'foraneo',
+          tipo_propietario: 'personal_foraneo',
           tipo_vehiculo: tipoVehiculo,
           tipo_propiedad: 'PARTICULAR',
           placa: placa,
