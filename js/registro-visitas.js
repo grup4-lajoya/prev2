@@ -710,13 +710,8 @@ function configurarAutocompleteVehiculo() {
 function buscarYMostrarVehiculos(texto, dropdown, input) {
   const textoLower = texto.toLowerCase();
   
-  // Filtrar vehículos del visitante seleccionado si existe
-  let vehiculosFiltrados = listaVehiculos;
-  if (visitanteSeleccionado) {
-    vehiculosFiltrados = listaVehiculos.filter(v => v.id_propietario === visitanteSeleccionado.id);
-  }
-  
-  const resultados = vehiculosFiltrados.filter(v => {
+  // Buscar en TODOS los vehículos foráneos (sin filtrar por propietario)
+  const resultados = listaVehiculos.filter(v => {
     return (v.placa || '').toLowerCase().includes(textoLower) ||
            (v.marca || '').toLowerCase().includes(textoLower) ||
            (v.modelo || '').toLowerCase().includes(textoLower);
