@@ -766,6 +766,11 @@ function seleccionarVehiculo(vehiculo, input, dropdown) {
   document.getElementById('marcaModeloVehiculo').textContent = marcaModelo;
   
   document.getElementById('infoVehiculoSeleccionado').style.display = 'block';
+    // Habilitar botón de confirmar vehículo
+  const btnConfirmarVeh = document.getElementById('btnConfirmarVehiculo');
+  if (btnConfirmarVeh) {
+    btnConfirmarVeh.disabled = false;
+  }
 }
 
 // ============================================
@@ -976,6 +981,9 @@ function cambiarOpcionVehiculo() {
   vehiculoSeleccionado = null;
   document.getElementById('inputVehiculo').value = '';
   document.getElementById('infoVehiculoSeleccionado').style.display = 'none';
+    // Resetear botón de confirmar
+  const btnConfirmar = document.getElementById('btnConfirmarVehiculo');
+  if (btnConfirmar) btnConfirmar.disabled = true;
   
   // Mostrar subsección según opción
   if (opcion === 'existente') {
@@ -988,6 +996,11 @@ function cambiarOpcionVehiculo() {
     }
   } else if (opcion === 'nuevo') {
     document.getElementById('contenedorVehiculoNuevo').style.display = 'block';
+        // Si es nuevo vehículo, habilitar botón (se validará en confirmarVehiculo)
+    if (btnConfirmar) btnConfirmar.disabled = false;
+  } else if (opcion === 'sin_vehiculo') {
+     // Si es sin vehículo, habilitar botón
+    if (btnConfirmar) btnConfirmar.disabled = false;
   }
 }
 
