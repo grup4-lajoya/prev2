@@ -797,6 +797,8 @@ function nuevaVisita() {
   // Limpiar campos de vehículo
   const inputVehiculo = document.getElementById('inputVehiculo');
   if (inputVehiculo) inputVehiculo.value = '';
+  inputVehiculo.disabled = false;  
+  inputVehiculo.readOnly = false;  
   
   const idVehiculoSel = document.getElementById('idVehiculoSeleccionado');
   if (idVehiculoSel) idVehiculoSel.value = '';
@@ -944,6 +946,13 @@ function confirmarVisitante() {
   seccionVehiculo.classList.remove('bloqueada');
   document.getElementById('mensajeBloqueoVehiculo').style.display = 'none';
   document.getElementById('formularioVehiculo').style.display = 'block';
+ 
+  // Asegurar que los campos estén habilitados
+    const inputVeh = document.getElementById('inputVehiculo');
+    if (inputVeh) {
+      inputVeh.disabled = false;
+      inputVeh.readOnly = false;
+    }
   
   document.getElementById('nombreVisitanteConfirmado').textContent = visitanteSeleccionado.nombre;
   document.getElementById('visitanteConfirmado').style.display = 'block';
@@ -971,6 +980,12 @@ function cambiarOpcionVehiculo() {
   // Mostrar subsección según opción
   if (opcion === 'existente') {
     document.getElementById('contenedorVehiculoExistente').style.display = 'block';
+  // Asegurar que el input esté habilitado
+    const inputVeh = document.getElementById('inputVehiculo');
+    if (inputVeh) {
+      inputVeh.disabled = false;
+      inputVeh.readOnly = false;
+    }
   } else if (opcion === 'nuevo') {
     document.getElementById('contenedorVehiculoNuevo').style.display = 'block';
   }
