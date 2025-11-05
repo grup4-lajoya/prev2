@@ -1311,7 +1311,8 @@ function abrirModalNuevoForaneo() {
   datosPersonalesTemp = null;
   
   // Reset formulario
-  document.getElementById('formNuevoForaneo').reset();
+  const form = document.getElementById('formNuevoForaneo');
+  if (form) form.reset();
   
   // Reset indicadores
   const indicador1 = document.getElementById('indicadorPasoForaneo1');
@@ -1321,7 +1322,9 @@ function abrirModalNuevoForaneo() {
   }
   
   const indicador2 = document.getElementById('indicadorPasoForaneo2');
-  if (indicador2) indicador2.classList.remove('active', 'completed');
+  if (indicador2) {
+    indicador2.classList.remove('active', 'completed');
+  }
   
   // Habilitar paso 1
   const seccionDatosPersonales = document.getElementById('seccionDatosPersonales');
@@ -1329,6 +1332,11 @@ function abrirModalNuevoForaneo() {
     seccionDatosPersonales.classList.remove('bloqueada', 'guardada');
     const badge = seccionDatosPersonales.querySelector('.badge-guardado');
     if (badge) badge.remove();
+    
+    // HABILITAR TODOS LOS CAMPOS DEL PASO 1
+    seccionDatosPersonales.querySelectorAll('input, select, button').forEach(el => {
+      el.disabled = false;
+    });
   }
   
   // Bloquear paso 2
@@ -1347,10 +1355,17 @@ function abrirModalNuevoForaneo() {
   }
   
   // Ocultar contenedores de origen
-  document.getElementById('contenedorUnidadForaneo').style.display = 'none';
-  document.getElementById('contenedorInstituto').style.display = 'none';
-  document.getElementById('contenedorEmpresaForaneo').style.display = 'none';
-  document.getElementById('personaConfirmada').style.display = 'none';
+  const contenedorUnidad = document.getElementById('contenedorUnidadForaneo');
+  if (contenedorUnidad) contenedorUnidad.style.display = 'none';
+  
+  const contenedorInstituto = document.getElementById('contenedorInstituto');
+  if (contenedorInstituto) contenedorInstituto.style.display = 'none';
+  
+  const contenedorEmpresa = document.getElementById('contenedorEmpresaForaneo');
+  if (contenedorEmpresa) contenedorEmpresa.style.display = 'none';
+  
+  const personaConf = document.getElementById('personaConfirmada');
+  if (personaConf) personaConf.style.display = 'none';
   
   // Abrir modal
   document.getElementById('modalNuevoForaneo').style.display = 'block';
