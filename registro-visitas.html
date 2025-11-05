@@ -260,6 +260,12 @@
             ℹ️ Esta autorización quedará registrada a nombre de: <strong id="nombreOrigenMostrar"></strong>
           </div>
 
+            <div class="form-group">
+              <label>Responsable Visita <span class="required">*</span></label>
+              <select id="dependenciaResponsable" required>
+                <option value="">Seleccione una dependencia</option>
+              </select>
+            </div>
             <div class="form-row">
               <div class="form-group">
                 <label>Fecha de Inicio <span class="required">*</span></label>
@@ -301,81 +307,155 @@
      MODAL: REGISTRAR NUEVA PERSONA FORÁNEA
      ============================================ -->
 <div id="modalNuevoForaneo" class="modal">
-  <div class="modal-content">
+  <div class="modal-content modal-large">
     <div class="modal-header">
       <h2>➕ Registrar Nueva Persona</h2>
       <span class="close" onclick="cerrarModalNuevoForaneo()">&times;</span>
     </div>
+    
+    <!-- INDICADOR DE PASOS -->
+    <div class="wizard-steps">
+      <div class="step active" id="indicadorPasoForaneo1">
+        <div class="step-number">1</div>
+        <div class="step-label">Datos Personales</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPasoForaneo2">
+        <div class="step-number">2</div>
+        <div class="step-label">Origen</div>
+      </div>
+    </div>
+    
     <div class="modal-body">
       <form id="formNuevoForaneo">
         
-        <div class="mensaje-info">
-          💡 Complete los datos de la persona que visitará la unidad
-        </div>
-
-        <div class="form-group">
-          <label>Nombre Completo <span class="required">*</span></label>
-          <input type="text" id="nuevoForaneoNombre" required>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>DNI</label>
-            <input type="text" id="nuevoForaneoDni" maxlength="8" placeholder="8 dígitos">
+        <!-- ============================================
+             PASO 1: DATOS PERSONALES
+             ============================================ -->
+        <div class="seccion" id="seccionDatosPersonales">
+          <div class="seccion-titulo">👤 Paso 1: Datos Personales</div>
+          
+          <div class="mensaje-info">
+            💡 Complete la información de la persona que visitará la unidad
           </div>
+
           <div class="form-group">
-            <label>NSA</label>
-            <input type="text" id="nuevoForaneoNsa" placeholder="Opcional">
+            <label>Grado (Opcional)</label>
+            <div class="input-con-boton">
+              <select id="nuevoForaneoGrado" class="select-con-boton">
+                <option value="">Ninguno</option>
+              </select>
+              <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevoGrado()" title="Agregar nuevo grado">
+                ➕
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label>Pasaporte</label>
-          <input type="text" id="nuevoForaneoPasaporte" placeholder="Opcional">
-        </div>
+          <div class="form-group">
+            <label>Apellidos y Nombres <span class="required">*</span></label>
+            <input type="text" id="nuevoForaneoNombre" required placeholder="Ingrese apellidos y nombres completos">
+          </div>
 
-        <div class="mensaje-advertencia">
-          ⚠️ Debe ingresar al menos uno: DNI, NSA o Pasaporte
-        </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>NSA / CIP</label>
+              <input type="text" id="nuevoForaneoNsa" placeholder="Opcional">
+            </div>
+            <div class="form-group">
+              <label>DNI</label>
+              <input type="text" id="nuevoForaneoDni" maxlength="8" placeholder="8 dígitos (opcional)">
+            </div>
+          </div>
 
-        <div class="form-group">
-          <label>Tipo de Origen <span class="required">*</span></label>
-          <select id="nuevoForaneoTipoOrigen" required onchange="cambiarTipoOrigen()">
-            <option value="">Seleccione</option>
-            <option value="unidad">Unidad</option>
-            <option value="empresa">Empresa</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label>Pasaporte / Carnet de Extranjería</label>
+            <input type="text" id="nuevoForaneoPasaporte" placeholder="Opcional">
+          </div>
 
-        <!-- Seleccionar Unidad -->
-        <div id="contenedorUnidad" class="form-group" style="display:none;">
-          <label>Unidad <span class="required">*</span></label>
-          <div class="input-con-boton">
-            <select id="nuevoForaneoUnidad" class="select-con-boton">
-              <option value="">Seleccione una unidad</option>
+          <div class="mensaje-advertencia">
+            ⚠️ Debe ingresar al menos uno: NSA/CIP, DNI o Pasaporte
+          </div>
+
+          <div class="form-group">
+            <label>País <span class="required">*</span></label>
+            <select id="nuevoForaneoPais" required>
+              <option value="">Seleccione un país</option>
             </select>
-            <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaUnidad()" title="Agregar nueva unidad">
-              ➕
+          </div>
+
+          <button type="button" class="btn-guardar-seccion" onclick="confirmarDatosPersonales()" id="btnConfirmarDatosPersonales">
+            ✅ Continuar al Origen
+          </button>
+        </div>
+
+        <!-- ============================================
+             PASO 2: ORIGEN
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionOrigenForaneo">
+          <div class="seccion-titulo">🏢 Paso 2: Origen</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoOrigenForaneo">
+            🔒 Complete primero los datos personales.
+          </div>
+
+          <div id="formularioOrigenForaneo" style="display:none;">
+            <div class="persona-confirmada" id="personaConfirmada" style="display:none;">
+              <strong>Persona:</strong> <span id="nombrePersonaConfirmada"></span>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de Origen <span class="required">*</span></label>
+              <select id="nuevoForaneoTipoOrigen" required onchange="cambiarTipoOrigenForaneo()">
+                <option value="">Seleccione</option>
+                <option value="unidad">OTRA UNIDAD</option>
+                <option value="instituto">INSTITUTO ARMADO</option>
+                <option value="empresa">EMPRESA / ENTIDAD / ORGANIZACIÓN</option>
+              </select>
+            </div>
+
+            <!-- Seleccionar Unidad -->
+            <div id="contenedorUnidadForaneo" class="form-group" style="display:none;">
+              <label>Unidad <span class="required">*</span></label>
+              <div class="input-con-boton">
+                <select id="nuevoForaneoUnidad" class="select-con-boton">
+                  <option value="">Seleccione una unidad</option>
+                </select>
+                <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaUnidad()" title="Agregar nueva unidad">
+                  ➕
+                </button>
+              </div>
+            </div>
+
+            <!-- Seleccionar Instituto Armado -->
+            <div id="contenedorInstituto" class="form-group" style="display:none;">
+              <label>Instituto Armado <span class="required">*</span></label>
+              <select id="nuevoForaneoInstituto">
+                <option value="">Seleccione</option>
+                <option value="EP">EP - Ejército del Perú</option>
+                <option value="MGP">MGP - Marina de Guerra del Perú</option>
+                <option value="FAP">FAP - Fuerza Aérea del Perú</option>
+                <option value="PNP">PNP - Policía Nacional del Perú</option>
+              </select>
+            </div>
+
+            <!-- Seleccionar Empresa -->
+            <div id="contenedorEmpresaForaneo" class="form-group" style="display:none;">
+              <label>Empresa / Entidad / Organización <span class="required">*</span></label>
+              <div class="input-con-boton">
+                <select id="nuevoForaneoEmpresa" class="select-con-boton">
+                  <option value="">Seleccione una empresa</option>
+                </select>
+                <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaEmpresa()" title="Agregar nueva empresa">
+                  ➕
+                </button>
+              </div>
+            </div>
+
+            <button type="button" class="btn-guardar-final" onclick="guardarNuevoForaneo()">
+              💾 Guardar Persona
             </button>
           </div>
         </div>
-
-        <!-- Seleccionar Empresa -->
-        <div id="contenedorEmpresa" class="form-group" style="display:none;">
-          <label>Empresa <span class="required">*</span></label>
-          <div class="input-con-boton">
-            <select id="nuevoForaneoEmpresa" class="select-con-boton">
-              <option value="">Seleccione una empresa</option>
-            </select>
-            <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevaEmpresa()" title="Agregar nueva empresa">
-              ➕
-            </button>
-          </div>
-        </div>
-
-        <button type="button" class="btn-guardar-final" onclick="guardarNuevoForaneo()">
-          💾 Guardar Persona
-        </button>
 
       </form>
     </div>
@@ -440,6 +520,32 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-cerrar" onclick="cerrarModalNuevaEmpresa()">Cancelar</button>
+    </div>
+  </div>
+</div>
+  <!-- ============================================
+     MODAL: REGISTRAR NUEVO GRADO
+     ============================================ -->
+<div id="modalNuevoGrado" class="modal">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>🎖️ Registrar Nuevo Grado</h2>
+      <span class="close" onclick="cerrarModalNuevoGrado()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevoGrado">
+        <div class="form-group">
+          <label>Descripción del Grado <span class="required">*</span></label>
+          <input type="text" id="nuevoGradoDescripcion" required placeholder="Ej: General de Brigada">
+        </div>
+        
+        <button type="button" class="btn-guardar-final" onclick="guardarNuevoGrado()">
+          💾 Guardar Grado
+        </button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalNuevoGrado()">Cancelar</button>
     </div>
   </div>
 </div>
