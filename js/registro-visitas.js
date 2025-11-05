@@ -1114,14 +1114,22 @@ function cambiarOpcionVehiculo() {
   vehiculoSeleccionado = null;
   document.getElementById('inputVehiculo').value = '';
   document.getElementById('infoVehiculoSeleccionado').style.display = 'none';
-    // Resetear botón de confirmar
+  
+  // Resetear campos de nuevo vehículo
+  document.getElementById('nuevaPlaca').value = '';
+  document.getElementById('nuevoTipoVehiculo').value = '';
+  document.getElementById('nuevaMarca').value = '';
+  document.getElementById('nuevoModelo').value = '';
+  document.getElementById('nuevoColor').value = '';
+  
+  // Resetear botón de confirmar
   const btnConfirmar = document.getElementById('btnConfirmarVehiculo');
   if (btnConfirmar) btnConfirmar.disabled = true;
   
   // Mostrar subsección según opción
   if (opcion === 'existente') {
     document.getElementById('contenedorVehiculoExistente').style.display = 'block';
-  // Asegurar que el input esté habilitado
+    // Asegurar que el input esté habilitado
     const inputVeh = document.getElementById('inputVehiculo');
     if (inputVeh) {
       inputVeh.disabled = false;
@@ -1129,10 +1137,16 @@ function cambiarOpcionVehiculo() {
     }
   } else if (opcion === 'nuevo') {
     document.getElementById('contenedorVehiculoNuevo').style.display = 'block';
-        // Si es nuevo vehículo, habilitar botón (se validará en confirmarVehiculo)
+    // Habilitar todos los campos del nuevo vehículo
+    document.getElementById('nuevaPlaca').disabled = false;
+    document.getElementById('nuevoTipoVehiculo').disabled = false;
+    document.getElementById('nuevaMarca').disabled = false;
+    document.getElementById('nuevoModelo').disabled = false;
+    document.getElementById('nuevoColor').disabled = false;
+    // Si es nuevo vehículo, habilitar botón (se validará en confirmarVehiculo)
     if (btnConfirmar) btnConfirmar.disabled = false;
   } else if (opcion === 'sin_vehiculo') {
-     // Si es sin vehículo, habilitar botón
+    // Si es sin vehículo, habilitar botón
     if (btnConfirmar) btnConfirmar.disabled = false;
   }
 }
