@@ -26,6 +26,13 @@ let listaPersonalForaneo = [];
 let listaVehiculos = [];
 let listaUnidades = [];
 let listaEmpresas = [];
+let listaGrados = [];
+let listaPaises = [];
+let listaDependencias = [];
+
+// Variables del wizard foráneo
+let datosPersonalesConfirmados = false;
+let datosPersonalesTemp = null;
 
 // Usuario actual
 const usuario = localStorage.getItem("usuario") || "";
@@ -55,6 +62,9 @@ async function cargarDatosIniciales() {
       cargarPersonalForaneo(),
       cargarUnidades(),
       cargarEmpresas(),
+      cargarGrados(),
+      cargarPaises(),
+      cargarDependencias(),
       cargarVehiculos(),
       cargarVisitasAutorizadas()
     ]);
@@ -148,6 +158,13 @@ async function enriquecerOrigenPersonal() {
       });
     }
   }
+
+  // Agregar nombre para instituto armado
+  listaPersonalForaneo.forEach(p => {
+    if (p.tipo_origen === 'instituto' && p.origen) {
+      p.nombre_origen = p.origen;
+    }
+  });
 }
 
 // ============================================
@@ -226,6 +243,122 @@ function actualizarSelectEmpresas() {
     const option = document.createElement('option');
     option.value = empresa.id;
     option.textContent = empresa.nombre + (empresa.ruc ? ` (RUC: ${empresa.ruc})` : '');
+    select.appendChild(option);
+  });
+}
+// ============================================
+// CARGAR GRADOS
+// ============================================
+
+async function cargarGrados() {
+  try {
+    const { data, error } = await supabase
+      .from('grado')
+      .select('*')
+      .eq('activo', true)
+      .order('descripcion', { ascending: true });
+
+    if (error) throw error;
+
+    listaGrados = data;
+    console.log('✅ Grados cargados:', data.length, 'registros');
+    
+    actualizarSelectGrados();
+    
+  } catch (error) {
+    console.error('Error al cargar grados:', error);
+    throw error;
+  }
+}
+
+function actualizarSelectGrados() {
+  const select = document.getElementById('nuevoForaneoGrado');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Ninguno</option>';
+  
+  listaGrados.forEach(grado => {
+    const option = document.createElement('option');
+    option.value = grado.id;
+    option.textContent = grado.descripcion;
+    select.appendChild(option);
+  });
+}
+
+// ============================================
+// CARGAR PAÍSES
+// ============================================
+
+async function cargarPaises() {
+  try {
+    const { data, error } = await supabase
+      .from('pais')
+      .select('*')
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
+
+    if (error) throw error;
+
+    listaPaises = data;
+    console.log('✅ Países cargados:', data.length, 'registros');
+    
+    actualizarSelectPaises();
+    
+  } catch (error) {
+    console.error('Error al cargar países:', error);
+    throw error;
+  }
+}
+
+function actualizarSelectPaises() {
+  const select = document.getElementById('nuevoForaneoPais');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Seleccione un país</option>';
+  
+  listaPaises.forEach(pais => {
+    const option = document.createElement('option');
+    option.value = pais.id;
+    option.textContent = pais.nombre;
+    select.appendChild(option);
+  });
+}
+
+// ============================================
+// CARGAR DEPENDENCIAS
+// ============================================
+
+async function cargarDependencias() {
+  try {
+    const { data, error } = await supabase
+      .from('dependencias')
+      .select('*')
+      .eq('activo', true)
+      .order('descripcion', { ascending: true });
+
+    if (error) throw error;
+
+    listaDependencias = data;
+    console.log('✅ Dependencias cargadas:', data.length, 'registros');
+    
+    actualizarSelectDependencias();
+    
+  } catch (error) {
+    console.error('Error al cargar dependencias:', error);
+    throw error;
+  }
+}
+
+function actualizarSelectDependencias() {
+  const select = document.getElementById('dependenciaResponsable');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Seleccione una dependencia</option>';
+  
+  listaDependencias.forEach(dep => {
+    const option = document.createElement('option');
+    option.value = dep.id;
+    option.textContent = dep.descripcion;
     select.appendChild(option);
   });
 }
@@ -1159,10 +1292,51 @@ function avanzarPaso3() {
 // ============================================
 
 function abrirModalNuevoForaneo() {
+  // Reset variables
+  datosPersonalesConfirmados = false;
+  datosPersonalesTemp = null;
+  
   // Reset formulario
   document.getElementById('formNuevoForaneo').reset();
-  document.getElementById('contenedorUnidad').style.display = 'none';
-  document.getElementById('contenedorEmpresa').style.display = 'none';
+  
+  // Reset indicadores
+  const indicador1 = document.getElementById('indicadorPasoForaneo1');
+  if (indicador1) {
+    indicador1.classList.add('active');
+    indicador1.classList.remove('completed');
+  }
+  
+  const indicador2 = document.getElementById('indicadorPasoForaneo2');
+  if (indicador2) indicador2.classList.remove('active', 'completed');
+  
+  // Habilitar paso 1
+  const seccionDatosPersonales = document.getElementById('seccionDatosPersonales');
+  if (seccionDatosPersonales) {
+    seccionDatosPersonales.classList.remove('bloqueada', 'guardada');
+    const badge = seccionDatosPersonales.querySelector('.badge-guardado');
+    if (badge) badge.remove();
+  }
+  
+  // Bloquear paso 2
+  const seccionOrigenForaneo = document.getElementById('seccionOrigenForaneo');
+  if (seccionOrigenForaneo) {
+    seccionOrigenForaneo.classList.add('bloqueada');
+    seccionOrigenForaneo.classList.remove('guardada');
+    const badge2 = seccionOrigenForaneo.querySelector('.badge-guardado');
+    if (badge2) badge2.remove();
+    
+    const mensajeBloqueo = document.getElementById('mensajeBloqueoOrigenForaneo');
+    if (mensajeBloqueo) mensajeBloqueo.style.display = 'block';
+    
+    const formularioOrigen = document.getElementById('formularioOrigenForaneo');
+    if (formularioOrigen) formularioOrigen.style.display = 'none';
+  }
+  
+  // Ocultar contenedores de origen
+  document.getElementById('contenedorUnidadForaneo').style.display = 'none';
+  document.getElementById('contenedorInstituto').style.display = 'none';
+  document.getElementById('contenedorEmpresaForaneo').style.display = 'none';
+  document.getElementById('personaConfirmada').style.display = 'none';
   
   // Abrir modal
   document.getElementById('modalNuevoForaneo').style.display = 'block';
@@ -1170,6 +1344,92 @@ function abrirModalNuevoForaneo() {
 
 function cerrarModalNuevoForaneo() {
   document.getElementById('modalNuevoForaneo').style.display = 'none';
+}
+// ============================================
+// PASO 1 FORÁNEO: CONFIRMAR DATOS PERSONALES
+// ============================================
+
+function confirmarDatosPersonales() {
+  const nombre = document.getElementById('nuevoForaneoNombre').value.trim();
+  const nsa = document.getElementById('nuevoForaneoNsa').value.trim();
+  const dni = document.getElementById('nuevoForaneoDni').value.trim();
+  const pasaporte = document.getElementById('nuevoForaneoPasaporte').value.trim();
+  const idPais = document.getElementById('nuevoForaneoPais').value;
+  const idGrado = document.getElementById('nuevoForaneoGrado').value;
+
+  // Validaciones
+  if (!nombre) {
+    mostrarNotificacion('El nombre es obligatorio', 'error');
+    return;
+  }
+
+  if (!nsa && !dni && !pasaporte) {
+    mostrarNotificacion('Debe ingresar al menos: NSA/CIP, DNI o Pasaporte', 'error');
+    return;
+  }
+
+  if (!idPais) {
+    mostrarNotificacion('Debe seleccionar un país', 'error');
+    return;
+  }
+
+  // Guardar datos temporalmente
+  datosPersonalesTemp = {
+    nombre,
+    nsa: nsa || null,
+    dni: dni || null,
+    pasaporte: pasaporte || null,
+    id_pais: idPais,
+    id_grado: idGrado || null
+  };
+
+  datosPersonalesConfirmados = true;
+
+  // Marcar paso 1 como completado
+  document.getElementById('indicadorPasoForaneo1').classList.remove('active');
+  document.getElementById('indicadorPasoForaneo1').classList.add('completed');
+  document.getElementById('indicadorPasoForaneo2').classList.add('active');
+
+  // Marcar sección como guardada
+  const seccionDatos = document.getElementById('seccionDatosPersonales');
+  seccionDatos.classList.add('guardada');
+  seccionDatos.innerHTML += '<span class="badge-guardado">✓ Confirmado</span>';
+  
+  // Deshabilitar campos del paso 1
+  document.querySelectorAll('#seccionDatosPersonales input, #seccionDatosPersonales select, #seccionDatosPersonales button').forEach(el => {
+    el.disabled = true;
+  });
+
+  // Habilitar sección 2
+  const seccionOrigen = document.getElementById('seccionOrigenForaneo');
+  seccionOrigen.classList.remove('bloqueada');
+  document.getElementById('mensajeBloqueoOrigenForaneo').style.display = 'none';
+  document.getElementById('formularioOrigenForaneo').style.display = 'block';
+  
+  document.getElementById('nombrePersonaConfirmada').textContent = nombre;
+  document.getElementById('personaConfirmada').style.display = 'block';
+
+  mostrarNotificacion('✓ Datos personales confirmados. Ahora seleccione el origen.', 'success');
+}
+
+// ============================================
+// CAMBIAR TIPO ORIGEN FORÁNEO
+// ============================================
+
+function cambiarTipoOrigenForaneo() {
+  const tipoOrigen = document.getElementById('nuevoForaneoTipoOrigen').value;
+  
+  document.getElementById('contenedorUnidadForaneo').style.display = 'none';
+  document.getElementById('contenedorInstituto').style.display = 'none';
+  document.getElementById('contenedorEmpresaForaneo').style.display = 'none';
+  
+  if (tipoOrigen === 'unidad') {
+    document.getElementById('contenedorUnidadForaneo').style.display = 'block';
+  } else if (tipoOrigen === 'instituto') {
+    document.getElementById('contenedorInstituto').style.display = 'block';
+  } else if (tipoOrigen === 'empresa') {
+    document.getElementById('contenedorEmpresaForaneo').style.display = 'block';
+  }
 }
 
 function cambiarTipoOrigen() {
@@ -1190,22 +1450,12 @@ function cambiarTipoOrigen() {
 }
 
 async function guardarNuevoForaneo() {
-  const nombre = document.getElementById('nuevoForaneoNombre').value.trim();
-  const dni = document.getElementById('nuevoForaneoDni').value.trim();
-  const nsa = document.getElementById('nuevoForaneoNsa').value.trim();
-  const pasaporte = document.getElementById('nuevoForaneoPasaporte').value.trim();
+  if (!datosPersonalesConfirmados || !datosPersonalesTemp) {
+    mostrarNotificacion('Debe confirmar primero los datos personales', 'error');
+    return;
+  }
+
   const tipoOrigen = document.getElementById('nuevoForaneoTipoOrigen').value;
-  
-  // Validaciones
-  if (!nombre) {
-    mostrarNotificacion('El nombre es obligatorio', 'error');
-    return;
-  }
-  
-  if (!dni && !nsa && !pasaporte) {
-    mostrarNotificacion('Debe ingresar al menos: DNI, NSA o Pasaporte', 'error');
-    return;
-  }
   
   if (!tipoOrigen) {
     mostrarNotificacion('Debe seleccionar el tipo de origen', 'error');
@@ -1214,6 +1464,7 @@ async function guardarNuevoForaneo() {
   
   let idOrigen = null;
   let nombreOrigen = '';
+  let origen = null;
   
   if (tipoOrigen === 'unidad') {
     idOrigen = document.getElementById('nuevoForaneoUnidad').value;
@@ -1223,6 +1474,13 @@ async function guardarNuevoForaneo() {
     }
     const unidadSeleccionada = listaUnidades.find(u => u.id === idOrigen);
     nombreOrigen = unidadSeleccionada ? unidadSeleccionada.nombre : '';
+  } else if (tipoOrigen === 'instituto') {
+    origen = document.getElementById('nuevoForaneoInstituto').value;
+    if (!origen) {
+      mostrarNotificacion('Debe seleccionar un instituto armado', 'error');
+      return;
+    }
+    nombreOrigen = origen;
   } else if (tipoOrigen === 'empresa') {
     idOrigen = document.getElementById('nuevoForaneoEmpresa').value;
     if (!idOrigen) {
@@ -1237,60 +1495,65 @@ async function guardarNuevoForaneo() {
   
   try {
     // Verificar duplicados
-    if (dni) {
+    if (datosPersonalesTemp.dni) {
       const { data: existeDni } = await supabase
         .from('personal_foraneo')
         .select('id, nombre')
-        .eq('dni', dni)
+        .eq('dni', datosPersonalesTemp.dni)
         .maybeSingle();
       
       if (existeDni) {
         ocultarOverlay();
-        mostrarNotificacion(`El DNI ${dni} ya está registrado para: ${existeDni.nombre}`, 'error');
+        mostrarNotificacion(`El DNI ${datosPersonalesTemp.dni} ya está registrado para: ${existeDni.nombre}`, 'error');
         return;
       }
     }
     
-    if (nsa) {
+    if (datosPersonalesTemp.nsa) {
       const { data: existeNsa } = await supabase
         .from('personal_foraneo')
         .select('id, nombre')
-        .eq('nsa', nsa)
+        .eq('nsa', datosPersonalesTemp.nsa)
         .maybeSingle();
       
       if (existeNsa) {
         ocultarOverlay();
-        mostrarNotificacion(`El NSA ${nsa} ya está registrado para: ${existeNsa.nombre}`, 'error');
+        mostrarNotificacion(`El NSA ${datosPersonalesTemp.nsa} ya está registrado para: ${existeNsa.nombre}`, 'error');
         return;
       }
     }
     
-    if (pasaporte) {
+    if (datosPersonalesTemp.pasaporte) {
       const { data: existePasaporte } = await supabase
         .from('personal_foraneo')
         .select('id, nombre')
-        .eq('pasaporte', pasaporte)
+        .eq('pasaporte', datosPersonalesTemp.pasaporte)
         .maybeSingle();
       
       if (existePasaporte) {
         ocultarOverlay();
-        mostrarNotificacion(`El Pasaporte ${pasaporte} ya está registrado para: ${existePasaporte.nombre}`, 'error');
+        mostrarNotificacion(`El Pasaporte ${datosPersonalesTemp.pasaporte} ya está registrado para: ${existePasaporte.nombre}`, 'error');
         return;
       }
     }
     
     // Insertar nuevo foráneo
+    const datosInsertar = {
+      nombre: datosPersonalesTemp.nombre,
+      nsa: datosPersonalesTemp.nsa,
+      dni: datosPersonalesTemp.dni,
+      pasaporte: datosPersonalesTemp.pasaporte,
+      id_pais: datosPersonalesTemp.id_pais,
+      id_grado: datosPersonalesTemp.id_grado,
+      tipo_origen: tipoOrigen,
+      id_origen: idOrigen,
+      origen: origen,
+      activo: true
+    };
+
     const { data: nuevoForaneo, error } = await supabase
       .from('personal_foraneo')
-      .insert([{
-        nombre: nombre,
-        dni: dni || null,
-        nsa: nsa || null,
-        pasaporte: pasaporte || null,
-        tipo_origen: tipoOrigen,
-        id_origen: idOrigen,
-        activo: true
-      }])
+      .insert([datosInsertar])
       .select()
       .single();
     
@@ -1310,7 +1573,7 @@ async function guardarNuevoForaneo() {
     seleccionarVisitante(nuevoForaneo, input, dropdown);
     
     cerrarModalNuevoForaneo();
-    mostrarNotificacion(`✓ Persona registrada correctamente: ${nombre}`, 'success');
+    mostrarNotificacion(`✓ Persona registrada correctamente: ${datosPersonalesTemp.nombre}`, 'success');
     
   } catch (error) {
     ocultarOverlay();
@@ -1469,6 +1732,76 @@ async function guardarNuevaEmpresa() {
     mostrarNotificacion('Error al registrar empresa: ' + error.message, 'error');
   }
 }
+// ============================================
+// MODAL: NUEVA GRADO
+// ============================================
+
+function abrirModalNuevoGrado() {
+  document.getElementById('formNuevoGrado').reset();
+  document.getElementById('modalNuevoGrado').style.display = 'block';
+}
+
+function cerrarModalNuevoGrado() {
+  document.getElementById('modalNuevoGrado').style.display = 'none';
+}
+
+async function guardarNuevoGrado() {
+  const descripcion = document.getElementById('nuevoGradoDescripcion').value.trim();
+  
+  if (!descripcion) {
+    mostrarNotificacion('La descripción del grado es obligatoria', 'error');
+    return;
+  }
+  
+  mostrarOverlay('Registrando grado...');
+  
+  try {
+    // Verificar si ya existe
+    const { data: existente } = await supabase
+      .from('grado')
+      .select('id')
+      .eq('descripcion', descripcion)
+      .maybeSingle();
+    
+    if (existente) {
+      ocultarOverlay();
+      mostrarNotificacion(`El grado "${descripcion}" ya está registrado`, 'warning');
+      return;
+    }
+    
+    // Insertar nuevo grado
+    const { data: nuevoGrado, error } = await supabase
+      .from('grado')
+      .insert([{
+        descripcion: descripcion,
+        activo: true
+      }])
+      .select()
+      .single();
+    
+    ocultarOverlay();
+    
+    if (error) throw error;
+    
+    // Actualizar lista local
+    listaGrados.push(nuevoGrado);
+    listaGrados.sort((a, b) => a.descripcion.localeCompare(b.descripcion));
+    
+    // Actualizar select
+    actualizarSelectGrados();
+    
+    // Seleccionar automáticamente
+    document.getElementById('nuevoForaneoGrado').value = nuevoGrado.id;
+    
+    cerrarModalNuevoGrado();
+    mostrarNotificacion(`✓ Grado registrado correctamente: ${descripcion}`, 'success');
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al registrar grado: ' + error.message, 'error');
+  }
+}
 
 // ============================================
 // GUARDAR VISITA AUTORIZADA (CREATE)
@@ -1487,10 +1820,16 @@ async function guardarVisita() {
   const fechaFin = document.getElementById('fechaFin').value;
   const motivo = document.getElementById('motivoVisita').value.trim();
   const estado = document.getElementById('estadoVisita').checked;
+  const idDependencia = document.getElementById('dependenciaResponsable').value;
 
   // Validaciones
-  if (!fechaInicio || !fechaFin) {
-    mostrarNotificacion('Complete las fechas de inicio y fin', 'error');
+    if (!fechaInicio || !fechaFin) {
+      mostrarNotificacion('Complete las fechas de inicio y fin', 'error');
+      return;
+    }
+
+  if (!idDependencia) {
+    mostrarNotificacion('Debe seleccionar una dependencia responsable', 'error');
     return;
   }
 
@@ -1498,18 +1837,19 @@ async function guardarVisita() {
 
   try {
     // Insertar visita autorizada
-      const { data, error } = await supabase
-        .from('visitas_autorizadas')
-        .insert([{
-          id_visita: visitanteSeleccionado.id,
-          id_vehiculo: vehiculoSeleccionado ? vehiculoSeleccionado.id : null,
-          nombre: nombreOrigen,  // ✅ AHORA GUARDA EL NOMBRE DE LA EMPRESA/UNIDAD
-          fec_inicio: fechaInicio,
-          fec_fin: fechaFin,
-          motivo: motivo || null,
-          estado: estado,
-          Unidad: unidad 
-        }])
+    const { data, error } = await supabase
+            .from('visitas_autorizadas')
+            .insert([{
+              id_visita: visitanteSeleccionado.id,
+              id_vehiculo: vehiculoSeleccionado ? vehiculoSeleccionado.id : null,
+              nombre: nombreOrigen,
+              fec_inicio: fechaInicio,
+              fec_fin: fechaFin,
+              motivo: motivo || null,
+              estado: estado,
+              id_dependencia: idDependencia,
+              Unidad: unidad 
+            }])
       .select();
 
     ocultarOverlay();
@@ -1812,6 +2152,7 @@ window.onclick = function(event) {
   const modalNuevaUnidad = document.getElementById('modalNuevaUnidad');
   const modalNuevaEmpresa = document.getElementById('modalNuevaEmpresa');
   const modalEditar = document.getElementById('modalEditar');
+  const modalNuevoGrado = document.getElementById('modalNuevoGrado');
   
   if (event.target === modalNueva) cerrarModal();
   if (event.target === modalVerDetalle) cerrarModalVerDetalle();
@@ -1819,6 +2160,7 @@ window.onclick = function(event) {
   if (event.target === modalNuevaUnidad) cerrarModalNuevaUnidad();
   if (event.target === modalNuevaEmpresa) cerrarModalNuevaEmpresa();
   if (event.target === modalEditar) cerrarModalEditar();
+  if (event.target === modalNuevoGrado) cerrarModalNuevoGrado();
 };
 
 // ============================================
