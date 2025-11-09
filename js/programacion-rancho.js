@@ -1729,9 +1729,22 @@ async function actualizarProgramacion() {
       return;
     }
     
-    // Insertar nuevos detalles
+// Insertar nuevos detalles
     const { error: errorInsert } = await supabase
       .from('detalle_programacion')
       .insert(detalles);
     
     ocultarOverlay();
+    
+    if (errorInsert) throw errorInsert;
+    
+    mostrarNotificacion('✓ Programación actualizada correctamente', 'success');
+    cerrarModalEditar();
+    cargarProgramaciones();
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
