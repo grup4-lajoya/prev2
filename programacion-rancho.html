@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación de Rancho</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="css/programacion-rancho.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>📋 Programación de Rancho</h1>
+  
+  <div class="controles-superiores">
+    <div class="buscador">
+      <input type="date" id="buscarFecha" placeholder="Buscar por fecha">
+    </div>
+    
+    <div class="filtros">
+      <select id="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="PROGRAMADO">Programado</option>
+        <option value="PUBLICADO">Publicado</option>
+        <option value="CERRADO">Cerrado</option>
+      </select>
+    </div>
+    
+    <span class="info-registros" id="infoRegistros"></span>
+  </div>
+
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando programaciones... ⏳</div>
+    <table id="tablaProgramacion" style="display:none;">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>FECHA</th>
+          <th>SITUACIÓN</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
+</div>
+
+<button class="btn-flotante" onclick="nuevaProgramacion()" title="Nueva Programación">+</button>
+
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
+
+<!-- MODAL NUEVA PROGRAMACIÓN -->
+<div id="modalNueva" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2>📋 Nueva Programación de Rancho</h2>
+      <span class="close" onclick="cerrarModal()">&times;</span>
+    </div>
+    
+    <!-- INDICADOR DE PASOS -->
+    <div class="wizard-steps">
+      <div class="step active" id="indicadorPaso1">
+        <div class="step-number">1</div>
+        <div class="step-label">Fecha</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPaso2">
+        <div class="step-number">2</div>
+        <div class="step-label">Desayuno</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPaso3">
+        <div class="step-number">3</div>
+        <div class="step-label">Almuerzo</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="indicadorPaso4">
+        <div class="step-number">4</div>
+        <div class="step-label">Cena</div>
+      </div>
+    </div>
+    
+    <div class="modal-body">
+      <form id="formNueva">
+        
+        <!-- ============================================
+             PASO 1: SELECCIONAR FECHA
+             ============================================ -->
+        <div class="seccion" id="seccionFecha">
+          <div class="seccion-titulo">📅 Paso 1: Fecha de Programación</div>
+          
+          <div class="mensaje-info">
+            💡 Seleccione la fecha para la cual desea programar el rancho (solo fechas futuras)
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha de Programación <span class="required">*</span></label>
+            <input type="date" id="fechaProgramacion" required>
+          </div>
+
+          <button type="button" class="btn-guardar-seccion" onclick="confirmarFecha()" id="btnConfirmarFecha">
+            ✅ Confirmar Fecha
+          </button>
+        </div>
+
+        <!-- ============================================
+             PASO 2: PROGRAMAR DESAYUNOS
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionDesayuno">
+          <div class="seccion-titulo">☕ Paso 2: Programar Desayuno(s)</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoDesayuno">
+            🔒 Confirme primero la fecha.
+          </div>
+
+          <div id="formularioDesayuno" style="display:none;">
+            <div class="fecha-confirmada" id="fechaConfirmada" style="display:none;">
+              <strong>Fecha programada:</strong> <span id="fechaMostrar"></span>
+            </div>
+
+            <div id="listaDesayunos" class="lista-items">
+              <!-- Los desayunos programados se mostrarán aquí -->
+            </div>
+
+            <button type="button" class="btn-nuevo-item" onclick="agregarDesayuno()">
+              ➕ Agregar Desayuno
+            </button>
+
+            <button type="button" class="btn-guardar-seccion" onclick="confirmarDesayunos()" id="btnConfirmarDesayuno">
+              ✅ Confirmar Desayunos
+            </button>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PASO 3: PROGRAMAR ALMUERZOS
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionAlmuerzo">
+          <div class="seccion-titulo">🍽️ Paso 3: Programar Almuerzo(s)</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueoAlmuerzo">
+            🔒 Complete primero los desayunos.
+          </div>
+
+          <div id="formularioAlmuerzo" style="display:none;">
+            <div id="listaAlmuerzos" class="lista-items">
+              <!-- Los almuerzos programados se mostrarán aquí -->
+            </div>
+
+            <button type="button" class="btn-nuevo-item" onclick="agregarAlmuerzo()">
+              ➕ Agregar Almuerzo
+            </button>
+
+            <button type="button" class="btn-guardar-seccion" onclick="confirmarAlmuerzos()" id="btnConfirmarAlmuerzo">
+              ✅ Confirmar Almuerzos
+            </button>
+          </div>
+        </div>
+
+        <!-- ============================================
+             PASO 4: PROGRAMAR CENAS
+             ============================================ -->
+        <div class="seccion bloqueada" id="seccionCena">
+          <div class="seccion-titulo">🌙 Paso 4: Programar Cena(s)</div>
+          
+          <div class="mensaje-info" id="mensajeBloqueCena">
+            🔒 Complete primero los almuerzos.
+          </div>
+
+          <div id="formularioCena" style="display:none;">
+            <div id="listaCenas" class="lista-items">
+              <!-- Las cenas programadas se mostrarán aquí -->
+            </div>
+
+            <button type="button" class="btn-nuevo-item" onclick="agregarCena()">
+              ➕ Agregar Cena
+            </button>
+
+            <button type="button" class="btn-guardar-final" onclick="guardarProgramacion()" id="btnGuardarProgramacion">
+              💾 Guardar Programación
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: AGREGAR ELEMENTO -->
+<div id="modalNuevoElemento" class="modal">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>➕ Nuevo Elemento</h2>
+      <span class="close" onclick="cerrarModalNuevoElemento()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="formNuevoElemento">
+        <input type="hidden" id="nuevoElementoTipRac">
+        <input type="hidden" id="nuevoElementoSubTipo">
+        
+        <div class="form-group">
+          <label>Descripción <span class="required">*</span></label>
+          <input type="text" id="nuevoElementoDescripcion" required placeholder="Ej: Pan con mantequilla">
+        </div>
+        
+        <button type="button" class="btn-guardar-final" onclick="guardarNuevoElemento()">
+          💾 Guardar Elemento
+        </button>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalNuevoElemento()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2>👁 Detalle de Programación</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+      
+      <div class="seccion info-programacion">
+        <div class="seccion-titulo">📋 Información General</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Fecha:</strong><span id="verFecha">-</span></div>
+          <div class="info-item"><strong>Estado:</strong><span id="verEstado">-</span></div>
+          <div class="info-item"><strong>Unidad:</strong><span id="verUnidad">-</span></div>
+        </div>
+      </div>
+
+      <div class="seccion info-programacion">
+        <div class="seccion-titulo">☕ Desayunos</div>
+        <div id="verDesayunos"></div>
+      </div>
+
+      <div class="seccion info-programacion">
+        <div class="seccion-titulo">🍽️ Almuerzos</div>
+        <div id="verAlmuerzos"></div>
+      </div>
+
+      <div class="seccion info-programacion">
+        <div class="seccion-titulo">🌙 Cenas</div>
+        <div id="verCenas"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="modal">
+  <div class="modal-content modal-large">
+    <div class="modal-header">
+      <h2>✏️ Editar Programación</h2>
+      <span class="close" onclick="cerrarModalEditar()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editIdProgramacion">
+      
+      <div class="mensaje-info">
+        ℹ️ Solo puede editar programaciones con estado PROGRAMADO
+      </div>
+
+      <div class="form-group">
+        <label>Fecha de Programación <span class="required">*</span></label>
+        <input type="date" id="editFechaProgramacion" required>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">☕ Desayunos</div>
+        <div id="editListaDesayunos" class="lista-items"></div>
+        <button type="button" class="btn-nuevo-item" onclick="editAgregarDesayuno()">
+          ➕ Agregar Desayuno
+        </button>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">🍽️ Almuerzos</div>
+        <div id="editListaAlmuerzos" class="lista-items"></div>
+        <button type="button" class="btn-nuevo-item" onclick="editAgregarAlmuerzo()">
+          ➕ Agregar Almuerzo
+        </button>
+      </div>
+
+      <div class="seccion">
+        <div class="seccion-titulo">🌙 Cenas</div>
+        <div id="editListaCenas" class="lista-items"></div>
+        <button type="button" class="btn-nuevo-item" onclick="editAgregarCena()">
+          ➕ Agregar Cena
+        </button>
+      </div>
+
+      <button type="button" class="btn-guardar-final" onclick="actualizarProgramacion()">
+        💾 Actualizar Programación
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalEditar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, Cancelar</button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">Sí, Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/programacion-rancho.js"></script>
+</body>
+</html>
