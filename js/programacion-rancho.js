@@ -61,17 +61,12 @@ async function cargarDatosIniciales() {
     ]);
     
     ocultarOverlay();
-    
-    if (errorInsert) throw errorInsert;
-    
-    mostrarNotificacion('✓ Programación actualizada correctamente', 'success');
-    cerrarModalEditar();
-    cargarProgramaciones();
+    console.log('✅ Datos iniciales cargados correctamente');
     
   } catch (error) {
     ocultarOverlay();
-    console.error('Error:', error);
-    mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+    console.error('Error al cargar datos iniciales:', error);
+    mostrarNotificacion('Error al cargar datos del sistema: ' + error.message, 'error');
   }
 }
 
@@ -311,14 +306,6 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-console.log('✅ Datos iniciales cargados correctamente');
-    
-  } catch (error) {
-    ocultarOverlay();
-    console.error('Error al cargar datos iniciales:', error);
-    mostrarNotificacion('Error al cargar datos del sistema: ' + error.message, 'error');
-  }
-}
 
 // ============================================
 // CARGAR ELEMENTOS
