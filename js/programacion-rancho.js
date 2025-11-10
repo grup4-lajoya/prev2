@@ -747,7 +747,6 @@ function eliminarItemDesayuno(codigo) {
 // ============================================
 // PASO 2: CONFIRMAR DESAYUNOS
 // ============================================
-
 function confirmarDesayunos() {
   desayunosProgramados = [];
   
@@ -759,22 +758,59 @@ function confirmarDesayunos() {
   }
   
   let hayError = false;
+  const horariosUsados = [];
   
   itemsDesayuno.forEach(item => {
     const codigo = item.dataset.codigo;
     const checkboxes = item.querySelectorAll('input[type="checkbox"]:checked');
+    const cantidad = item.querySelector('.input-cantidad').value;
+    const horaInicio = item.querySelector('.input-hora-inicio').value;
+    const horaFin = item.querySelector('.input-hora-fin').value;
     
+    // Validar elementos seleccionados
     if (checkboxes.length === 0) {
       mostrarNotificacion(`El ${codigo} debe tener al menos un elemento seleccionado`, 'error');
       hayError = true;
       return;
     }
     
+    // Validar cantidad
+    if (!cantidad || parseInt(cantidad) <= 0) {
+      mostrarNotificacion(`El ${codigo} debe tener una cantidad válida de platos`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios
+    if (!horaInicio || !horaFin) {
+      mostrarNotificacion(`El ${codigo} debe tener hora de inicio y fin`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    if (horaInicio >= horaFin) {
+      mostrarNotificacion(`El ${codigo} tiene un horario inválido (hora fin debe ser mayor a hora inicio)`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios duplicados
+    const horarioKey = `${horaInicio}-${horaFin}`;
+    if (horariosUsados.includes(horarioKey)) {
+      mostrarNotificacion(`El ${codigo} tiene el mismo horario que otro desayuno. Los horarios deben ser únicos.`, 'error');
+      hayError = true;
+      return;
+    }
+    horariosUsados.push(horarioKey);
+    
     checkboxes.forEach(checkbox => {
       desayunosProgramados.push({
         codigo: codigo,
         id_elemento: checkbox.value,
-        descripcion: checkbox.dataset.descripcion
+        descripcion: checkbox.dataset.descripcion,
+        cantidad: parseInt(cantidad),
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
       });
     });
   });
@@ -806,7 +842,6 @@ function confirmarDesayunos() {
   
   mostrarNotificacion('✓ Desayunos confirmados. Ahora programe los almuerzos.', 'success');
 }
-
 // ============================================
 // PASO 3: AGREGAR ALMUERZO
 // ============================================
@@ -888,7 +923,6 @@ function eliminarItemAlmuerzo(codigo) {
 // ============================================
 // PASO 3: CONFIRMAR ALMUERZOS
 // ============================================
-
 function confirmarAlmuerzos() {
   almuerzosProgramados = [];
   
@@ -900,24 +934,77 @@ function confirmarAlmuerzos() {
   }
   
   let hayError = false;
+  const horariosUsados = [];
   
   itemsAlmuerzo.forEach(item => {
     const codigo = item.dataset.codigo;
     const entrada = item.querySelector('.select-entrada').value;
     const fondo = item.querySelector('.select-fondo').value;
     const postre = item.querySelector('.select-postre').value;
+    const cantidad = item.querySelector('.input-cantidad').value;
+    const horaInicio = item.querySelector('.input-hora-inicio').value;
+    const horaFin = item.querySelector('.input-hora-fin').value;
     
+    // Validar elementos
     if (!entrada || !fondo || !postre) {
       mostrarNotificacion(`El ${codigo} debe tener entrada, fondo y postre`, 'error');
       hayError = true;
       return;
     }
     
-    almuerzosProgramados.push(
-      { codigo, sub_tipo: 'ENTRADA', id_elemento: entrada },
-      { codigo, sub_tipo: 'FONDO', id_elemento: fondo },
-      { codigo, sub_tipo: 'POSTRE', id_elemento: postre }
-    );
+    // Validar cantidad
+    if (!cantidad || parseInt(cantidad) <= 0) {
+      mostrarNotificacion(`El ${codigo} debe tener una cantidad válida de platos`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios
+    if (!horaInicio || !horaFin) {
+      mostrarNotificacion(`El ${codigo} debe tener hora de inicio y fin`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    if (horaInicio >= horaFin) {
+      mostrarNotificacion(`El ${codigo} tiene un horario inválido (hora fin debe ser mayor a hora inicio)`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios duplicados
+    const horarioKey = `${horaInicio}-${horaFin}`;
+    if (horariosUsados.includes(horarioKey)) {
+      mostrarNotificacion(`El ${codigo} tiene el mismo horario que otro almuerzo. Los horarios deben ser únicos.`, 'error');
+      hayError = true;
+      return;
+    }
+    horariosUsados.push(horarioKey);
+    
+    almuerzosProgramados.push({
+      codigo: codigo,
+      sub_tipo: 'ENTRADA',
+      id_elemento: entrada,
+      cantidad: parseInt(cantidad),
+      hora_inicio: horaInicio,
+      hora_fin: horaFin
+    });
+    almuerzosProgramados.push({
+      codigo: codigo,
+      sub_tipo: 'FONDO',
+      id_elemento: fondo,
+      cantidad: parseInt(cantidad),
+      hora_inicio: horaInicio,
+      hora_fin: horaFin
+    });
+    almuerzosProgramados.push({
+      codigo: codigo,
+      sub_tipo: 'POSTRE',
+      id_elemento: postre,
+      cantidad: parseInt(cantidad),
+      hora_inicio: horaInicio,
+      hora_fin: horaFin
+    });
   });
   
   if (hayError) return;
@@ -947,7 +1034,6 @@ function confirmarAlmuerzos() {
   
   mostrarNotificacion('✓ Almuerzos confirmados. Ahora programe las cenas.', 'success');
 }
-
 // ============================================
 // PASO 4: AGREGAR CENA
 // ============================================
@@ -1137,7 +1223,6 @@ function actualizarSelectoresElementos(tipRac, subTipo, nuevoElemento, codigoIte
 // ============================================
 // GUARDAR PROGRAMACIÓN COMPLETA (CREATE)
 // ============================================
-
 async function guardarProgramacion() {
   cenasProgramadas = [];
   
@@ -1149,20 +1234,57 @@ async function guardarProgramacion() {
   }
   
   let hayError = false;
+  const horariosUsados = [];
   
   itemsCena.forEach(item => {
     const codigo = item.dataset.codigo;
     const cena = item.querySelector('.select-cena').value;
+    const cantidad = item.querySelector('.input-cantidad').value;
+    const horaInicio = item.querySelector('.input-hora-inicio').value;
+    const horaFin = item.querySelector('.input-hora-fin').value;
     
+    // Validar elemento
     if (!cena) {
       mostrarNotificacion(`El ${codigo} debe tener una cena seleccionada`, 'error');
       hayError = true;
       return;
     }
     
+    // Validar cantidad
+    if (!cantidad || parseInt(cantidad) <= 0) {
+      mostrarNotificacion(`El ${codigo} debe tener una cantidad válida de platos`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios
+    if (!horaInicio || !horaFin) {
+      mostrarNotificacion(`El ${codigo} debe tener hora de inicio y fin`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    if (horaInicio >= horaFin) {
+      mostrarNotificacion(`El ${codigo} tiene un horario inválido (hora fin debe ser mayor a hora inicio)`, 'error');
+      hayError = true;
+      return;
+    }
+    
+    // Validar horarios duplicados
+    const horarioKey = `${horaInicio}-${horaFin}`;
+    if (horariosUsados.includes(horarioKey)) {
+      mostrarNotificacion(`El ${codigo} tiene el mismo horario que otra cena. Los horarios deben ser únicos.`, 'error');
+      hayError = true;
+      return;
+    }
+    horariosUsados.push(horarioKey);
+    
     cenasProgramadas.push({
       codigo: codigo,
-      id_elemento: cena
+      id_elemento: cena,
+      cantidad: parseInt(cantidad),
+      hora_inicio: horaInicio,
+      hora_fin: horaFin
     });
   });
   
@@ -1173,19 +1295,68 @@ async function guardarProgramacion() {
   try {
     // Preparar detalles para insertar
     const detalles = [];
+    const horariosYCantidades = [];
     
     // Desayunos
+    const desayunosAgrupados = {};
     desayunosProgramados.forEach(d => {
-      detalles.push({
-        id_programacion: idProgramacionActual,
-        tip_rac: 'DESAYUNO',
-        codigo: d.codigo,
-        sub_tipo: null,
-        id_elemento: d.id_elemento
-      });
+      if (!desayunosAgrupados[d.codigo]) {
+        desayunosAgrupados[d.codigo] = {
+          cantidad: d.cantidad,
+          hora_inicio: d.hora_inicio,
+          hora_fin: d.hora_fin,
+          elementos: []
+        };
+      }
+      desayunosAgrupados[d.codigo].elementos.push(d.id_elemento);
     });
     
+    for (const codigo in desayunosAgrupados) {
+      const data = desayunosAgrupados[codigo];
+      horariosYCantidades.push({
+        id_programacion: idProgramacionActual,
+        tip_rac: 'DESAYUNO',
+        codigo: codigo,
+        cantidad: data.cantidad,
+        hora_inicio: data.hora_inicio,
+        hora_fin: data.hora_fin
+      });
+      
+      data.elementos.forEach(id_elemento => {
+        detalles.push({
+          id_programacion: idProgramacionActual,
+          tip_rac: 'DESAYUNO',
+          codigo: codigo,
+          sub_tipo: null,
+          id_elemento: id_elemento
+        });
+      });
+    }
+    
     // Almuerzos
+    const almuerzosAgrupados = {};
+    almuerzosProgramados.forEach(a => {
+      if (!almuerzosAgrupados[a.codigo]) {
+        almuerzosAgrupados[a.codigo] = {
+          cantidad: a.cantidad,
+          hora_inicio: a.hora_inicio,
+          hora_fin: a.hora_fin
+        };
+      }
+    });
+    
+    for (const codigo in almuerzosAgrupados) {
+      const data = almuerzosAgrupados[codigo];
+      horariosYCantidades.push({
+        id_programacion: idProgramacionActual,
+        tip_rac: 'ALMUERZO',
+        codigo: codigo,
+        cantidad: data.cantidad,
+        hora_inicio: data.hora_inicio,
+        hora_fin: data.hora_fin
+      });
+    }
+    
     almuerzosProgramados.forEach(a => {
       detalles.push({
         id_programacion: idProgramacionActual,
@@ -1198,6 +1369,15 @@ async function guardarProgramacion() {
     
     // Cenas
     cenasProgramadas.forEach(c => {
+      horariosYCantidades.push({
+        id_programacion: idProgramacionActual,
+        tip_rac: 'CENA',
+        codigo: c.codigo,
+        cantidad: c.cantidad,
+        hora_inicio: c.hora_inicio,
+        hora_fin: c.hora_fin
+      });
+      
       detalles.push({
         id_programacion: idProgramacionActual,
         tip_rac: 'CENA',
@@ -1207,14 +1387,21 @@ async function guardarProgramacion() {
       });
     });
     
-    // Insertar todos los detalles
-    const { error } = await supabase
+    // Insertar horarios y cantidades
+    const { error: errorHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .insert(horariosYCantidades);
+    
+    if (errorHorarios) throw errorHorarios;
+    
+    // Insertar detalles
+    const { error: errorDetalles } = await supabase
       .from('detalle_programacion')
       .insert(detalles);
     
     ocultarOverlay();
     
-    if (error) throw error;
+    if (errorDetalles) throw errorDetalles;
     
     mostrarNotificacion('✓ Programación guardada correctamente', 'success');
     cerrarModal();
@@ -1226,11 +1413,9 @@ async function guardarProgramacion() {
     mostrarNotificacion('Error al guardar programación: ' + error.message, 'error');
   }
 }
-
 // ============================================
 // VER DETALLE (READ)
 // ============================================
-
 async function verDetalle(index) {
   const prog = datosFiltrados[index];
   
@@ -1249,6 +1434,15 @@ async function verDetalle(index) {
     
     if (error) throw error;
     
+    // Obtener horarios y cantidades
+    const { data: horarios, error: errorHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .select('*')
+      .eq('id_programacion', prog.id)
+      .order('codigo');
+    
+    if (errorHorarios) throw errorHorarios;
+    
     ocultarOverlay();
     
     // Mostrar información general
@@ -1261,14 +1455,18 @@ async function verDetalle(index) {
     const almuerzos = detalles.filter(d => d.tip_rac === 'ALMUERZO');
     const cenas = detalles.filter(d => d.tip_rac === 'CENA');
     
+    const horariosDesayuno = horarios.filter(h => h.tip_rac === 'DESAYUNO');
+    const horariosAlmuerzo = horarios.filter(h => h.tip_rac === 'ALMUERZO');
+    const horariosCena = horarios.filter(h => h.tip_rac === 'CENA');
+    
     // Mostrar desayunos
-    mostrarDetalleDesayunos(desayunos);
+    mostrarDetalleDesayunos(desayunos, horariosDesayuno);
     
     // Mostrar almuerzos
-    mostrarDetalleAlmuerzos(almuerzos);
+    mostrarDetalleAlmuerzos(almuerzos, horariosAlmuerzo);
     
     // Mostrar cenas
-    mostrarDetalleCenas(cenas);
+    mostrarDetalleCenas(cenas, horariosCena);
     
     document.getElementById('modalVerDetalle').style.display = 'block';
     
@@ -1278,8 +1476,7 @@ async function verDetalle(index) {
     mostrarNotificacion('Error al cargar información: ' + error.message, 'error');
   }
 }
-
-function mostrarDetalleDesayunos(desayunos) {
+function mostrarDetalleDesayunos(desayunos, horarios) {
   const container = document.getElementById('verDesayunos');
   container.innerHTML = '';
   
@@ -1295,11 +1492,24 @@ function mostrarDetalleDesayunos(desayunos) {
     agrupados[d.codigo].push(d.tipo_racion_elemento.descripcion);
   });
   
+  // Crear mapa de horarios
+  const mapaHorarios = {};
+  horarios.forEach(h => {
+    mapaHorarios[h.codigo] = {
+      cantidad: h.cantidad,
+      hora_inicio: h.hora_inicio,
+      hora_fin: h.hora_fin
+    };
+  });
+  
   for (const codigo in agrupados) {
+    const horario = mapaHorarios[codigo] || {};
     const div = document.createElement('div');
     div.className = 'detalle-item';
     div.innerHTML = `
       <strong>${codigo}:</strong>
+      ${horario.cantidad ? `<span style="color: #0056A6; font-weight: 600;"> (${horario.cantidad} platos)</span>` : ''}
+      ${horario.hora_inicio ? `<span style="color: #856404; font-weight: 600;"> 🕐 ${horario.hora_inicio} - ${horario.hora_fin}</span>` : ''}
       <ul>
         ${agrupados[codigo].map(elem => `<li>${elem}</li>`).join('')}
       </ul>
@@ -1307,8 +1517,7 @@ function mostrarDetalleDesayunos(desayunos) {
     container.appendChild(div);
   }
 }
-
-function mostrarDetalleAlmuerzos(almuerzos) {
+function mostrarDetalleAlmuerzos(almuerzos, horarios) {
   const container = document.getElementById('verAlmuerzos');
   container.innerHTML = '';
   
@@ -1324,11 +1533,24 @@ function mostrarDetalleAlmuerzos(almuerzos) {
     agrupados[a.codigo][a.sub_tipo] = a.tipo_racion_elemento.descripcion;
   });
   
+  // Crear mapa de horarios
+  const mapaHorarios = {};
+  horarios.forEach(h => {
+    mapaHorarios[h.codigo] = {
+      cantidad: h.cantidad,
+      hora_inicio: h.hora_inicio,
+      hora_fin: h.hora_fin
+    };
+  });
+  
   for (const codigo in agrupados) {
+    const horario = mapaHorarios[codigo] || {};
     const div = document.createElement('div');
     div.className = 'detalle-item';
     div.innerHTML = `
       <strong>${codigo}:</strong>
+      ${horario.cantidad ? `<span style="color: #0056A6; font-weight: 600;"> (${horario.cantidad} platos)</span>` : ''}
+      ${horario.hora_inicio ? `<span style="color: #856404; font-weight: 600;"> 🕐 ${horario.hora_inicio} - ${horario.hora_fin}</span>` : ''}
       <ul>
         <li><strong>Entrada:</strong> ${agrupados[codigo].ENTRADA}</li>
         <li><strong>Fondo:</strong> ${agrupados[codigo].FONDO}</li>
@@ -1338,8 +1560,7 @@ function mostrarDetalleAlmuerzos(almuerzos) {
     container.appendChild(div);
   }
 }
-
-function mostrarDetalleCenas(cenas) {
+function mostrarDetalleCenas(cenas, horarios) {
   const container = document.getElementById('verCenas');
   container.innerHTML = '';
   
@@ -1348,18 +1569,31 @@ function mostrarDetalleCenas(cenas) {
     return;
   }
   
+  // Crear mapa de horarios
+  const mapaHorarios = {};
+  horarios.forEach(h => {
+    mapaHorarios[h.codigo] = {
+      cantidad: h.cantidad,
+      hora_inicio: h.hora_inicio,
+      hora_fin: h.hora_fin
+    };
+  });
+  
   cenas.forEach(c => {
+    const horario = mapaHorarios[c.codigo] || {};
     const div = document.createElement('div');
     div.className = 'detalle-item';
-    div.innerHTML = `<strong>${c.codigo}:</strong> ${c.tipo_racion_elemento.descripcion}`;
+    div.innerHTML = `
+      <strong>${c.codigo}:</strong> ${c.tipo_racion_elemento.descripcion}
+      ${horario.cantidad ? `<span style="color: #0056A6; font-weight: 600;"> (${horario.cantidad} platos)</span>` : ''}
+      ${horario.hora_inicio ? `<span style="color: #856404; font-weight: 600;"> 🕐 ${horario.hora_inicio} - ${horario.hora_fin}</span>` : ''}
+    `;
     container.appendChild(div);
   });
 }
-
 // ============================================
 // EDITAR PROGRAMACIÓN (UPDATE)
 // ============================================
-
 async function editarProgramacion(index) {
   const prog = datosFiltrados[index];
   
@@ -1380,6 +1614,15 @@ async function editarProgramacion(index) {
     
     if (error) throw error;
     
+    // Obtener horarios y cantidades
+    const { data: horarios, error: errorHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .select('*')
+      .eq('id_programacion', prog.id)
+      .order('codigo');
+    
+    if (errorHorarios) throw errorHorarios;
+    
     ocultarOverlay();
     
     // Establecer ID y fecha
@@ -1391,14 +1634,24 @@ async function editarProgramacion(index) {
     manana.setDate(manana.getDate() + 1);
     document.getElementById('editFechaProgramacion').min = manana.toISOString().split('T')[0];
     
+    // Crear mapas de horarios por código
+    const mapaHorarios = {};
+    horarios.forEach(h => {
+      mapaHorarios[`${h.tip_rac}-${h.codigo}`] = {
+        cantidad: h.cantidad,
+        hora_inicio: h.hora_inicio,
+        hora_fin: h.hora_fin
+      };
+    });
+    
     // Cargar desayunos
-    cargarEditDesayunos(detalles.filter(d => d.tip_rac === 'DESAYUNO'));
+    cargarEditDesayunos(detalles.filter(d => d.tip_rac === 'DESAYUNO'), mapaHorarios);
     
     // Cargar almuerzos
-    cargarEditAlmuerzos(detalles.filter(d => d.tip_rac === 'ALMUERZO'));
+    cargarEditAlmuerzos(detalles.filter(d => d.tip_rac === 'ALMUERZO'), mapaHorarios);
     
     // Cargar cenas
-    cargarEditCenas(detalles.filter(d => d.tip_rac === 'CENA'));
+    cargarEditCenas(detalles.filter(d => d.tip_rac === 'CENA'), mapaHorarios);
     
     document.getElementById('modalEditar').style.display = 'block';
     
@@ -1408,8 +1661,7 @@ async function editarProgramacion(index) {
     mostrarNotificacion('Error al cargar datos: ' + error.message, 'error');
   }
 }
-
-function cargarEditDesayunos(desayunos) {
+function cargarEditDesayunos(desayunos, mapaHorarios) {
   const container = document.getElementById('editListaDesayunos');
   container.innerHTML = '';
   
@@ -1421,6 +1673,7 @@ function cargarEditDesayunos(desayunos) {
   });
   
   for (const codigo in agrupados) {
+    const horario = mapaHorarios[`DESAYUNO-${codigo}`] || {};
     const div = document.createElement('div');
     div.className = 'item-programacion';
     div.dataset.codigo = codigo;
@@ -1443,6 +1696,20 @@ function cargarEditDesayunos(desayunos) {
         <h4>☕ ${codigo}</h4>
         <button type="button" class="btn-eliminar-item" onclick="eliminarEditDesayuno('${codigo}')">🗑️</button>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cantidad de Platos <span class="required">*</span></label>
+          <input type="number" class="input-cantidad" min="1" required value="${horario.cantidad || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Inicio <span class="required">*</span></label>
+          <input type="time" class="input-hora-inicio" required value="${horario.hora_inicio || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Fin <span class="required">*</span></label>
+          <input type="time" class="input-hora-fin" required value="${horario.hora_fin || ''}">
+        </div>
+      </div>
       <div class="elementos-checkbox">
         ${checkboxesHTML}
       </div>
@@ -1451,8 +1718,7 @@ function cargarEditDesayunos(desayunos) {
     container.appendChild(div);
   }
 }
-
-function cargarEditAlmuerzos(almuerzos) {
+function cargarEditAlmuerzos(almuerzos, mapaHorarios) {
   const container = document.getElementById('editListaAlmuerzos');
   container.innerHTML = '';
   
@@ -1464,6 +1730,7 @@ function cargarEditAlmuerzos(almuerzos) {
   });
   
   for (const codigo in agrupados) {
+    const horario = mapaHorarios[`ALMUERZO-${codigo}`] || {};
     const div = document.createElement('div');
     div.className = 'item-programacion';
     div.dataset.codigo = codigo;
@@ -1476,6 +1743,21 @@ function cargarEditAlmuerzos(almuerzos) {
       <div class="item-header">
         <h4>🍽️ ${codigo}</h4>
         <button type="button" class="btn-eliminar-item" onclick="eliminarEditAlmuerzo('${codigo}')">🗑️</button>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cantidad de Platos <span class="required">*</span></label>
+          <input type="number" class="input-cantidad" min="1" required value="${horario.cantidad || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Inicio <span class="required">*</span></label>
+          <input type="time" class="input-hora-inicio" required value="${horario.hora_inicio || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Fin <span class="required">*</span></label>
+          <input type="time" class="input-hora-fin" required value="${horario.hora_fin || ''}">
+        </div>
       </div>
       
       <div class="form-group">
@@ -1506,12 +1788,12 @@ function cargarEditAlmuerzos(almuerzos) {
     container.appendChild(div);
   }
 }
-
-function cargarEditCenas(cenas) {
+function cargarEditCenas(cenas, mapaHorarios) {
   const container = document.getElementById('editListaCenas');
   container.innerHTML = '';
   
   cenas.forEach(c => {
+    const horario = mapaHorarios[`CENA-${c.codigo}`] || {};
     const div = document.createElement('div');
     div.className = 'item-programacion';
     div.dataset.codigo = c.codigo;
@@ -1522,6 +1804,21 @@ function cargarEditCenas(cenas) {
       <div class="item-header">
         <h4>🌙 ${c.codigo}</h4>
         <button type="button" class="btn-eliminar-item" onclick="eliminarEditCena('${c.codigo}')">🗑️</button>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cantidad de Platos <span class="required">*</span></label>
+          <input type="number" class="input-cantidad" min="1" required value="${horario.cantidad || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Inicio <span class="required">*</span></label>
+          <input type="time" class="input-hora-inicio" required value="${horario.hora_inicio || ''}">
+        </div>
+        <div class="form-group">
+          <label>Hora Fin <span class="required">*</span></label>
+          <input type="time" class="input-hora-fin" required value="${horario.hora_fin || ''}">
+        </div>
       </div>
       
       <div class="form-group">
@@ -1536,7 +1833,6 @@ function cargarEditCenas(cenas) {
     container.appendChild(div);
   });
 }
-
 function eliminarEditDesayuno(codigo) {
   const item = document.querySelector(`#editListaDesayunos [data-codigo="${codigo}"]`);
   if (item) item.remove();
@@ -1671,7 +1967,6 @@ function editAgregarCena() {
   
   document.getElementById('editListaCenas').appendChild(cenaDiv);
 }
-
 async function actualizarProgramacion() {
   const idProg = document.getElementById('editIdProgramacion').value;
   const fecha = document.getElementById('editFechaProgramacion').value;
@@ -1694,31 +1989,66 @@ async function actualizarProgramacion() {
   mostrarOverlay('Actualizando programación...');
   
   try {
-    // Actualizar fecha de programación
-    const { error: errorUpdate } = await supabase
-      .from('programacion')
-      .update({ fecha: fecha })
-      .eq('id', idProg);
-    
-    if (errorUpdate) throw errorUpdate;
-    
-    // Eliminar detalles existentes
-    const { error: errorDelete } = await supabase
-      .from('detalle_programacion')
-      .delete()
-      .eq('id_programacion', idProg);
-    
-    if (errorDelete) throw errorDelete;
-    
-    // Preparar nuevos detalles
+    // Preparar datos
     const detalles = [];
+    const horariosYCantidades = [];
+    let hayError = false;
     
-    // Desayunos
+    // ========== DESAYUNOS ==========
     const itemsDesayuno = document.querySelectorAll('#editListaDesayunos .item-programacion');
+    const horariosDesayuno = [];
+    
     itemsDesayuno.forEach(item => {
       const codigo = item.dataset.codigo;
       const checkboxes = item.querySelectorAll('input[type="checkbox"]:checked');
+      const cantidad = item.querySelector('.input-cantidad').value;
+      const horaInicio = item.querySelector('.input-hora-inicio').value;
+      const horaFin = item.querySelector('.input-hora-fin').value;
       
+      // Validaciones
+      if (checkboxes.length === 0) {
+        mostrarNotificacion(`El ${codigo} debe tener elementos seleccionados`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (!cantidad || parseInt(cantidad) <= 0) {
+        mostrarNotificacion(`El ${codigo} debe tener cantidad válida`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (!horaInicio || !horaFin) {
+        mostrarNotificacion(`El ${codigo} debe tener horario completo`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (horaInicio >= horaFin) {
+        mostrarNotificacion(`El ${codigo} tiene horario inválido`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      const horarioKey = `${horaInicio}-${horaFin}`;
+      if (horariosDesayuno.includes(horarioKey)) {
+        mostrarNotificacion(`El ${codigo} tiene horario duplicado con otro desayuno`, 'error');
+        hayError = true;
+        return;
+      }
+      horariosDesayuno.push(horarioKey);
+      
+      // Agregar horario y cantidad
+      horariosYCantidades.push({
+        id_programacion: idProg,
+        tip_rac: 'DESAYUNO',
+        codigo: codigo,
+        cantidad: parseInt(cantidad),
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
+      });
+      
+      // Agregar detalles
       checkboxes.forEach(checkbox => {
         detalles.push({
           id_programacion: idProg,
@@ -1730,39 +2060,148 @@ async function actualizarProgramacion() {
       });
     });
     
-    // Almuerzos
+    if (hayError) {
+      ocultarOverlay();
+      return;
+    }
+    
+    // ========== ALMUERZOS ==========
     const itemsAlmuerzo = document.querySelectorAll('#editListaAlmuerzos .item-programacion');
+    const horariosAlmuerzo = [];
+    
     itemsAlmuerzo.forEach(item => {
       const codigo = item.dataset.codigo;
       const entrada = item.querySelector('.select-entrada').value;
       const fondo = item.querySelector('.select-fondo').value;
       const postre = item.querySelector('.select-postre').value;
+      const cantidad = item.querySelector('.input-cantidad').value;
+      const horaInicio = item.querySelector('.input-hora-inicio').value;
+      const horaFin = item.querySelector('.input-hora-fin').value;
       
-      if (entrada && fondo && postre) {
-        detalles.push(
-          { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'ENTRADA', id_elemento: entrada },
-          { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'FONDO', id_elemento: fondo },
-          { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'POSTRE', id_elemento: postre }
-        );
+      // Validaciones
+      if (!entrada || !fondo || !postre) {
+        mostrarNotificacion(`El ${codigo} debe tener entrada, fondo y postre`, 'error');
+        hayError = true;
+        return;
       }
+      
+      if (!cantidad || parseInt(cantidad) <= 0) {
+        mostrarNotificacion(`El ${codigo} debe tener cantidad válida`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (!horaInicio || !horaFin) {
+        mostrarNotificacion(`El ${codigo} debe tener horario completo`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (horaInicio >= horaFin) {
+        mostrarNotificacion(`El ${codigo} tiene horario inválido`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      const horarioKey = `${horaInicio}-${horaFin}`;
+      if (horariosAlmuerzo.includes(horarioKey)) {
+        mostrarNotificacion(`El ${codigo} tiene horario duplicado con otro almuerzo`, 'error');
+        hayError = true;
+        return;
+      }
+      horariosAlmuerzo.push(horarioKey);
+      
+      // Agregar horario y cantidad
+      horariosYCantidades.push({
+        id_programacion: idProg,
+        tip_rac: 'ALMUERZO',
+        codigo: codigo,
+        cantidad: parseInt(cantidad),
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
+      });
+      
+      // Agregar detalles
+      detalles.push(
+        { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'ENTRADA', id_elemento: entrada },
+        { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'FONDO', id_elemento: fondo },
+        { id_programacion: idProg, tip_rac: 'ALMUERZO', codigo, sub_tipo: 'POSTRE', id_elemento: postre }
+      );
     });
     
-    // Cenas
+    if (hayError) {
+      ocultarOverlay();
+      return;
+    }
+    
+    // ========== CENAS ==========
     const itemsCena = document.querySelectorAll('#editListaCenas .item-programacion');
+    const horariosCena = [];
+    
     itemsCena.forEach(item => {
       const codigo = item.dataset.codigo;
       const cena = item.querySelector('.select-cena').value;
+      const cantidad = item.querySelector('.input-cantidad').value;
+      const horaInicio = item.querySelector('.input-hora-inicio').value;
+      const horaFin = item.querySelector('.input-hora-fin').value;
       
-      if (cena) {
-        detalles.push({
-          id_programacion: idProg,
-          tip_rac: 'CENA',
-          codigo: codigo,
-          sub_tipo: null,
-          id_elemento: cena
-        });
+      // Validaciones
+      if (!cena) {
+        mostrarNotificacion(`El ${codigo} debe tener una cena seleccionada`, 'error');
+        hayError = true;
+        return;
       }
+      
+      if (!cantidad || parseInt(cantidad) <= 0) {
+        mostrarNotificacion(`El ${codigo} debe tener cantidad válida`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (!horaInicio || !horaFin) {
+        mostrarNotificacion(`El ${codigo} debe tener horario completo`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (horaInicio >= horaFin) {
+        mostrarNotificacion(`El ${codigo} tiene horario inválido`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      const horarioKey = `${horaInicio}-${horaFin}`;
+      if (horariosCena.includes(horarioKey)) {
+        mostrarNotificacion(`El ${codigo} tiene horario duplicado con otra cena`, 'error');
+        hayError = true;
+        return;
+      }
+      horariosCena.push(horarioKey);
+      
+      // Agregar horario y cantidad
+      horariosYCantidades.push({
+        id_programacion: idProg,
+        tip_rac: 'CENA',
+        codigo: codigo,
+        cantidad: parseInt(cantidad),
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
+      });
+      
+      // Agregar detalle
+      detalles.push({
+        id_programacion: idProg,
+        tip_rac: 'CENA',
+        codigo: codigo,
+        sub_tipo: null,
+        id_elemento: cena
+      });
     });
+    
+    if (hayError) {
+      ocultarOverlay();
+      return;
+    }
     
     if (detalles.length === 0) {
       ocultarOverlay();
@@ -1770,7 +2209,40 @@ async function actualizarProgramacion() {
       return;
     }
     
-// Insertar nuevos detalles
+    // ========== ACTUALIZAR BASE DE DATOS ==========
+    
+    // 1. Actualizar fecha
+    const { error: errorUpdate } = await supabase
+      .from('programacion')
+      .update({ fecha: fecha })
+      .eq('id', idProg);
+    
+    if (errorUpdate) throw errorUpdate;
+    
+    // 2. Eliminar horarios anteriores
+    const { error: errorDeleteHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .delete()
+      .eq('id_programacion', idProg);
+    
+    if (errorDeleteHorarios) throw errorDeleteHorarios;
+    
+    // 3. Eliminar detalles anteriores
+    const { error: errorDelete } = await supabase
+      .from('detalle_programacion')
+      .delete()
+      .eq('id_programacion', idProg);
+    
+    if (errorDelete) throw errorDelete;
+    
+    // 4. Insertar nuevos horarios
+    const { error: errorInsertHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .insert(horariosYCantidades);
+    
+    if (errorInsertHorarios) throw errorInsertHorarios;
+    
+    // 5. Insertar nuevos detalles
     const { error: errorInsert } = await supabase
       .from('detalle_programacion')
       .insert(detalles);
@@ -1789,3 +2261,4 @@ async function actualizarProgramacion() {
     mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
   }
 }
+
