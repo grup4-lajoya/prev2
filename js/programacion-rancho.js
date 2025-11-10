@@ -711,7 +711,21 @@ function agregarDesayuno() {
   desayunoDiv.innerHTML = `
     <div class="item-header">
       <h4>☕ ${codigo}</h4>
-      <button type="button" class="btn-eliminar-item" onclick="eliminarItemDesayuno('${codigo}')">🗑️</button>
+      <div class="form-row">
+      <div class="form-group">
+        <label>Cantidad de Platos <span class="required">*</span></label>
+        <input type="number" class="input-cantidad" min="1" required placeholder="Ej: 60">
+      </div>
+      <div class="form-group">
+        <label>Hora Inicio <span class="required">*</span></label>
+        <input type="time" class="input-hora-inicio" required>
+      </div>
+      <div class="form-group">
+        <label>Hora Fin <span class="required">*</span></label>
+        <input type="time" class="input-hora-fin" required>
+      </div>
+    </div>
+    <button type="button" class="btn-eliminar-item" onclick="eliminarItemDesayuno('${codigo}')">🗑️</button>
     </div>
     <div class="elementos-checkbox">
       ${checkboxesHTML}
@@ -812,9 +826,22 @@ function agregarAlmuerzo() {
   almuerzoDiv.innerHTML = `
     <div class="item-header">
       <h4>🍽️ ${codigo}</h4>
+      <div class="form-row">
+      <div class="form-group">
+        <label>Cantidad de Platos <span class="required">*</span></label>
+        <input type="number" class="input-cantidad" min="1" required placeholder="Ej: 300">
+      </div>
+      <div class="form-group">
+        <label>Hora Inicio <span class="required">*</span></label>
+        <input type="time" class="input-hora-inicio" required>
+      </div>
+      <div class="form-group">
+        <label>Hora Fin <span class="required">*</span></label>
+        <input type="time" class="input-hora-fin" required>
+      </div>
+    </div>
       <button type="button" class="btn-eliminar-item" onclick="eliminarItemAlmuerzo('${codigo}')">🗑️</button>
     </div>
-    
     <div class="form-group">
       <label>Entrada <span class="required">*</span></label>
       <div class="input-con-boton">
@@ -938,6 +965,20 @@ function agregarCena() {
   cenaDiv.innerHTML = `
     <div class="item-header">
       <h4>🌙 ${codigo}</h4>
+      <div class="form-row">
+      <div class="form-group">
+        <label>Cantidad de Platos <span class="required">*</span></label>
+        <input type="number" class="input-cantidad" min="1" required placeholder="Ej: 100">
+      </div>
+      <div class="form-group">
+        <label>Hora Inicio <span class="required">*</span></label>
+        <input type="time" class="input-hora-inicio" required>
+      </div>
+      <div class="form-group">
+        <label>Hora Fin <span class="required">*</span></label>
+        <input type="time" class="input-hora-fin" required>
+      </div>
+    </div>
       <button type="button" class="btn-eliminar-item" onclick="eliminarItemCena('${codigo}')">🗑️</button>
     </div>
     
