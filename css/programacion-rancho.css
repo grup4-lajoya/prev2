@@ -976,6 +976,34 @@ tbody td:first-child {
   font-size: 1.1rem;
   font-weight: 500;
 }
+/* ============================================
+   CAMPOS DE CANTIDAD Y HORARIO
+   ============================================ */
+
+.input-cantidad,
+.input-hora-inicio,
+.input-hora-fin {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.input-cantidad:focus,
+.input-hora-inicio:focus,
+.input-hora-fin:focus {
+  outline: none;
+  border-color: #0056A6;
+  box-shadow: 0 0 0 3px rgba(0, 86, 166, 0.1);
+}
+
+.input-cantidad {
+  font-weight: 600;
+  color: #0056A6;
+}
 
 /* ============================================
    RESPONSIVE
