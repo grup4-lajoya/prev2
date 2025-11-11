@@ -675,6 +675,16 @@ async function confirmarFecha() {
     seccionDesayuno.classList.remove('bloqueada');
     document.getElementById('mensajeBloqueoDesayuno').style.display = 'none';
     document.getElementById('formularioDesayuno').style.display = 'block';
+
+    const seccionAlmuerzo = document.getElementById('seccionAlmuerzo');
+    seccionAlmuerzo.classList.remove('bloqueada');
+    document.getElementById('mensajeBloqueoAlmuerzo').style.display = 'none';
+    document.getElementById('formularioAlmuerzo').style.display = 'block';
+    
+    const seccionCena = document.getElementById('seccionCena');
+    seccionCena.classList.remove('bloqueada');
+    document.getElementById('mensajeBloqueCena').style.display = 'none';
+    document.getElementById('formularioCena').style.display = 'block';
     
     document.getElementById('fechaMostrar').textContent = formatearFecha(fecha);
     document.getElementById('fechaConfirmada').style.display = 'block';
@@ -757,7 +767,9 @@ function confirmarDesayunos() {
   const itemsDesayuno = document.querySelectorAll('#listaDesayunos .item-programacion');
   
   if (itemsDesayuno.length === 0) {
-    mostrarNotificacion('Debe agregar al menos un desayuno', 'error');
+    desayunosProgramados = [];
+    desayunosConfirmados = true;
+    mostrarNotificacion('✓ Desayunos omitidos (opcional)', 'info');
     return;
   }
   
@@ -932,10 +944,12 @@ function confirmarAlmuerzos() {
   
   const itemsAlmuerzo = document.querySelectorAll('#listaAlmuerzos .item-programacion');
   
-  if (itemsAlmuerzo.length === 0) {
-    mostrarNotificacion('Debe agregar al menos un almuerzo', 'error');
-    return;
-  }
+if (itemsAlmuerzo.length === 0) {
+  almuerzosProgramados = [];
+  almuerzosConfirmados = true;
+  mostrarNotificacion('✓ Almuerzos omitidos (opcional)', 'info');
+  return;
+}
   
   let hayError = false;
   const horariosUsados = [];
@@ -1232,10 +1246,9 @@ async function guardarProgramacion() {
   
   const itemsCena = document.querySelectorAll('#listaCenas .item-programacion');
   
-  if (itemsCena.length === 0) {
-    mostrarNotificacion('Debe agregar al menos una cena', 'error');
-    return;
-  }
+if (itemsCena.length === 0) {
+  cenasProgramadas = [];
+}
   
   let hayError = false;
   const horariosUsados = [];
@@ -1293,6 +1306,12 @@ async function guardarProgramacion() {
   });
   
   if (hayError) return;
+  if (desayunosProgramados.length === 0 && 
+      almuerzosProgramados.length === 0 && 
+      cenasProgramadas.length === 0) {
+    mostrarNotificacion('Debe programar al menos un desayuno, almuerzo o cena', 'error');
+    return;
+  }  
   
   mostrarOverlay('Guardando programación completa...');
   
@@ -2209,13 +2228,7 @@ async function actualizarProgramacion() {
     if (hayError) {
       ocultarOverlay();
       return;
-    }
-    
-    if (detalles.length === 0) {
-      ocultarOverlay();
-      mostrarNotificacion('Debe programar al menos un elemento', 'error');
-      return;
-    }
+    }   
     
     // ========== ACTUALIZAR BASE DE DATOS ==========
     
