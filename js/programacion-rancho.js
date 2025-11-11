@@ -376,7 +376,10 @@ async function verificarProgramacionesCerradas() {
     // Solo después del mediodía (12:00)
     if (horaActual < 12) return;
     
-    const fechaHoy = hoy.toISOString().split('T')[0];
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate()).padStart(2, '0');
+    const fechaHoy = `${year}-${month}-${day}`;
     
     const { data, error } = await supabase
       .from('programacion')
