@@ -551,9 +551,11 @@ function nuevaProgramacion() {
   if (formNueva) formNueva.reset();
   
   // Establecer fecha mínima (mañana)
-  const manana = new Date();
-  manana.setDate(manana.getDate() + 1);
-  const fechaMinima = manana.toISOString().split('T')[0];
+  const hoy = new Date();
+  const year = hoy.getFullYear();
+  const month = String(hoy.getMonth() + 1).padStart(2, '0');
+  const day = String(hoy.getDate() + 1).padStart(2, '0');
+  const fechaMinima = `${year}-${month}-${day}`;
   document.getElementById('fechaProgramacion').min = fechaMinima;
   
   // Reset indicadores de pasos
@@ -604,11 +606,13 @@ async function confirmarFecha() {
   }
   
   // Validar que sea fecha futura
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const fechaSeleccionada = new Date(fecha + 'T00:00:00');
-  
-  if (fechaSeleccionada <= hoy) {
+    const hoy = new Date();
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate() + 1).padStart(2, '0');
+    const fechaManana = `${year}-${month}-${day}`;
+    
+    if (fecha < fechaManana) {
     mostrarNotificacion('La fecha debe ser posterior a hoy', 'error');
     return;
   }
@@ -1630,9 +1634,11 @@ async function editarProgramacion(index) {
     document.getElementById('editFechaProgramacion').value = prog.fecha;
     
     // Establecer fecha mínima
-    const manana = new Date();
-    manana.setDate(manana.getDate() + 1);
-    document.getElementById('editFechaProgramacion').min = manana.toISOString().split('T')[0];
+    const hoy = new Date();
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate() + 1).padStart(2, '0');
+    document.getElementById('editFechaProgramacion').min = `${year}-${month}-${day}`;
     
     // Crear mapas de horarios por código
     const mapaHorarios = {};
@@ -1977,12 +1983,14 @@ async function actualizarProgramacion() {
   }
   
   // Validar fecha futura
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const fechaSeleccionada = new Date(fecha + 'T00:00:00');
-  
-  if (fechaSeleccionada <= hoy) {
-    mostrarNotificacion('La fecha debe ser posterior a hoy', 'error');
+    const hoy = new Date();
+    const year = hoy.getFullYear();
+    const month = String(hoy.getMonth() + 1).padStart(2, '0');
+    const day = String(hoy.getDate() + 1).padStart(2, '0');
+    const fechaManana = `${year}-${month}-${day}`;
+    
+    if (fecha < fechaManana) {
+      mostrarNotificacion('La fecha debe ser a partir de mañana', 'error');
     return;
   }
   
