@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Rancho</title>
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS para Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="css/control-rancho.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>📊 Control de Rancho</h1>
+  
+  <!-- FILTROS -->
+  <div class="panel-filtros">
+    <div class="filtro-grupo">
+      <label>Fecha Inicio <span class="required">*</span></label>
+      <input type="date" id="fechaInicio" required>
+    </div>
+    
+    <div class="filtro-grupo">
+      <label>Fecha Fin <span class="required">*</span></label>
+      <input type="date" id="fechaFin" required>
+    </div>
+    
+    <div class="filtro-grupo">
+      <label>Tipo de Ración</label>
+      <select id="tipoRacion">
+        <option value="">Todos</option>
+        <option value="DESAYUNO">Desayuno</option>
+        <option value="ALMUERZO">Almuerzo</option>
+        <option value="CENA">Cena</option>
+      </select>
+    </div>
+    
+    <div class="filtro-grupo">
+      <label>Tipo de Personal</label>
+      <select id="tipoPersonal">
+        <option value="">Todos</option>
+        <option value="PERSONAL_UNIDAD">Personal de la Unidad</option>
+        <option value="EVENTO">Personal de Evento</option>
+        <option value="FORANEO">Foráneos/Civiles</option>
+      </select>
+    </div>
+    
+    <div class="filtro-acciones">
+      <button class="btn-filtrar" onclick="aplicarFiltros()">
+        📊 Actualizar
+      </button>
+      <button class="btn-exportar" onclick="exportarExcel()">
+        📥 Exportar Excel
+      </button>
+    </div>
+  </div>
+  
+  <!-- RESUMEN GENERAL -->
+  <div class="resumen-cards">
+    <div class="card-stat">
+      <div class="stat-icon">☕</div>
+      <div class="stat-info">
+        <span class="stat-valor" id="totalDesayunos">0</span>
+        <span class="stat-label">Desayunos</span>
+      </div>
+    </div>
+    
+    <div class="card-stat">
+      <div class="stat-icon">🍽️</div>
+      <div class="stat-info">
+        <span class="stat-valor" id="totalAlmuerzos">0</span>
+        <span class="stat-label">Almuerzos</span>
+      </div>
+    </div>
+    
+    <div class="card-stat">
+      <div class="stat-icon">🌙</div>
+      <div class="stat-info">
+        <span class="stat-valor" id="totalCenas">0</span>
+        <span class="stat-label">Cenas</span>
+      </div>
+    </div>
+    
+    <div class="card-stat">
+      <div class="stat-icon">📈</div>
+      <div class="stat-info">
+        <span class="stat-valor" id="totalGeneral">0</span>
+        <span class="stat-label">Total Consumos</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- GRÁFICAS -->
+  <div class="graficas-grid">
+    <div class="grafica-card">
+      <h3>🥧 Consumo por Tipo de Ración</h3>
+      <canvas id="chartTipoRacion"></canvas>
+    </div>
+    
+    <div class="grafica-card">
+      <h3>📊 Programado vs Consumido</h3>
+      <canvas id="chartComparacion"></canvas>
+    </div>
+    
+    <div class="grafica-card">
+      <h3>👥 Por Tipo de Personal</h3>
+      <canvas id="chartTipoPersonal"></canvas>
+    </div>
+    
+    <div class="grafica-card">
+      <h3>📈 Tendencia por Fecha</h3>
+      <canvas id="chartTendencia"></canvas>
+    </div>
+  </div>
+  
+  <!-- TABLA DETALLE -->
+  <div class="tabla-detalle">
+    <h3>📋 Detalle por Código de Menú</h3>
+    <div class="info-tabla">
+      <span id="infoRegistros">0 registros</span>
+    </div>
+    <div class="tabla-container">
+      <table id="tablaDetalle">
+        <thead>
+          <tr>
+            <th>Tipo Ración</th>
+            <th>Código Menú</th>
+            <th>Unidad</th>
+            <th>Evento</th>
+            <th>Plana</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTablaDetalle"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY DE CARGA -->
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Cargando datos...</p>
+  </div>
+</div>
+
+<script src="js/control-rancho.js"></script>
+</body>
+</html>
