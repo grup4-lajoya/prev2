@@ -533,7 +533,6 @@ function actualizarTablaDetalle(datos) {
 // ============================================
 // EXPORTAR A EXCEL
 // ============================================
-
 function exportarExcel() {
   if (!datosAgrupados.detalleExcel || datosAgrupados.detalleExcel.length === 0) {
     mostrarNotificacion('No hay datos para exportar', 'warning');
@@ -575,8 +574,25 @@ function exportarExcel() {
     const filtros = obtenerFiltros();
     const nombreArchivo = `Control_Rancho_${filtros.fechaInicio}_${filtros.fechaFin}.xlsx`;
     
-    // Descargar
-    XLSX.writeFile(wb, nombreArchivo);
+    // ✅ DESCARGA COMPATIBLE CON SANDBOX
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    // Crear enlace de descarga
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    a.style.display = 'none';
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Limpiar
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
     
     ocultarOverlay();
     mostrarNotificacion('✓ Excel exportado correctamente', 'success');
