@@ -557,12 +557,8 @@ function exportarExcel() {
     
     // Ajustar ancho de columnas
     const colWidths = [
-      { wch: 15 }, // Tipo Ración
-      { wch: 15 }, // Código Menú
-      { wch: 20 }, // Unidad
-      { wch: 30 }, // Evento
-      { wch: 15 }, // Plana
-      { wch: 10 }  // Cantidad
+      { wch: 15 }, { wch: 15 }, { wch: 20 }, 
+      { wch: 30 }, { wch: 15 }, { wch: 10 }
     ];
     ws['!cols'] = colWidths;
     
@@ -574,25 +570,42 @@ function exportarExcel() {
     const filtros = obtenerFiltros();
     const nombreArchivo = `Control_Rancho_${filtros.fechaInicio}_${filtros.fechaFin}.xlsx`;
     
-    // ✅ DESCARGA COMPATIBLE CON SANDBOX
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    // ✅ WORKAROUND PARA SANDBOX: Abrir en nueva ventana
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    const dataUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${wbout}`;
     
-    // Crear enlace de descarga
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombreArchivo;
-    a.style.display = 'none';
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    // Limpiar
-    setTimeout(() => {
+    // Abrir en nueva pestaña para forzar descarga
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head><title>Descargando...</title></head>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h2>📥 Descargando archivo...</h2>
+            <p>Si la descarga no inicia automáticamente, haz clic en el botón:</p>
+            <a href="${dataUrl}" download="${nombreArchivo}" id="downloadLink" 
+               style="display:inline-block; padding:15px 30px; background:#28a745; 
+                      color:white; text-decoration:none; border-radius:8px; margin-top:20px;">
+              📥 Descargar Excel
+            </a>
+            <script>
+              setTimeout(() => {
+                document.getElementById('downloadLink').click();
+                setTimeout(() => window.close(), 1000);
+              }, 500);
+            </script>
+          </body>
+        </html>
+      `);
+    } else {
+      // Fallback si el popup está bloqueado
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+    }
     
     ocultarOverlay();
     mostrarNotificacion('✓ Excel exportado correctamente', 'success');
@@ -603,7 +616,6 @@ function exportarExcel() {
     mostrarNotificacion('Error al exportar Excel: ' + error.message, 'error');
   }
 }
-
 // ============================================
 // UTILIDADES
 // ============================================
