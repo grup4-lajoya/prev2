@@ -48,6 +48,14 @@
         <option value="FORANEO">Foráneos/Civiles</option>
       </select>
     </div>
+        <div class="filtro-grupo">
+      <label>Estado Reserva</label>
+      <select id="estadoReserva">
+        <option value="CONSUMIDO">Solo Consumidos</option>
+        <option value="CONFIRMADO">Solo Confirmados (No consumidos)</option>
+        <option value="AMBOS">Todos</option>
+      </select>
+    </div>
     
     <div class="filtro-acciones">
       <button class="btn-filtrar" onclick="aplicarFiltros()">
@@ -55,6 +63,9 @@
       </button>
       <button class="btn-exportar" onclick="exportarExcel()">
         📥 Exportar Excel
+      </button>
+      <button class="btn-exportar" onclick="exportarExcelFinanzas()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+        💰 Exportar Excel (Finanzas)
       </button>
     </div>
   </div>
@@ -136,6 +147,31 @@
           </tr>
         </thead>
         <tbody id="cuerpoTablaDetalle"></tbody>
+      </table>
+    </div>
+  </div>
+    <div class="tabla-detalle" style="margin-top: 30px;">
+    <h3>💰 Detalle por Persona (Finanzas)</h3>
+    <div class="info-tabla">
+      <span id="infoRegistrosFinanzas">0 registros</span>
+    </div>
+    <div class="tabla-container">
+      <table id="tablaDetalleFinanzas">
+        <thead>
+          <tr>
+            <th>NSA</th>
+            <th>Nombre</th>
+            <th>Unidad</th>
+            <th>Plana</th>
+            <th>Evento</th>
+            <th>Fecha</th>
+            <th>Tipo Ración</th>
+            <th>Código Menú</th>
+            <th>Estado</th>
+            <th>Fecha Consumo</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTablaFinanzas"></tbody>
       </table>
     </div>
   </div>
