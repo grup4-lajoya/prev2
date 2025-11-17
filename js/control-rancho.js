@@ -296,10 +296,21 @@ function actualizarGraficas(datos) {
 }
 
 function crearGraficaTipoRacion(data) {
-  const ctx = document.getElementById('chartTipoRacion').getContext('2d');
-  
   const labels = Object.keys(data);
   const valores = Object.values(data);
+  
+  const chartElement = document.getElementById('chartTipoRacion');
+  if (!chartElement) {
+    console.error('❌ Elemento chartTipoRacion no encontrado');
+    return;
+  }
+  
+  if (labels.length === 0) {
+    chartElement.parentNode.innerHTML = '<p style="text-align:center;padding:50px;color:#999;">No hay datos para mostrar</p>';
+    return;
+  }
+  
+  const ctx = chartElement.getContext('2d');
   
   if (labels.length === 0) {
     ctx.canvas.parentNode.innerHTML = '<p style="text-align:center;padding:50px;color:#999;">No hay datos para mostrar</p>';
@@ -351,7 +362,13 @@ function crearGraficaTipoRacion(data) {
 }
 
 function crearGraficaComparacion(data) {
-  const ctx = document.getElementById('chartComparacion').getContext('2d');
+  const chartElement = document.getElementById('chartComparacion');
+  if (!chartElement) {
+    console.error('❌ Elemento chartComparacion no encontrado');
+    return;
+  }
+  
+  const ctx = chartElement.getContext('2d');
   
   const tipos = ['DESAYUNO', 'ALMUERZO', 'CENA'];
   const programado = tipos.map(t => data[t]?.programado || 0);
@@ -414,8 +431,12 @@ function crearGraficaComparacion(data) {
 }
 
 function crearGraficaTipoPersonal(data) {
-  const ctx = document.getElementById('chartTipoPersonal').getContext('2d');
-  
+  const chartElement = document.getElementById('chartTipoPersonal');
+  if (!chartElement) {
+    console.error('❌ Elemento chartTipoPersonal no encontrado');
+    return;
+  }
+   
   const labels = Object.keys(data).map(key => {
     const nombres = {
       'PERSONAL_UNIDAD': 'Personal Unidad',
@@ -427,9 +448,11 @@ function crearGraficaTipoPersonal(data) {
   const valores = Object.values(data);
   
   if (labels.length === 0) {
-    ctx.canvas.parentNode.innerHTML = '<p style="text-align:center;padding:50px;color:#999;">No hay datos para mostrar</p>';
+    chartElement.parentNode.innerHTML = '<p style="text-align:center;padding:50px;color:#999;">No hay datos para mostrar</p>';
     return;
   }
+  
+  const ctx = chartElement.getContext('2d');
   
   charts.tipoPersonal = new Chart(ctx, {
     type: 'pie',
@@ -476,7 +499,13 @@ function crearGraficaTipoPersonal(data) {
 }
 
 function crearGraficaTendencia(data) {
-  const ctx = document.getElementById('chartTendencia').getContext('2d');
+  const chartElement = document.getElementById('chartTendencia');
+  if (!chartElement) {
+    console.error('❌ Elemento chartTendencia no encontrado');
+    return;
+  }
+  
+  const ctx = chartElement.getContext('2d');
   
   const fechas = Object.keys(data).sort();
   const desayunos = fechas.map(f => data[f].DESAYUNO);
