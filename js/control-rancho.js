@@ -310,12 +310,7 @@ function crearGraficaTipoRacion(data) {
     return;
   }
   
-  const ctx = chartElement.getContext('2d');
-  
-  if (labels.length === 0) {
-    ctx.canvas.parentNode.innerHTML = '<p style="text-align:center;padding:50px;color:#999;">No hay datos para mostrar</p>';
-    return;
-  }
+const ctx = chartElement.getContext('2d');
   
   charts.tipoRacion = new Chart(ctx, {
     type: 'doughnut',
