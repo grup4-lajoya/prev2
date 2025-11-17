@@ -2040,15 +2040,32 @@ function editAgregarCena() {
   cenaDiv.innerHTML = `
     <div class="item-header">
       <h4>🌙 ${codigo}</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cantidad de Platos <span class="required">*</span></label>
+          <input type="number" class="input-cantidad" min="1" required placeholder="Ej: 100">
+        </div>
+        <div class="form-group">
+          <label>Hora Inicio <span class="required">*</span></label>
+          <input type="time" class="input-hora-inicio" required>
+        </div>
+        <div class="form-group">
+          <label>Hora Fin <span class="required">*</span></label>
+          <input type="time" class="input-hora-fin" required>
+        </div>
+      </div>
       <button type="button" class="btn-eliminar-item" onclick="eliminarEditCena('${codigo}')">🗑️</button>
     </div>
     
     <div class="form-group">
-      <label>Cena</label>
-      <select class="select-cena">
-        <option value="">Seleccione cena</option>
-        ${elementosCena.map(e => `<option value="${e.id}">${e.descripcion}</option>`).join('')}
-      </select>
+      <label>Cena <span class="required">*</span></label>
+      <div class="input-con-boton">
+        <select class="select-con-boton select-cena" required>
+          <option value="">Seleccione cena</option>
+          ${elementosCena.map(e => `<option value="${e.id}">${e.descripcion}</option>`).join('')}
+        </select>
+        <button type="button" class="btn-agregar-inline" onclick="abrirModalNuevoElemento('CENA', null, '${codigo}')">➕</button>
+      </div>
     </div>
   `;
   
