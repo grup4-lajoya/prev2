@@ -76,6 +76,7 @@ async function aplicarFiltros() {
     actualizarResumen(datosAgrupados);
     actualizarGraficas(datosAgrupados);
     actualizarTablaDetalle(datosAgrupados);
+    actualizarTablaFinanzas(datosAgrupados);
     
     ocultarOverlay();
     mostrarNotificacion(`✓ Datos cargados: ${datos.length} consumos`, 'success');
@@ -92,17 +93,18 @@ function obtenerFiltros() {
     fechaInicio: document.getElementById('fechaInicio').value,
     fechaFin: document.getElementById('fechaFin').value,
     tipoRacion: document.getElementById('tipoRacion').value,
-    tipoPersonal: document.getElementById('tipoPersonal').value
+    tipoPersonal: document.getElementById('tipoPersonal').value,
+    estadoReserva: document.getElementById('estadoReserva').value  // ← AGREGAR ESTA LÍNEA
   };
 }
 
 async function cargarDatosControl(filtros) {
   let query = supabase
-    .from('vista_control_rancho_completa')
+    .from('vista_control_rancho_completa_v2')  // ← CAMBIO 1
     .select('*')
-    .eq('unidad_programacion', unidad) // Filtro por unidad del usuario
-    .gte('fecha', filtros.fechaInicio)
-    .lte('fecha', filtros.fechaFin);
+    .eq('unidad_programacion', unidad)
+    .gte('fecha_programacion', filtros.fechaInicio)  // ← CAMBIO 2
+    .lte('fecha_programacion', filtros.fechaFin);     // ← CAMBIO 3
   
   if (filtros.tipoRacion) {
     query = query.eq('tipo_racion', filtros.tipoRacion);
@@ -112,7 +114,18 @@ async function cargarDatosControl(filtros) {
     query = query.eq('tipo_origen', filtros.tipoPersonal);
   }
   
-  const { data, error } = await query.order('fecha', { ascending: true });
+  // ✅ AGREGAR ESTE BLOQUE COMPLETO
+  if (filtros.estadoReserva) {
+    if (filtros.estadoReserva === 'CONSUMIDO') {
+      query = query.eq('consumido', true);
+    } else if (filtros.estadoReserva === 'CONFIRMADO') {
+      query = query.eq('confirmado', true).eq('consumido', false);
+    }
+    // Si es 'AMBOS', no agrega filtro
+  }
+  // FIN DEL BLOQUE
+  
+  const { data, error } = await query.order('fecha_programacion', { ascending: true });  // ← CAMBIO 4
   
   if (error) throw error;
   
@@ -206,6 +219,43 @@ function procesarDatos(datos) {
   
   // Convertir porCodigoMenu a array para Excel
   resultado.detalleExcel = Object.values(resultado.porCodigoMenu);
+    resultado.porPersona = {};
+  
+  datos.forEach(item => {
+    const nombreCompleto = item.nombre_personal || item.nombre_foraneo || 'Sin nombre';
+    const nsa = item.nsa || 'N/A';
+    const fecha = item.fecha_programacion;
+    const tipoRacion = item.tipo_racion;
+    const codigoMenu = item.codigo_menu;
+    const unidad = item.unidad_personal || item.unidad_programacion;
+    const plana = item.plana || 'N/A';
+    const evento = item.evento || 'N/A';
+    
+    // Clave única para evitar duplicados
+    const key = `${nsa}|${fecha}|${tipoRacion}|${codigoMenu}|${item.id}`;
+    
+    if (!resultado.porPersona[key]) {
+      resultado.porPersona[key] = {
+        nsa: nsa,
+        nombre: nombreCompleto,
+        unidad: unidad,
+        plana: plana,
+        evento: evento,
+        fecha: fecha,
+        tipo_racion: tipoRacion,
+        codigo_menu: codigoMenu,
+        estado: item.consumido ? 'CONSUMIDO' : 'CONFIRMADO',
+        fecha_consumo: item.fecha_consumo || 'Pendiente',
+        fuente: item.fuente
+      };
+    }
+  });
+  
+  // Convertir a array para la tabla y Excel
+  resultado.detalleFinanzas = Object.values(resultado.porPersona);
+  // FIN DEL BLOQUE AGREGADO
+  // ============================================
+  
   
   return resultado;
 }
@@ -615,6 +665,180 @@ function exportarExcel() {
     console.error('Error al exportar Excel:', error);
     mostrarNotificacion('Error al exportar Excel: ' + error.message, 'error');
   }
+}
+function exportarExcelFinanzas() {
+  if (!datosAgrupados.detalleFinanzas || datosAgrupados.detalleFinanzas.length === 0) {
+    mostrarNotificacion('No hay datos para exportar', 'warning');
+    return;
+  }
+  
+  mostrarOverlay('Generando archivo Excel para Finanzas...');
+  
+  try {
+    const filtros = obtenerFiltros();
+    
+    // Preparar datos para Excel
+    const datosExcel = datosAgrupados.detalleFinanzas.map(item => {
+      let fechaConsumo = 'Pendiente';
+      if (item.fecha_consumo && item.fecha_consumo !== 'Pendiente') {
+        try {
+          const fecha = new Date(item.fecha_consumo);
+          fechaConsumo = fecha.toLocaleString('es-PE');
+        } catch (e) {
+          fechaConsumo = item.fecha_consumo;
+        }
+      }
+      
+      return {
+        'NSA': item.nsa,
+        'Nombre': item.nombre,
+        'Unidad': item.unidad,
+        'Plana': item.plana,
+        'Evento': item.evento,
+        'Fecha Programación': item.fecha,
+        'Tipo Ración': item.tipo_racion,
+        'Código Menú': item.codigo_menu,
+        'Estado': item.estado,
+        'Fecha Consumo': fechaConsumo,
+        'Fuente': item.fuente
+      };
+    });
+    
+    // Crear hoja de cálculo
+    const ws = XLSX.utils.json_to_sheet(datosExcel);
+    
+    // Ajustar ancho de columnas
+    const colWidths = [
+      { wch: 12 },  // NSA
+      { wch: 30 },  // Nombre
+      { wch: 15 },  // Unidad
+      { wch: 15 },  // Plana
+      { wch: 25 },  // Evento
+      { wch: 12 },  // Fecha
+      { wch: 15 },  // Tipo Ración
+      { wch: 15 },  // Código
+      { wch: 12 },  // Estado
+      { wch: 20 },  // Fecha Consumo
+      { wch: 15 }   // Fuente
+    ];
+    ws['!cols'] = colWidths;
+    
+    // Crear libro
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Detalle Finanzas');
+    
+    // Generar nombre de archivo
+    const nombreArchivo = `Finanzas_Detalle_Personal_${filtros.fechaInicio}_${filtros.fechaFin}.xlsx`;
+    
+    // Descargar
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+    const dataUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${wbout}`;
+    
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head><title>Descargando...</title></head>
+          <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <h2>📥 Descargando archivo de Finanzas...</h2>
+            <p>Si la descarga no inicia automáticamente, haz clic en el botón:</p>
+            <a href="${dataUrl}" download="${nombreArchivo}" id="downloadLink" 
+               style="display:inline-block; padding:15px 30px; background:#28a745; 
+                      color:white; text-decoration:none; border-radius:8px; margin-top:20px;">
+              📥 Descargar Excel
+            </a>
+            <script>
+              setTimeout(() => {
+                document.getElementById('downloadLink').click();
+                setTimeout(() => window.close(), 1000);
+              }, 500);
+            </script>
+          </body>
+        </html>
+      `);
+    } else {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    
+    ocultarOverlay();
+    mostrarNotificacion('✓ Excel de Finanzas exportado correctamente', 'success');
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error al exportar Excel:', error);
+    mostrarNotificacion('Error al exportar Excel: ' + error.message, 'error');
+  }
+}
+// ============================================
+// ACTUALIZAR TABLA FINANZAS
+// ============================================
+function actualizarTablaFinanzas(datos) {
+  const tbody = document.getElementById('cuerpoTablaFinanzas');
+  tbody.innerHTML = '';
+  
+  const detalle = datos.detalleFinanzas || [];
+  
+  if (detalle.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999;">No hay datos para mostrar</td></tr>';
+    document.getElementById('infoRegistrosFinanzas').textContent = '0 registros';
+    return;
+  }
+  
+  // Ordenar por NSA y fecha
+  detalle.sort((a, b) => {
+    if (a.nsa !== b.nsa) {
+      return a.nsa.localeCompare(b.nsa);
+    }
+    if (a.fecha !== b.fecha) {
+      return a.fecha.localeCompare(b.fecha);
+    }
+    return a.tipo_racion.localeCompare(b.tipo_racion);
+  });
+  
+  detalle.forEach(item => {
+    const fila = document.createElement('tr');
+    
+    let fechaConsumoFormateada = 'Pendiente';
+    if (item.fecha_consumo && item.fecha_consumo !== 'Pendiente') {
+      try {
+        const fecha = new Date(item.fecha_consumo);
+        fechaConsumoFormateada = fecha.toLocaleString('es-PE', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (e) {
+        fechaConsumoFormateada = item.fecha_consumo;
+      }
+    }
+    
+    const estadoBadge = item.estado === 'CONSUMIDO'
+      ? '<span class="badge-cantidad" style="background: #d4edda; color: #155724;">CONSUMIDO</span>'
+      : '<span class="badge-cantidad" style="background: #fff3cd; color: #856404;">CONFIRMADO</span>';
+    
+    fila.innerHTML = `
+      <td><strong>${item.nsa}</strong></td>
+      <td>${item.nombre}</td>
+      <td>${item.unidad}</td>
+      <td>${item.plana}</td>
+      <td>${item.evento}</td>
+      <td>${item.fecha}</td>
+      <td><strong>${item.tipo_racion}</strong></td>
+      <td>${item.codigo_menu}</td>
+      <td>${estadoBadge}</td>
+      <td style="font-size: 12px;">${fechaConsumoFormateada}</td>
+    `;
+    tbody.appendChild(fila);
+  });
+  
+  document.getElementById('infoRegistrosFinanzas').textContent = `${detalle.length} registros`;
 }
 // ============================================
 // UTILIDADES
