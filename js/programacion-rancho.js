@@ -445,6 +445,11 @@ function actualizarTabla() {
         <button class="btn-icono btn-publicar" onclick="publicarProgramacion(${inicio + index})" title="Publicar">📢</button>
       `;
     }
+    if (prog.estado === 'PUBLICADO') {
+  botonesAccion += `
+    <button class="btn-icono btn-editar" onclick="agregarCenasAPublicado(${inicio + index})" title="Agregar Cenas">🌙➕</button>
+  `;
+}
     
     fila.innerHTML = `
       <td>${numeroGlobal}</td>
@@ -1689,6 +1694,60 @@ async function editarProgramacion(index) {
     mostrarNotificacion('Error al cargar datos: ' + error.message, 'error');
   }
 }
+// NUEVA FUNCIÓN
+async function agregarCenasAPublicado(index) {
+  const prog = datosFiltrados[index];
+  
+  if (prog.estado !== 'PUBLICADO') {
+    mostrarNotificacion('Esta función solo aplica a programaciones PUBLICADAS', 'warning');
+    return;
+  }
+  
+  mostrarOverlay('Cargando datos...');
+  
+  try {
+    // Obtener cenas existentes
+    const { data: cenasExistentes, error } = await supabase
+      .from('detalle_programacion')
+      .select('codigo')
+      .eq('id_programacion', prog.id)
+      .eq('tip_rac', 'CENA');
+    
+    if (error) throw error;
+    
+    ocultarOverlay();
+    
+    // Abrir modal de edición normal
+    document.getElementById('editIdProgramacion').value = prog.id;
+    document.getElementById('editFechaProgramacion').value = prog.fecha;
+    document.getElementById('editFechaProgramacion').disabled = true;
+    
+    // Vaciar y deshabilitar desayunos y almuerzos
+    document.getElementById('editListaDesayunos').innerHTML = '<p style="color:#666;">No se pueden editar (ya publicados)</p>';
+    document.getElementById('editListaAlmuerzos').innerHTML = '<p style="color:#666;">No se pueden editar (ya publicados)</p>';
+    
+    // Deshabilitar botones de agregar
+    document.querySelectorAll('#seccionDesayuno .btn-nuevo-item, #seccionAlmuerzo .btn-nuevo-item').forEach(btn => {
+      btn.disabled = true;
+      btn.style.display = 'none';
+    });
+    
+    // Cargar solo cenas existentes
+    cargarEditCenas(cenasExistentes.map(c => ({ ...c, tip_rac: 'CENA' })), {});
+    
+    // Cambiar texto del botón guardar
+    const btnGuardar = document.querySelector('#modalEditar .btn-guardar-final');
+    btnGuardar.textContent = '💾 Agregar Cenas';
+    btnGuardar.onclick = guardarCenasAdicionales;
+    
+    document.getElementById('modalEditar').style.display = 'block';
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al cargar: ' + error.message, 'error');
+  }
+}
 function cargarEditDesayunos(desayunos, mapaHorarios) {
   const container = document.getElementById('editListaDesayunos');
   container.innerHTML = '';
@@ -2283,6 +2342,100 @@ async function actualizarProgramacion() {
     ocultarOverlay();
     console.error('Error:', error);
     mostrarNotificacion('Error al actualizar: ' + error.message, 'error');
+  }
+}
+// NUEVA FUNCIÓN PARA GUARDAR SOLO CENAS
+async function guardarCenasAdicionales() {
+  const idProg = document.getElementById('editIdProgramacion').value;
+  
+  const itemsCena = document.querySelectorAll('#editListaCenas .item-programacion');
+  
+  if (itemsCena.length === 0) {
+    mostrarNotificacion('Debe agregar al menos una cena', 'error');
+    return;
+  }
+  
+  mostrarOverlay('Guardando cenas adicionales...');
+  
+  try {
+    const detalles = [];
+    const horariosYCantidades = [];
+    let hayError = false;
+    const horariosCena = [];
+    
+    itemsCena.forEach(item => {
+      const codigo = item.dataset.codigo;
+      const cena = item.querySelector('.select-cena').value;
+      const cantidad = item.querySelector('.input-cantidad').value;
+      const horaInicio = item.querySelector('.input-hora-inicio').value;
+      const horaFin = item.querySelector('.input-hora-fin').value;
+      
+      if (!cena || !cantidad || !horaInicio || !horaFin) {
+        mostrarNotificacion(`El ${codigo} está incompleto`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      if (horaInicio >= horaFin) {
+        mostrarNotificacion(`El ${codigo} tiene horario inválido`, 'error');
+        hayError = true;
+        return;
+      }
+      
+      const horarioKey = `${horaInicio}-${horaFin}`;
+      if (horariosCena.includes(horarioKey)) {
+        mostrarNotificacion(`El ${codigo} tiene horario duplicado`, 'error');
+        hayError = true;
+        return;
+      }
+      horariosCena.push(horarioKey);
+      
+      horariosYCantidades.push({
+        id_programacion: idProg,
+        tip_rac: 'CENA',
+        codigo: codigo,
+        cantidad: parseInt(cantidad),
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
+      });
+      
+      detalles.push({
+        id_programacion: idProg,
+        tip_rac: 'CENA',
+        codigo: codigo,
+        sub_tipo: null,
+        id_elemento: cena
+      });
+    });
+    
+    if (hayError) {
+      ocultarOverlay();
+      return;
+    }
+    
+    // Insertar solo las nuevas cenas
+    const { error: errorHorarios } = await supabase
+      .from('programacion_horario_cantidad')
+      .insert(horariosYCantidades);
+    
+    if (errorHorarios) throw errorHorarios;
+    
+    const { error: errorDetalles } = await supabase
+      .from('detalle_programacion')
+      .insert(detalles);
+    
+    if (errorDetalles) throw errorDetalles;
+    
+    ocultarOverlay();
+    
+    mostrarNotificacion('✓ Cenas agregadas correctamente', 'success');
+    cerrarModalEditar();
+    cargarProgramaciones();
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error:', error);
+    mostrarNotificacion('Error al guardar: ' + error.message, 'error');
   }
 }
 
