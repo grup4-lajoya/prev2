@@ -158,7 +158,7 @@ function procesarDatos(datos) {
   datos.forEach(item => {
     const tipoRacion = item.tipo_racion;
     const tipoOrigen = item.tipo_origen;
-    const fecha = item.fecha;
+    const fecha = item.fecha_programacion;
     const codigoMenu = item.codigo_menu;
     const unidad = item.unidad_personal || item.unidad_programacion;
     const plana = item.plana;
