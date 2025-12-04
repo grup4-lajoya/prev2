@@ -6,6 +6,8 @@
 <title>Control de Visitas Autorizadas</title>
 <!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS para exportar Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="css/registro-visitas.css">
 </head>
 <body>
@@ -31,6 +33,10 @@
         <option value="unidad">Unidades</option>
         <option value="empresa">Empresas</option>
       </select>
+
+      <button class="btn-reporte-excel" onclick="abrirModalReporte()" title="Generar Reporte Mensual">
+        📊 Reporte Excel
+      </button>
     </div>
     
     <span class="info-registros" id="infoRegistros"></span>
@@ -685,6 +691,34 @@
   </div>
 </div>
 
+  <!-- MODAL GENERAR REPORTE -->
+<div id="modalReporte" class="modal">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>📊 Generar Reporte Mensual de Visitas</h2>
+      <span class="close" onclick="cerrarModalReporte()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="mensaje-info">
+        ℹ️ Seleccione el rango de fechas para generar el reporte de visitas
+      </div>
+      <div class="form-group">
+        <label>Fecha Inicio <span class="required">*</span></label>
+        <input type="date" id="reporteFechaInicio" required>
+      </div>
+      <div class="form-group">
+        <label>Fecha Fin <span class="required">*</span></label>
+        <input type="date" id="reporteFechaFin" required>
+      </div>
+      <button type="button" class="btn-guardar-final" onclick="generarReporteExcel()">
+        📥 Descargar Excel
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalReporte()">Cancelar</button>
+    </div>
+  </div>
+</div>
 <script src="js/registro-visitas.js"></script>
 </body>
 </html>
