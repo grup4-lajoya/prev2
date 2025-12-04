@@ -2190,6 +2190,7 @@ window.onclick = function(event) {
   if (event.target === modalNuevaEmpresa) cerrarModalNuevaEmpresa();
   if (event.target === modalEditar) cerrarModalEditar();
   if (event.target === modalNuevoGrado) cerrarModalNuevoGrado();
+  if (event.target === modalReporte) cerrarModalReporte();
 };
 
 // ============================================
@@ -2273,6 +2274,172 @@ function cerrarConfirmacion(respuesta) {
   if (resolverConfirmacion) {
     resolverConfirmacion(respuesta);
     resolverConfirmacion = null;
+  }
+}
+// ============================================
+// GENERAR REPORTE EXCEL
+// ============================================
+
+function abrirModalReporte() {
+  // Establecer fecha por defecto (mes actual)
+  const hoy = new Date();
+  const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  
+  document.getElementById('reporteFechaInicio').value = primerDia.toISOString().split('T')[0];
+  document.getElementById('reporteFechaFin').value = ultimoDia.toISOString().split('T')[0];
+  
+  document.getElementById('modalReporte').style.display = 'block';
+}
+
+function cerrarModalReporte() {
+  document.getElementById('modalReporte').style.display = 'none';
+}
+
+async function generarReporteExcel() {
+  const fechaInicio = document.getElementById('reporteFechaInicio').value;
+  const fechaFin = document.getElementById('reporteFechaFin').value;
+  
+  if (!fechaInicio || !fechaFin) {
+    mostrarNotificacion('Debe seleccionar ambas fechas', 'error');
+    return;
+  }
+  
+  if (fechaFin < fechaInicio) {
+    mostrarNotificacion('La fecha fin debe ser mayor o igual a la fecha inicio', 'error');
+    return;
+  }
+  
+  mostrarOverlay('Generando reporte Excel...');
+  
+  try {
+    // Consultar ingresos en el rango de fechas
+    const { data: ingresos, error } = await supabase
+      .from('ingresos_salidas')
+      .select('*')
+      .in('tipo_persona', ['personal_foraneo', 'temporal'])
+      .eq('unidad', unidad)
+      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
+      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
+      .order('fecha_ingreso', { ascending: true });
+    
+    if (error) throw error;
+    
+    if (ingresos.length === 0) {
+      ocultarOverlay();
+      mostrarNotificacion('No hay registros en el rango de fechas seleccionado', 'warning');
+      return;
+    }
+    
+    // Obtener IDs únicos de personas
+    const idsPersonas = [...new Set(ingresos.map(i => i.id_persona))];
+    
+    // Consultar datos de personal foráneo
+    const { data: personas, error: errorPersonas } = await supabase
+      .from('personal_foraneo')
+      .select('id, nombre, nsa, dni, pasaporte, id_pais, id_grado')
+      .in('id', idsPersonas);
+    
+    if (errorPersonas) throw errorPersonas;
+    
+    // Crear mapas
+    const mapaPersonas = {};
+    personas.forEach(p => mapaPersonas[p.id] = p);
+    
+    // Obtener países y grados
+    const idsPaises = [...new Set(personas.map(p => p.id_pais).filter(Boolean))];
+    const idsGrados = [...new Set(personas.map(p => p.id_grado).filter(Boolean))];
+    
+    let mapaPaises = {};
+    if (idsPaises.length > 0) {
+      const { data: paises } = await supabase
+        .from('pais')
+        .select('id, nombre')
+        .in('id', idsPaises);
+      
+      if (paises) paises.forEach(p => mapaPaises[p.id] = p.nombre);
+    }
+    
+    let mapaGrados = {};
+    if (idsGrados.length > 0) {
+      const { data: grados } = await supabase
+        .from('grado')
+        .select('id, descripcion')
+        .in('id', idsGrados);
+      
+      if (grados) grados.forEach(g => mapaGrados[g.id] = g.descripcion);
+    }
+    
+    // Preparar datos para Excel
+    const datosExcel = ingresos.map((ingreso, index) => {
+      const persona = mapaPersonas[ingreso.id_persona] || {};
+      const grado = persona.id_grado ? mapaGrados[persona.id_grado] : '-';
+      const pais = persona.id_pais ? mapaPaises[persona.id_pais] : 'PERUANO';
+      
+      const horaIngreso = new Date(ingreso.fecha_ingreso).toLocaleTimeString('es-PE', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      
+      const horaSalida = ingreso.fecha_salida 
+        ? new Date(ingreso.fecha_salida).toLocaleTimeString('es-PE', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          })
+        : '-';
+      
+      return {
+        'N°': index + 1,
+        'GRADO': grado,
+        'NSA / CIP': persona.nsa || '-',
+        'APELLIDOS Y NOMBRES': persona.nombre || '-',
+        'DNI / PAS / C.E': persona.dni || persona.pasaporte || '-',
+        'NACIONALIDAD': pais,
+        'HORA DE INGRESO': horaIngreso,
+        'HORA DE SALIDA': horaSalida,
+        'MOTIVO': ingreso.motivo_visita || '-',
+        'RESPONSABLE': ingreso.responsable || '-'
+      };
+    });
+    
+    // Crear Excel con XLSX
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datosExcel);
+    
+    // Ajustar anchos de columna
+    ws['!cols'] = [
+      { wch: 5 },   // N°
+      { wch: 12 },  // GRADO
+      { wch: 12 },  // NSA/CIP
+      { wch: 30 },  // APELLIDOS Y NOMBRES
+      { wch: 12 },  // DNI
+      { wch: 15 },  // NACIONALIDAD
+      { wch: 15 },  // HORA INGRESO
+      { wch: 15 },  // HORA SALIDA
+      { wch: 30 },  // MOTIVO
+      { wch: 20 }   // RESPONSABLE
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'VISITAS MENSUALES');
+    
+    // Generar nombre de archivo
+    const mesInicio = new Date(fechaInicio).toLocaleString('es-PE', { month: 'long' }).toUpperCase();
+    const anio = new Date(fechaInicio).getFullYear();
+    const nombreArchivo = `REPORTE_VISITAS_${mesInicio}_${anio}.xlsx`;
+    
+    // Descargar
+    XLSX.writeFile(wb, nombreArchivo);
+    
+    ocultarOverlay();
+    cerrarModalReporte();
+    mostrarNotificacion(`✓ Reporte generado: ${ingresos.length} registros exportados`, 'success');
+    
+  } catch (error) {
+    ocultarOverlay();
+    console.error('Error al generar reporte:', error);
+    mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
   }
 }
 
