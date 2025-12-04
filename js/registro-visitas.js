@@ -2379,14 +2379,16 @@ async function generarReporteExcel() {
       const horaIngreso = new Date(ingreso.fecha_ingreso).toLocaleTimeString('es-PE', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: false 
+        hour12: false,
+        timeZone: 'America/Lima'
       });
       
       const horaSalida = ingreso.fecha_salida 
         ? new Date(ingreso.fecha_salida).toLocaleTimeString('es-PE', { 
             hour: '2-digit', 
             minute: '2-digit',
-            hour12: false 
+            hour12: false,
+            timeZone: 'America/Lima'
           })
         : '-';
       
