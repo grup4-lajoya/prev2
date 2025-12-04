@@ -1282,3 +1282,28 @@ tbody tr:hover {
     opacity: 0;
   }
 }
+/* ============================================
+   BOTÓN REPORTE EXCEL
+   ============================================ */
+
+.btn-reporte-excel {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-reporte-excel:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
