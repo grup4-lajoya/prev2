@@ -2324,8 +2324,8 @@ async function generarReporteExcel() {
     .select('*')
     .eq('tipo_persona', 'foraneo')
     .eq('unidad', 'GRUP4')
-    .gte('fecha_ingreso', fechaInicio)
-    .lte('fecha_ingreso', fechaFin)
+    .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
+    .lte('fecha_ingreso', fechaFin + 'T23:59:59')
     .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
@@ -2344,8 +2344,8 @@ console.log('Data foraneos:', ingresosForaneos);
       .from('ingresos_temporales')
       .select('*')
       .eq('unidad', 'GRUP4')
-      .gte('fecha_ingreso', fechaInicio)
-      .lte('fecha_ingreso', fechaFin)
+      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
+      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
       .order('fecha_ingreso', { ascending: true });
     
     if (errorTemporales) throw errorTemporales;
