@@ -2316,6 +2316,11 @@ async function generarReporteExcel() {
   mostrarOverlay('Generando reporte Excel...');
   
   try {
+  // Calcular día siguiente para el rango
+  const fechaSiguiente = new Date(fechaFin);
+  fechaSiguiente.setDate(fechaSiguiente.getDate() + 1);
+  const fechaFinMasUno = fechaSiguiente.toISOString().split('T')[0];
+  
   // ============================================
   // 1. CONSULTAR INGRESOS TIPO FORANEO
   // ============================================
@@ -2325,10 +2330,11 @@ async function generarReporteExcel() {
     .eq('tipo_persona', 'foraneo')
     .eq('unidad', 'GRUP4')
     .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-    .lte('fecha_ingreso', fechaFin + 'T23:59:59')
+    .lt('fecha_ingreso', fechaFinMasUno + 'T00:00:00')
     .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
+    
     console.log('Query params:', {
   tipo_persona: 'foraneo',
   fecha_inicio: fechaInicioUTC,
@@ -2337,16 +2343,16 @@ async function generarReporteExcel() {
 console.log('Error foraneos:', errorForaneos);
 console.log('Data foraneos:', ingresosForaneos);
 
-    // ============================================
-    // 2. CONSULTAR INGRESOS TEMPORALES
-    // ============================================
-    const { data: ingresosTemporales, error: errorTemporales } = await supabase
-      .from('ingresos_temporales')
-      .select('*')
-      .eq('unidad', 'GRUP4')
-      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
-      .order('fecha_ingreso', { ascending: true });
+  // ============================================
+  // 2. CONSULTAR INGRESOS TEMPORALES
+  // ============================================
+  const { data: ingresosTemporales, error: errorTemporales } = await supabase
+    .from('ingresos_temporales')
+    .select('*')
+    .eq('unidad', 'GRUP4')
+    .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
+    .lt('fecha_ingreso', fechaFinMasUno + 'T00:00:00')
+    .order('fecha_ingreso', { ascending: true });
     
     if (errorTemporales) throw errorTemporales;
 
