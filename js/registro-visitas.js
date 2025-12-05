@@ -2448,8 +2448,119 @@ async function generarReporteExcel() {
         const anio = fecha.getFullYear();
         const nombreArchivo = `REPORTE_VISITAS_${mes}_${anio}.xlsx`;
 
-      // Descargar archivo Excel
-      XLSX.writeFile(wb, nombreArchivo);
+// Generar archivo como base64
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        
+        // Crear página HTML con botón de descarga
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Excel - GRUP4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .info {
+            color: #666;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .btn-download {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+        .success {
+            color: #28a745;
+            margin-top: 20px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Reporte Excel Generado</h1>
+        <div class="info">
+            <strong>${nombreArchivo}</strong><br>
+            ${totalForaneos + totalTemporales} registros encontrados<br>
+            Período: ${new Date(fechaInicio).toLocaleDateString('es-PE')} - ${new Date(fechaFin).toLocaleDateString('es-PE')}
+        </div>
+        <button class="btn-download" onclick="descargarArchivo()">
+            ⬇️ Descargar Reporte
+        </button>
+        <div class="success" id="mensaje">✅ ¡Descarga iniciada!</div>
+    </div>
+    
+    <script>
+        const base64Data = '${wbout}';
+        const nombreArchivo = '${nombreArchivo}';
+        
+        function descargarArchivo() {
+            const binaryString = window.atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            document.getElementById('mensaje').style.display = 'block';
+        }
+        
+        window.onload = function() {
+            setTimeout(descargarArchivo, 500);
+        };
+    </script>
+</body>
+</html>
+        `;
+        
+        // Abrir en nueva ventana
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
 
         mostrarNotificacion(`Reporte generado: ${totalForaneos + totalTemporales} registros`, 'success');
         cerrarModalReporte();
