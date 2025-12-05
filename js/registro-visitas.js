@@ -2296,243 +2296,168 @@ function cerrarModalReporte() {
   document.getElementById('modalReporte').style.display = 'none';
 }
 async function generarReporteExcel() {
-  console.log('Variable unidad:', unidad);
-  console.log('Tipo de unidad:', typeof unidad);
-  console.log('Longitud:', unidad.length);
-  console.log('Caracteres:', [...unidad].map(c => c.charCodeAt(0)));
-  const fechaInicio = document.getElementById('reporteFechaInicio').value;
-  const fechaFin = document.getElementById('reporteFechaFin').value;
-  
-  if (!fechaInicio || !fechaFin) {
-    mostrarNotificacion('Debe seleccionar ambas fechas', 'error');
-    return;
-  }
-  
-  if (fechaFin < fechaInicio) {
-    mostrarNotificacion('La fecha fin debe ser mayor o igual a la fecha inicio', 'error');
-    return;
-  }
-  
-  mostrarOverlay('Generando reporte Excel...');
-  
-  try { 
-  // ============================================
-  // 1. CONSULTAR INGRESOS TIPO FORANEO
-  // ============================================
-    const { data: ingresosForaneos, error: errorForaneos } = await supabase
-      .rpc('obtener_ingresos_foraneos', {
-        p_unidad: 'GRUP4',
-        p_fecha_inicio: fechaInicio,
-        p_fecha_fin: fechaFin
-      });
-    
-    if (errorForaneos) throw errorForaneos;
-    
-    console.log('Query params:', {
-      tipo_persona: 'foraneo',
-      fecha_inicio: fechaInicio,
-      fecha_fin: fechaFin
-    });
-console.log('Error foraneos:', errorForaneos);
-console.log('Data foraneos:', ingresosForaneos);
+    try {
+        const fechaInicio = document.getElementById('reporteFechaInicio').value;
+        const fechaFin = document.getElementById('reporteFechaFin').value;
 
-  // ============================================
-  // 2. CONSULTAR INGRESOS TEMPORALES
-  // ============================================
-    const { data: ingresosTemporales, error: errorTemporales } = await supabase
-      .rpc('obtener_ingresos_temporales', {
-        p_unidad: 'GRUP4',
-        p_fecha_inicio: fechaInicio,
-        p_fecha_fin: fechaFin
-      });
-    
-    if (errorTemporales) throw errorTemporales;
+        if (!fechaInicio || !fechaFin) {
+            mostrarNotificacion('Por favor seleccione ambas fechas', 'error');
+            return;
+        }
 
-    const totalRegistros = (ingresosForaneos?.length || 0) + (ingresosTemporales?.length || 0);
+        mostrarNotificacion('Generando reporte...', 'info');
 
-    console.log('=== DEBUG REPORTE ===');
-    console.log('Ingresos Foráneos:', ingresosForaneos);
-    console.log('Ingresos Temporales:', ingresosTemporales);
-    console.log('Total:', totalRegistros);
-    console.log('=====================');
+        // Obtener ingresos foráneos
+        const { data: ingresosForaneos, error: errorForaneos } = await supabase
+            .rpc('obtener_ingresos_foraneos', {
+                p_unidad: 'GRUP4',
+                p_fecha_inicio: fechaInicio,
+                p_fecha_fin: fechaFin
+            });
 
-    if (totalRegistros === 0) {
-      ocultarOverlay();
-      mostrarNotificacion('No hay registros en el rango de fechas seleccionado', 'warning');
-      return;
-    }
+        if (errorForaneos) {
+            mostrarNotificacion('Error al obtener ingresos foráneos', 'error');
+            return;
+        }
 
-    // ============================================
-    // 3. PROCESAR INGRESOS FORÁNEOS
-    // ============================================
-    let datosExcel = [];
+        // Obtener ingresos temporales
+        const { data: ingresosTemporales, error: errorTemporales } = await supabase
+            .rpc('obtener_ingresos_temporales', {
+                p_unidad: 'GRUP4',
+                p_fecha_inicio: fechaInicio,
+                p_fecha_fin: fechaFin
+            });
 
-    if (ingresosForaneos && ingresosForaneos.length > 0) {
-      // Obtener IDs únicos de personas
-      const idsPersonas = [...new Set(ingresosForaneos.map(i => i.id_persona))];
-      
-      // Consultar datos de personal foráneo
-      const { data: personas, error: errorPersonas } = await supabase
-        .from('personal_foraneo')
-        .select('id, nombre, nsa, dni, pasaporte, id_pais, id_grado')
-        .in('id', idsPersonas);
-      
-      if (errorPersonas) throw errorPersonas;
-      
-      // Crear mapas
-      const mapaPersonas = {};
-      personas.forEach(p => mapaPersonas[p.id] = p);
-      
-      // Obtener países y grados
-      const idsPaises = [...new Set(personas.map(p => p.id_pais).filter(Boolean))];
-      const idsGrados = [...new Set(personas.map(p => p.id_grado).filter(Boolean))];
-      
-      let mapaPaises = {};
-      if (idsPaises.length > 0) {
-        const { data: paises } = await supabase
-          .from('pais')
-          .select('id, nombre')
-          .in('id', idsPaises);
-        
-        if (paises) paises.forEach(p => mapaPaises[p.id] = p.nombre);
-      }
-      
-      let mapaGrados = {};
-      if (idsGrados.length > 0) {
-        const { data: grados } = await supabase
-          .from('grado')
-          .select('id, descripcion')
-          .in('id', idsGrados);
-        
-        if (grados) grados.forEach(g => mapaGrados[g.id] = g.descripcion);
-      }
-      
-      // Procesar ingresos foráneos
-      ingresosForaneos.forEach(ingreso => {
-        const persona = mapaPersonas[ingreso.id_persona] || {};
-        const grado = persona.id_grado ? mapaGrados[persona.id_grado] : '-';
-        const pais = persona.id_pais ? mapaPaises[persona.id_pais] : 'PERUANO';
-        
-        const horaIngreso = new Date(ingreso.fecha_ingreso).toLocaleTimeString('es-PE', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'America/Lima'
-        });
-        
-        const horaSalida = ingreso.fecha_salida 
-          ? new Date(ingreso.fecha_salida).toLocaleTimeString('es-PE', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false,
-              timeZone: 'America/Lima'
+        if (errorTemporales) {
+            mostrarNotificacion('Error al obtener ingresos temporales', 'error');
+            return;
+        }
+
+        // Verificar si hay datos
+        const totalForaneos = ingresosForaneos?.length || 0;
+        const totalTemporales = ingresosTemporales?.length || 0;
+
+        if (totalForaneos === 0 && totalTemporales === 0) {
+            mostrarNotificacion('No se encontraron registros en el rango de fechas', 'warning');
+            cerrarModalReporte();
+            return;
+        }
+
+        // Enriquecer datos de foráneos
+        const datosEnriquecidos = await Promise.all(
+            (ingresosForaneos || []).map(async (ingreso) => {
+                const { data: persona } = await supabase
+                    .from('personal_foraneo')
+                    .select(`
+                        nombre,
+                        nsa,
+                        dni,
+                        pasaporte,
+                        pais (nombre_pais),
+                        grado (nombre_grado)
+                    `)
+                    .eq('id', ingreso.id_persona)
+                    .single();
+
+                return {
+                    tipo: 'foraneo',
+                    grado: persona?.grado?.nombre_grado || '',
+                    nsa: persona?.nsa || '',
+                    nombre: persona?.nombre || '',
+                    documento: persona?.dni || persona?.pasaporte || '',
+                    nacionalidad: persona?.pais?.nombre_pais || '',
+                    fecha_ingreso: ingreso.fecha_ingreso,
+                    fecha_salida: ingreso.fecha_salida,
+                    motivo: ingreso.motivo_visita || '',
+                    responsable: ingreso.responsable || ''
+                };
             })
-          : '-';
-        
-        datosExcel.push({
-          fecha_ingreso: new Date(ingreso.fecha_ingreso),
-          'N°': 0, // Se numerará después
-          'GRADO': grado,
-          'NSA / CIP': persona.nsa || '-',
-          'APELLIDOS Y NOMBRES': persona.nombre || '-',
-          'DNI / PAS / C.E': persona.dni || persona.pasaporte || '-',
-          'NACIONALIDAD': pais,
-          'HORA DE INGRESO': horaIngreso,
-          'HORA DE SALIDA': horaSalida,
-          'MOTIVO': ingreso.motivo_visita || '-',
-          'RESPONSABLE': ingreso.responsable || '-'
-        });
-      });
+        );
+
+        // Agregar datos de temporales
+        const datosTemporales = (ingresosTemporales || []).map(temp => ({
+            tipo: 'temporal',
+            grado: temp.grado || '',
+            nsa: '',
+            nombre: temp.nombre || '',
+            documento: temp.dni || '',
+            nacionalidad: temp.pais || '',
+            fecha_ingreso: temp.fecha_ingreso,
+            fecha_salida: temp.fecha_salida,
+            motivo: temp.motivo_visita || '',
+            responsable: temp.autorizado_por || ''
+        }));
+
+        // Combinar y ordenar
+        const todosDatos = [...datosEnriquecidos, ...datosTemporales]
+            .sort((a, b) => new Date(a.fecha_ingreso) - new Date(b.fecha_ingreso));
+
+        // Formatear para Excel
+        const datosExcel = todosDatos.map((dato, index) => ({
+            'N°': index + 1,
+            'GRADO': dato.grado,
+            'NSA/CIP': dato.nsa,
+            'APELLIDOS Y NOMBRES': dato.nombre,
+            'DNI/PAS/CE': dato.documento,
+            'NACIONALIDAD': dato.nacionalidad,
+            'HORA DE INGRESO': dato.fecha_ingreso ? 
+                new Date(dato.fecha_ingreso).toLocaleString('es-PE', {
+                    timeZone: 'America/Lima',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '',
+            'HORA DE SALIDA': dato.fecha_salida ? 
+                new Date(dato.fecha_salida).toLocaleString('es-PE', {
+                    timeZone: 'America/Lima',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '',
+            'MOTIVO': dato.motivo,
+            'RESPONSABLE': dato.responsable
+        }));
+
+        // Crear libro Excel
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(datosExcel);
+
+        // Ajustar anchos de columna
+        ws['!cols'] = [
+            { wch: 5 },   // N°
+            { wch: 12 },  // GRADO
+            { wch: 12 },  // NSA/CIP
+            { wch: 35 },  // NOMBRES
+            { wch: 12 },  // DNI
+            { wch: 15 },  // NACIONALIDAD
+            { wch: 18 },  // INGRESO
+            { wch: 18 },  // SALIDA
+            { wch: 30 },  // MOTIVO
+            { wch: 25 }   // RESPONSABLE
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Visitas');
+
+        // Generar nombre de archivo
+        const fecha = new Date(fechaInicio);
+        const mes = fecha.toLocaleString('es-PE', { month: 'long' }).toUpperCase();
+        const anio = fecha.getFullYear();
+        const nombreArchivo = `REPORTE_VISITAS_${mes}_${anio}.xlsx`;
+
+        // Descargar
+        XLSX.writeFile(wb, nombreArchivo);
+
+        mostrarNotificacion(`Reporte generado: ${totalForaneos + totalTemporales} registros`, 'success');
+        cerrarModalReporte();
+
+    } catch (error) {
+        mostrarNotificacion('Error al generar reporte', 'error');
     }
-
-    // ============================================
-    // 4. PROCESAR INGRESOS TEMPORALES
-    // ============================================
-    if (ingresosTemporales && ingresosTemporales.length > 0) {
-      ingresosTemporales.forEach(temporal => {
-        const horaIngreso = new Date(temporal.fecha_ingreso).toLocaleTimeString('es-PE', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'America/Lima'
-        });
-        
-        const horaSalida = temporal.fecha_salida 
-          ? new Date(temporal.fecha_salida).toLocaleTimeString('es-PE', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false,
-              timeZone: 'America/Lima'
-            })
-          : '-';
-        
-        datosExcel.push({
-          fecha_ingreso: new Date(temporal.fecha_ingreso),
-          'N°': 0,
-          'GRADO': temporal.grado || '-',
-          'NSA / CIP': '-',
-          'APELLIDOS Y NOMBRES': temporal.nombre || '-',
-          'DNI / PAS / C.E': temporal.dni || '-',
-          'NACIONALIDAD': temporal.pais || 'PERUANO',
-          'HORA DE INGRESO': horaIngreso,
-          'HORA DE SALIDA': horaSalida,
-          'MOTIVO': temporal.motivo_visita || '-',
-          'RESPONSABLE': temporal.autorizado_por || '-'
-        });
-      });
-    }
-
-    // ============================================
-    // 5. ORDENAR POR FECHA Y NUMERAR
-    // ============================================
-    datosExcel.sort((a, b) => a.fecha_ingreso - b.fecha_ingreso);
-    datosExcel.forEach((fila, index) => {
-      fila['N°'] = index + 1;
-      delete fila.fecha_ingreso; // Eliminar campo auxiliar
-    });
-
-    // ============================================
-    // 6. CREAR EXCEL
-    // ============================================
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(datosExcel);
-    
-    // Ajustar anchos de columna
-    ws['!cols'] = [
-      { wch: 5 },   // N°
-      { wch: 12 },  // GRADO
-      { wch: 12 },  // NSA/CIP
-      { wch: 30 },  // APELLIDOS Y NOMBRES
-      { wch: 12 },  // DNI
-      { wch: 15 },  // NACIONALIDAD
-      { wch: 15 },  // HORA INGRESO
-      { wch: 15 },  // HORA SALIDA
-      { wch: 30 },  // MOTIVO
-      { wch: 20 }   // RESPONSABLE
-    ];
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'VISITAS MENSUALES');
-    
-    // Generar nombre de archivo
-    const mesInicio = new Date(fechaInicio).toLocaleString('es-PE', { month: 'long' }).toUpperCase();
-    const anio = new Date(fechaInicio).getFullYear();
-    const nombreArchivo = `REPORTE_VISITAS_${mesInicio}_${anio}.xlsx`;
-    
-    // Descargar
-    XLSX.writeFile(wb, nombreArchivo);
-    
-    ocultarOverlay();
-    cerrarModalReporte();
-    mostrarNotificacion(`✓ Reporte generado: ${totalRegistros} registros exportados`, 'success');
-    
-  } catch (error) {
-    ocultarOverlay();
-    console.error('Error al generar reporte:', error);
-    mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
-  }
 }
-
-
 // Estilos de animación
 const style = document.createElement('style');
 style.textContent = `
