@@ -2324,8 +2324,8 @@ async function generarReporteExcel() {
       .select('*')
       .eq('tipo_persona', 'foraneo')
       .eq('unidad', unidad)
-      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
+      .gte('fecha_ingreso', fechaInicio)
+      .lte('fecha_ingreso', fechaFin + 'T23:59:59.999Z')
       .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
@@ -2337,8 +2337,8 @@ async function generarReporteExcel() {
       .from('ingresos_temporales')
       .select('*')
       .eq('unidad', unidad)
-      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
+      .gte('fecha_ingreso', fechaInicio)
+      .lte('fecha_ingreso', fechaFin + 'T23:59:59.999Z')
       .order('fecha_ingreso', { ascending: true });
     
     if (errorTemporales) throw errorTemporales;
