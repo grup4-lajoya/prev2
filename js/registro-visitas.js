@@ -2319,6 +2319,9 @@ async function generarReporteExcel() {
     // Convertir fechas locales a UTC
     const fechaInicioUTC = new Date(fechaInicio + 'T00:00:00-05:00').toISOString();
     const fechaFinUTC = new Date(fechaFin + 'T23:59:59-05:00').toISOString();
+
+    console.log('Fecha Inicio UTC:', fechaInicioUTC);
+console.log('Fecha Fin UTC:', fechaFinUTC);
   
     // ============================================
     // 1. CONSULTAR INGRESOS TIPO FORANEO
