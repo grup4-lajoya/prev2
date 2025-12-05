@@ -2317,7 +2317,7 @@ async function generarReporteExcel() {
     const { data: ingresos, error } = await supabase
       .from('ingresos_salidas')
       .select('*')
-      .in('tipo_persona', ['personal_foraneo', 'temporal'])
+      .in('tipo_persona', ['foraneo', 'temporal'])
       .eq('unidad', unidad)
       .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
       .lte('fecha_ingreso', fechaFin + 'T23:59:59')
