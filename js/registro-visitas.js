@@ -2296,6 +2296,10 @@ function cerrarModalReporte() {
   document.getElementById('modalReporte').style.display = 'none';
 }
 async function generarReporteExcel() {
+  console.log('Variable unidad:', unidad);
+  console.log('Tipo de unidad:', typeof unidad);
+  console.log('Longitud:', unidad.length);
+  console.log('Caracteres:', [...unidad].map(c => c.charCodeAt(0)));
   const fechaInicio = document.getElementById('reporteFechaInicio').value;
   const fechaFin = document.getElementById('reporteFechaFin').value;
   
