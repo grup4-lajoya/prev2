@@ -2295,7 +2295,6 @@ function abrirModalReporte() {
 function cerrarModalReporte() {
   document.getElementById('modalReporte').style.display = 'none';
 }
-
 async function generarReporteExcel() {
   const fechaInicio = document.getElementById('reporteFechaInicio').value;
   const fechaFin = document.getElementById('reporteFechaFin').value;
@@ -2313,107 +2312,173 @@ async function generarReporteExcel() {
   mostrarOverlay('Generando reporte Excel...');
   
   try {
-    // Consultar ingresos en el rango de fechas
-    const { data: ingresos, error } = await supabase
+    // ============================================
+    // 1. CONSULTAR INGRESOS TIPO FORANEO
+    // ============================================
+    const { data: ingresosForaneos, error: errorForaneos } = await supabase
       .from('ingresos_salidas')
       .select('*')
-      .in('tipo_persona', ['foraneo', 'temporal'])
+      .eq('tipo_persona', 'foraneo')
       .eq('unidad', unidad)
       .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
       .lte('fecha_ingreso', fechaFin + 'T23:59:59')
       .order('fecha_ingreso', { ascending: true });
+    
+    if (errorForaneos) throw errorForaneos;
 
-    // AGREGAR ESTAS LÍNEAS AQUÍ (antes del if error)
-console.log('Fecha Inicio:', fechaInicio);
-console.log('Fecha Fin:', fechaFin);
-console.log('Unidad:', unidad);
-console.log('Registros encontrados:', ingresos);
-console.log('Error:', error);
+    // ============================================
+    // 2. CONSULTAR INGRESOS TEMPORALES
+    // ============================================
+    const { data: ingresosTemporales, error: errorTemporales } = await supabase
+      .from('ingresos_temporales')
+      .select('*')
+      .eq('unidad', unidad)
+      .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
+      .lte('fecha_ingreso', fechaFin + 'T23:59:59')
+      .order('fecha_ingreso', { ascending: true });
     
-    if (error) throw error;
-    
-    if (ingresos.length === 0) {
+    if (errorTemporales) throw errorTemporales;
+
+    const totalRegistros = (ingresosForaneos?.length || 0) + (ingresosTemporales?.length || 0);
+
+    if (totalRegistros === 0) {
       ocultarOverlay();
       mostrarNotificacion('No hay registros en el rango de fechas seleccionado', 'warning');
       return;
     }
-    
-    // Obtener IDs únicos de personas
-    const idsPersonas = [...new Set(ingresos.map(i => i.id_persona))];
-    
-    // Consultar datos de personal foráneo
-    const { data: personas, error: errorPersonas } = await supabase
-      .from('personal_foraneo')
-      .select('id, nombre, nsa, dni, pasaporte, id_pais, id_grado')
-      .in('id', idsPersonas);
-    
-    if (errorPersonas) throw errorPersonas;
-    
-    // Crear mapas
-    const mapaPersonas = {};
-    personas.forEach(p => mapaPersonas[p.id] = p);
-    
-    // Obtener países y grados
-    const idsPaises = [...new Set(personas.map(p => p.id_pais).filter(Boolean))];
-    const idsGrados = [...new Set(personas.map(p => p.id_grado).filter(Boolean))];
-    
-    let mapaPaises = {};
-    if (idsPaises.length > 0) {
-      const { data: paises } = await supabase
-        .from('pais')
-        .select('id, nombre')
-        .in('id', idsPaises);
+
+    // ============================================
+    // 3. PROCESAR INGRESOS FORÁNEOS
+    // ============================================
+    let datosExcel = [];
+
+    if (ingresosForaneos && ingresosForaneos.length > 0) {
+      // Obtener IDs únicos de personas
+      const idsPersonas = [...new Set(ingresosForaneos.map(i => i.id_persona))];
       
-      if (paises) paises.forEach(p => mapaPaises[p.id] = p.nombre);
-    }
-    
-    let mapaGrados = {};
-    if (idsGrados.length > 0) {
-      const { data: grados } = await supabase
-        .from('grado')
-        .select('id, descripcion')
-        .in('id', idsGrados);
+      // Consultar datos de personal foráneo
+      const { data: personas, error: errorPersonas } = await supabase
+        .from('personal_foraneo')
+        .select('id, nombre, nsa, dni, pasaporte, id_pais, id_grado')
+        .in('id', idsPersonas);
       
-      if (grados) grados.forEach(g => mapaGrados[g.id] = g.descripcion);
-    }
-    
-    // Preparar datos para Excel
-    const datosExcel = ingresos.map((ingreso, index) => {
-      const persona = mapaPersonas[ingreso.id_persona] || {};
-      const grado = persona.id_grado ? mapaGrados[persona.id_grado] : '-';
-      const pais = persona.id_pais ? mapaPaises[persona.id_pais] : 'PERUANO';
+      if (errorPersonas) throw errorPersonas;
       
-      const horaIngreso = new Date(ingreso.fecha_ingreso).toLocaleTimeString('es-PE', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'America/Lima'
+      // Crear mapas
+      const mapaPersonas = {};
+      personas.forEach(p => mapaPersonas[p.id] = p);
+      
+      // Obtener países y grados
+      const idsPaises = [...new Set(personas.map(p => p.id_pais).filter(Boolean))];
+      const idsGrados = [...new Set(personas.map(p => p.id_grado).filter(Boolean))];
+      
+      let mapaPaises = {};
+      if (idsPaises.length > 0) {
+        const { data: paises } = await supabase
+          .from('pais')
+          .select('id, nombre')
+          .in('id', idsPaises);
+        
+        if (paises) paises.forEach(p => mapaPaises[p.id] = p.nombre);
+      }
+      
+      let mapaGrados = {};
+      if (idsGrados.length > 0) {
+        const { data: grados } = await supabase
+          .from('grado')
+          .select('id, descripcion')
+          .in('id', idsGrados);
+        
+        if (grados) grados.forEach(g => mapaGrados[g.id] = g.descripcion);
+      }
+      
+      // Procesar ingresos foráneos
+      ingresosForaneos.forEach(ingreso => {
+        const persona = mapaPersonas[ingreso.id_persona] || {};
+        const grado = persona.id_grado ? mapaGrados[persona.id_grado] : '-';
+        const pais = persona.id_pais ? mapaPaises[persona.id_pais] : 'PERUANO';
+        
+        const horaIngreso = new Date(ingreso.fecha_ingreso).toLocaleTimeString('es-PE', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Lima'
+        });
+        
+        const horaSalida = ingreso.fecha_salida 
+          ? new Date(ingreso.fecha_salida).toLocaleTimeString('es-PE', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Lima'
+            })
+          : '-';
+        
+        datosExcel.push({
+          fecha_ingreso: new Date(ingreso.fecha_ingreso),
+          'N°': 0, // Se numerará después
+          'GRADO': grado,
+          'NSA / CIP': persona.nsa || '-',
+          'APELLIDOS Y NOMBRES': persona.nombre || '-',
+          'DNI / PAS / C.E': persona.dni || persona.pasaporte || '-',
+          'NACIONALIDAD': pais,
+          'HORA DE INGRESO': horaIngreso,
+          'HORA DE SALIDA': horaSalida,
+          'MOTIVO': ingreso.motivo_visita || '-',
+          'RESPONSABLE': ingreso.responsable || '-'
+        });
       });
-      
-      const horaSalida = ingreso.fecha_salida 
-        ? new Date(ingreso.fecha_salida).toLocaleTimeString('es-PE', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false,
-            timeZone: 'America/Lima'
-          })
-        : '-';
-      
-      return {
-        'N°': index + 1,
-        'GRADO': grado,
-        'NSA / CIP': persona.nsa || '-',
-        'APELLIDOS Y NOMBRES': persona.nombre || '-',
-        'DNI / PAS / C.E': persona.dni || persona.pasaporte || '-',
-        'NACIONALIDAD': pais,
-        'HORA DE INGRESO': horaIngreso,
-        'HORA DE SALIDA': horaSalida,
-        'MOTIVO': ingreso.motivo_visita || '-',
-        'RESPONSABLE': ingreso.responsable || '-'
-      };
+    }
+
+    // ============================================
+    // 4. PROCESAR INGRESOS TEMPORALES
+    // ============================================
+    if (ingresosTemporales && ingresosTemporales.length > 0) {
+      ingresosTemporales.forEach(temporal => {
+        const horaIngreso = new Date(temporal.fecha_ingreso).toLocaleTimeString('es-PE', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Lima'
+        });
+        
+        const horaSalida = temporal.fecha_salida 
+          ? new Date(temporal.fecha_salida).toLocaleTimeString('es-PE', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Lima'
+            })
+          : '-';
+        
+        datosExcel.push({
+          fecha_ingreso: new Date(temporal.fecha_ingreso),
+          'N°': 0,
+          'GRADO': temporal.grado || '-',
+          'NSA / CIP': '-',
+          'APELLIDOS Y NOMBRES': temporal.nombre || '-',
+          'DNI / PAS / C.E': temporal.dni || '-',
+          'NACIONALIDAD': temporal.pais || 'PERUANO',
+          'HORA DE INGRESO': horaIngreso,
+          'HORA DE SALIDA': horaSalida,
+          'MOTIVO': temporal.motivo_visita || '-',
+          'RESPONSABLE': temporal.autorizado_por || '-'
+        });
+      });
+    }
+
+    // ============================================
+    // 5. ORDENAR POR FECHA Y NUMERAR
+    // ============================================
+    datosExcel.sort((a, b) => a.fecha_ingreso - b.fecha_ingreso);
+    datosExcel.forEach((fila, index) => {
+      fila['N°'] = index + 1;
+      delete fila.fecha_ingreso; // Eliminar campo auxiliar
     });
-    
-    // Crear Excel con XLSX
+
+    // ============================================
+    // 6. CREAR EXCEL
+    // ============================================
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(datosExcel);
     
@@ -2443,7 +2508,7 @@ console.log('Error:', error);
     
     ocultarOverlay();
     cerrarModalReporte();
-    mostrarNotificacion(`✓ Reporte generado: ${ingresos.length} registros exportados`, 'success');
+    mostrarNotificacion(`✓ Reporte generado: ${totalRegistros} registros exportados`, 'success');
     
   } catch (error) {
     ocultarOverlay();
@@ -2451,6 +2516,7 @@ console.log('Error:', error);
     mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
   }
 }
+
 
 // Estilos de animación
 const style = document.createElement('style');
