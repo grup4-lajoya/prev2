@@ -2317,8 +2317,8 @@ async function generarReporteExcel() {
   
   try {
     // Convertir fechas locales a UTC
-    const fechaInicioUTC = new Date(fechaInicio + 'T00:00:00-05:00').toISOString();
-    const fechaFinUTC = new Date(fechaFin + 'T23:59:59-05:00').toISOString();
+    const fechaInicioUTC = fechaInicio + 'T00:00:00.000Z';
+    const fechaFinUTC = fechaFin + 'T23:59:59.999Z';
 
     console.log('Fecha Inicio UTC:', fechaInicioUTC);
 console.log('Fecha Fin UTC:', fechaFinUTC);
