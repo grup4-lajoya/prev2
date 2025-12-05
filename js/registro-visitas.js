@@ -2336,10 +2336,10 @@ async function generarReporteExcel() {
     if (errorForaneos) throw errorForaneos;
     
     console.log('Query params:', {
-  tipo_persona: 'foraneo',
-  fecha_inicio: fechaInicioUTC,
-  fecha_fin: fechaFinUTC
-});
+      tipo_persona: 'foraneo',
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin
+    });
 console.log('Error foraneos:', errorForaneos);
 console.log('Data foraneos:', ingresosForaneos);
 
