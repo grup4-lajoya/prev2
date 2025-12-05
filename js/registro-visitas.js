@@ -2316,23 +2316,17 @@ async function generarReporteExcel() {
   mostrarOverlay('Generando reporte Excel...');
   
   try {
-    // Convertir fechas locales a UTC
-    const fechaInicioUTC = fechaInicio + 'T00:00:00.000Z';
-    const fechaFinUTC = fechaFin + 'T23:59:59.999Z';
-
-    console.log('Fecha Inicio UTC:', fechaInicioUTC);
-console.log('Fecha Fin UTC:', fechaFinUTC);
-  
-    // ============================================
-    // 1. CONSULTAR INGRESOS TIPO FORANEO
-    // ============================================
-    const { data: ingresosForaneos, error: errorForaneos } = await supabase
-      .from('ingresos_salidas')
-      .select('*')
-      .eq('tipo_persona', 'foraneo')    
-      .gte('fecha_ingreso', fechaInicioUTC)
-      .lte('fecha_ingreso', fechaFinUTC)
-      .order('fecha_ingreso', { ascending: true });
+  // ============================================
+  // 1. CONSULTAR INGRESOS TIPO FORANEO
+  // ============================================
+  const { data: ingresosForaneos, error: errorForaneos } = await supabase
+    .from('ingresos_salidas')
+    .select('*')
+    .eq('tipo_persona', 'foraneo')
+    .eq('unidad', 'GRUP4')
+    .gte('fecha_ingreso', fechaInicio)
+    .lte('fecha_ingreso', fechaFin)
+    .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
     console.log('Query params:', {
@@ -2344,14 +2338,15 @@ console.log('Error foraneos:', errorForaneos);
 console.log('Data foraneos:', ingresosForaneos);
 
     // ============================================
-      // 2. CONSULTAR INGRESOS TEMPORALES
-      // ============================================
-      const { data: ingresosTemporales, error: errorTemporales } = await supabase
-        .from('ingresos_temporales')
-        .select('*')        
-        .gte('fecha_ingreso', fechaInicioUTC)
-        .lte('fecha_ingreso', fechaFinUTC)
-        .order('fecha_ingreso', { ascending: true });
+    // 2. CONSULTAR INGRESOS TEMPORALES
+    // ============================================
+    const { data: ingresosTemporales, error: errorTemporales } = await supabase
+      .from('ingresos_temporales')
+      .select('*')
+      .eq('unidad', 'GRUP4')
+      .gte('fecha_ingreso', fechaInicio)
+      .lte('fecha_ingreso', fechaFin)
+      .order('fecha_ingreso', { ascending: true });
     
     if (errorTemporales) throw errorTemporales;
 
