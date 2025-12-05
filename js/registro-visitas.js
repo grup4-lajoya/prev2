@@ -2339,6 +2339,12 @@ async function generarReporteExcel() {
     
     if (errorTemporales) throw errorTemporales;
 
+    console.log('=== DEBUG REPORTE ===');
+    console.log('Ingresos Foráneos:', ingresosForaneos);
+    console.log('Ingresos Temporales:', ingresosTemporales);
+    console.log('Total:', totalRegistros);
+    console.log('=====================');
+
     const totalRegistros = (ingresosForaneos?.length || 0) + (ingresosTemporales?.length || 0);
 
     if (totalRegistros === 0) {
