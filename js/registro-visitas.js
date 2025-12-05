@@ -2335,6 +2335,13 @@ console.log('Fecha Fin UTC:', fechaFinUTC);
       .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
+    console.log('Query params:', {
+  tipo_persona: 'foraneo',
+  fecha_inicio: fechaInicioUTC,
+  fecha_fin: fechaFinUTC
+});
+console.log('Error foraneos:', errorForaneos);
+console.log('Data foraneos:', ingresosForaneos);
 
     // ============================================
       // 2. CONSULTAR INGRESOS TEMPORALES
