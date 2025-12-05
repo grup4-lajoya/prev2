@@ -2316,6 +2316,10 @@ async function generarReporteExcel() {
   mostrarOverlay('Generando reporte Excel...');
   
   try {
+    // Convertir fechas locales a UTC
+    const fechaInicioUTC = new Date(fechaInicio + 'T00:00:00-05:00').toISOString();
+    const fechaFinUTC = new Date(fechaFin + 'T23:59:59-05:00').toISOString();
+  
     // ============================================
     // 1. CONSULTAR INGRESOS TIPO FORANEO
     // ============================================
@@ -2324,22 +2328,22 @@ async function generarReporteExcel() {
       .select('*')
       .eq('tipo_persona', 'foraneo')
       .eq('unidad', unidad)
-      .gte('fecha_ingreso', fechaInicio)
-      .lte('fecha_ingreso', fechaFin + 'T23:59:59.999Z')
+      .gte('fecha_ingreso', fechaInicioUTC)
+      .lte('fecha_ingreso', fechaFinUTC)
       .order('fecha_ingreso', { ascending: true });
     
     if (errorForaneos) throw errorForaneos;
 
     // ============================================
-    // 2. CONSULTAR INGRESOS TEMPORALES
-    // ============================================
-    const { data: ingresosTemporales, error: errorTemporales } = await supabase
-      .from('ingresos_temporales')
-      .select('*')
-      .eq('unidad', unidad)
-      .gte('fecha_ingreso', fechaInicio)
-      .lte('fecha_ingreso', fechaFin + 'T23:59:59.999Z')
-      .order('fecha_ingreso', { ascending: true });
+      // 2. CONSULTAR INGRESOS TEMPORALES
+      // ============================================
+      const { data: ingresosTemporales, error: errorTemporales } = await supabase
+        .from('ingresos_temporales')
+        .select('*')
+        .eq('unidad', unidad)
+        .gte('fecha_ingreso', fechaInicioUTC)
+        .lte('fecha_ingreso', fechaFinUTC)
+        .order('fecha_ingreso', { ascending: true });
     
     if (errorTemporales) throw errorTemporales;
 
