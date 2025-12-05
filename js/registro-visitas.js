@@ -2448,8 +2448,33 @@ async function generarReporteExcel() {
         const anio = fecha.getFullYear();
         const nombreArchivo = `REPORTE_VISITAS_${mes}_${anio}.xlsx`;
 
-        // Descargar
-        XLSX.writeFile(wb, nombreArchivo);
+        // Generar el archivo como Blob
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+        // Convertir a Blob
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+            return buf;
+        }
+
+        const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+
+        // Crear link de descarga
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = nombreArchivo;
+        link.style.display = 'none';
+
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Liberar memoria
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
 
         mostrarNotificacion(`Reporte generado: ${totalForaneos + totalTemporales} registros`, 'success');
         cerrarModalReporte();
