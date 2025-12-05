@@ -2307,15 +2307,16 @@ async function generarReporteExcel() {
 
         mostrarNotificacion('Generando reporte...', 'info');
 
-        // Obtener ingresos foráneos
+        // Obtener ingresos foráneos (YA CON DATOS COMPLETOS)
         const { data: ingresosForaneos, error: errorForaneos } = await supabase
             .rpc('obtener_ingresos_foraneos', {
-                p_unidad: 'GRUP4',
+                p_unidad: unidad,
                 p_fecha_inicio: fechaInicio,
                 p_fecha_fin: fechaFin
             });
 
         if (errorForaneos) {
+            console.error('Error foráneos:', errorForaneos);
             mostrarNotificacion('Error al obtener ingresos foráneos', 'error');
             return;
         }
@@ -2323,63 +2324,40 @@ async function generarReporteExcel() {
         // Obtener ingresos temporales
         const { data: ingresosTemporales, error: errorTemporales } = await supabase
             .rpc('obtener_ingresos_temporales', {
-                p_unidad: 'GRUP4',
+                p_unidad: unidad,
                 p_fecha_inicio: fechaInicio,
                 p_fecha_fin: fechaFin
             });
 
         if (errorTemporales) {
+            console.error('Error temporales:', errorTemporales);
             mostrarNotificacion('Error al obtener ingresos temporales', 'error');
             return;
         }
 
-        // Verificar si hay datos
-        const totalForaneos = ingresosForaneos?.length || 0;
-        const totalTemporales = ingresosTemporales?.length || 0;
+        console.log('✅ Foráneos obtenidos:', ingresosForaneos?.length || 0);
+        console.log('✅ Temporales obtenidos:', ingresosTemporales?.length || 0);
 
-        if (totalForaneos === 0 && totalTemporales === 0) {
-            mostrarNotificacion('No se encontraron registros en el rango de fechas', 'warning');
-            cerrarModalReporte();
-            return;
-        }
+        // Transformar foráneos (YA NO NECESITA Promise.all ni consultas adicionales)
+        const datosForaneos = (ingresosForaneos || []).map(ingreso => ({
+            tipo: 'foraneo',
+            grado: ingreso.nombre_grado || '',
+            nsa: ingreso.nsa || '',
+            nombre: ingreso.nombre,
+            documento: ingreso.dni || ingreso.pasaporte || '',
+            nacionalidad: ingreso.nombre_pais || '',
+            fecha_ingreso: ingreso.fecha_ingreso,
+            fecha_salida: ingreso.fecha_salida,
+            motivo: ingreso.motivo_visita || '',
+            responsable: ingreso.responsable || ''
+        }));
 
-        // Enriquecer datos de foráneos
-        const datosEnriquecidos = await Promise.all(
-            (ingresosForaneos || []).map(async (ingreso) => {
-                const { data: persona } = await supabase
-                    .from('personal_foraneo')
-                    .select(`
-                        nombre,
-                        nsa,
-                        dni,
-                        pasaporte,
-                        pais (nombre_pais),
-                        grado (nombre_grado)
-                    `)
-                    .eq('id', ingreso.id_persona)
-                    .single();
-
-                return {
-                    tipo: 'foraneo',
-                    grado: persona?.grado?.nombre_grado || '',
-                    nsa: persona?.nsa || '',
-                    nombre: persona?.nombre || '',
-                    documento: persona?.dni || persona?.pasaporte || '',
-                    nacionalidad: persona?.pais?.nombre_pais || '',
-                    fecha_ingreso: ingreso.fecha_ingreso,
-                    fecha_salida: ingreso.fecha_salida,
-                    motivo: ingreso.motivo_visita || '',
-                    responsable: ingreso.responsable || ''
-                };
-            })
-        );
-
-        // Agregar datos de temporales
+        // Transformar temporales
         const datosTemporales = (ingresosTemporales || []).map(temp => ({
             tipo: 'temporal',
             grado: temp.grado || '',
             nsa: '',
-            nombre: temp.nombre || '',
+            nombre: temp.nombre,
             documento: temp.dni || '',
             nacionalidad: temp.pais || '',
             fecha_ingreso: temp.fecha_ingreso,
@@ -2388,9 +2366,20 @@ async function generarReporteExcel() {
             responsable: temp.autorizado_por || ''
         }));
 
+        const totalForaneos = datosForaneos.length;
+        const totalTemporales = datosTemporales.length;
+
+        if (totalForaneos === 0 && totalTemporales === 0) {
+            mostrarNotificacion('No se encontraron registros en el rango de fechas', 'warning');
+            cerrarModalReporte();
+            return;
+        }
+
         // Combinar y ordenar
-        const todosDatos = [...datosEnriquecidos, ...datosTemporales]
+        const todosDatos = [...datosForaneos, ...datosTemporales]
             .sort((a, b) => new Date(a.fecha_ingreso) - new Date(b.fecha_ingreso));
+
+        console.log(`✅ Total registros: ${todosDatos.length}`);
 
         // Formatear para Excel
         const datosExcel = todosDatos.map((dato, index) => ({
@@ -2426,38 +2415,35 @@ async function generarReporteExcel() {
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(datosExcel);
 
-        // Ajustar anchos de columna
         ws['!cols'] = [
-            { wch: 5 },   // N°
-            { wch: 12 },  // GRADO
-            { wch: 12 },  // NSA/CIP
-            { wch: 35 },  // NOMBRES
-            { wch: 12 },  // DNI
-            { wch: 15 },  // NACIONALIDAD
-            { wch: 18 },  // INGRESO
-            { wch: 18 },  // SALIDA
-            { wch: 30 },  // MOTIVO
-            { wch: 25 }   // RESPONSABLE
+            { wch: 5 },
+            { wch: 12 },
+            { wch: 12 },
+            { wch: 35 },
+            { wch: 12 },
+            { wch: 15 },
+            { wch: 18 },
+            { wch: 18 },
+            { wch: 30 },
+            { wch: 25 }
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, 'Visitas');
 
-        // Generar nombre de archivo
+        // Generar nombre con MES CORRECTO
         const fecha = new Date(fechaInicio);
-        const mes = fecha.toLocaleString('es-PE', { month: 'long' }).toUpperCase();
+        const mes = fecha.toLocaleString('es-PE', { month: 'long', timeZone: 'UTC' }).toUpperCase();
         const anio = fecha.getFullYear();
         const nombreArchivo = `REPORTE_VISITAS_${mes}_${anio}.xlsx`;
 
-// Generar archivo como base64
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
         
-        // Crear página HTML con botón de descarga
         const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reporte Excel - GRUP4</title>
+    <title>Reporte Excel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -2476,15 +2462,8 @@ async function generarReporteExcel() {
             text-align: center;
             max-width: 500px;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .info {
-            color: #666;
-            margin: 20px 0;
-            font-size: 14px;
-        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .info { color: #666; margin: 20px 0; font-size: 14px; line-height: 1.6; }
         .btn-download {
             background: #28a745;
             color: white;
@@ -2514,7 +2493,8 @@ async function generarReporteExcel() {
         <h1>📊 Reporte Excel Generado</h1>
         <div class="info">
             <strong>${nombreArchivo}</strong><br>
-            ${totalForaneos + totalTemporales} registros encontrados<br>
+            ${totalForaneos + totalTemporales} registros<br>
+            (${totalForaneos} foráneos + ${totalTemporales} temporales)<br>
             Período: ${new Date(fechaInicio).toLocaleDateString('es-PE')} - ${new Date(fechaFin).toLocaleDateString('es-PE')}
         </div>
         <button class="btn-download" onclick="descargarArchivo()">
@@ -2557,17 +2537,16 @@ async function generarReporteExcel() {
 </html>
         `;
         
-        // Abrir en nueva ventana
         const newWindow = window.open('', '_blank');
         newWindow.document.write(htmlContent);
         newWindow.document.close();
 
-        mostrarNotificacion(`Reporte generado: ${totalForaneos + totalTemporales} registros`, 'success');
+        mostrarNotificacion(`✅ Reporte generado: ${totalForaneos + totalTemporales} registros`, 'success');
         cerrarModalReporte();
 
     } catch (error) {
-        console.error('Error:', error);
-        mostrarNotificacion('Error al generar reporte', 'error');
+        console.error('Error completo:', error);
+        mostrarNotificacion('Error al generar reporte: ' + error.message, 'error');
     }
 }
 // Estilos de animación
