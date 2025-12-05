@@ -2322,6 +2322,13 @@ async function generarReporteExcel() {
       .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
       .lte('fecha_ingreso', fechaFin + 'T23:59:59')
       .order('fecha_ingreso', { ascending: true });
+
+    // AGREGAR ESTAS LÍNEAS AQUÍ (antes del if error)
+console.log('Fecha Inicio:', fechaInicio);
+console.log('Fecha Fin:', fechaFin);
+console.log('Unidad:', unidad);
+console.log('Registros encontrados:', ingresos);
+console.log('Error:', error);
     
     if (error) throw error;
     
