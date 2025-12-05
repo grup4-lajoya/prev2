@@ -2329,8 +2329,7 @@ console.log('Fecha Fin UTC:', fechaFinUTC);
     const { data: ingresosForaneos, error: errorForaneos } = await supabase
       .from('ingresos_salidas')
       .select('*')
-      .eq('tipo_persona', 'foraneo')
-      .eq('unidad', unidad)
+      .eq('tipo_persona', 'foraneo')    
       .gte('fecha_ingreso', fechaInicioUTC)
       .lte('fecha_ingreso', fechaFinUTC)
       .order('fecha_ingreso', { ascending: true });
@@ -2342,8 +2341,7 @@ console.log('Fecha Fin UTC:', fechaFinUTC);
       // ============================================
       const { data: ingresosTemporales, error: errorTemporales } = await supabase
         .from('ingresos_temporales')
-        .select('*')
-        .eq('unidad', unidad)
+        .select('*')        
         .gte('fecha_ingreso', fechaInicioUTC)
         .lte('fecha_ingreso', fechaFinUTC)
         .order('fecha_ingreso', { ascending: true });
