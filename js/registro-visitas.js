@@ -2315,23 +2315,16 @@ async function generarReporteExcel() {
   
   mostrarOverlay('Generando reporte Excel...');
   
-  try {
-  // Calcular día siguiente para el rango
-  const fechaSiguiente = new Date(fechaFin);
-  fechaSiguiente.setDate(fechaSiguiente.getDate() + 1);
-  const fechaFinMasUno = fechaSiguiente.toISOString().split('T')[0];
-  
+  try { 
   // ============================================
   // 1. CONSULTAR INGRESOS TIPO FORANEO
   // ============================================
-  const { data: ingresosForaneos, error: errorForaneos } = await supabase
-    .from('ingresos_salidas')
-    .select('*')
-    .eq('tipo_persona', 'foraneo')
-    .eq('unidad', 'GRUP4')
-    .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-    .lt('fecha_ingreso', fechaFinMasUno + 'T00:00:00')
-    .order('fecha_ingreso', { ascending: true });
+    const { data: ingresosForaneos, error: errorForaneos } = await supabase
+      .rpc('obtener_ingresos_foraneos', {
+        p_unidad: 'GRUP4',
+        p_fecha_inicio: fechaInicio,
+        p_fecha_fin: fechaFin
+      });
     
     if (errorForaneos) throw errorForaneos;
     
@@ -2346,13 +2339,12 @@ console.log('Data foraneos:', ingresosForaneos);
   // ============================================
   // 2. CONSULTAR INGRESOS TEMPORALES
   // ============================================
-  const { data: ingresosTemporales, error: errorTemporales } = await supabase
-    .from('ingresos_temporales')
-    .select('*')
-    .eq('unidad', 'GRUP4')
-    .gte('fecha_ingreso', fechaInicio + 'T00:00:00')
-    .lt('fecha_ingreso', fechaFinMasUno + 'T00:00:00')
-    .order('fecha_ingreso', { ascending: true });
+    const { data: ingresosTemporales, error: errorTemporales } = await supabase
+      .rpc('obtener_ingresos_temporales', {
+        p_unidad: 'GRUP4',
+        p_fecha_inicio: fechaInicio,
+        p_fecha_fin: fechaFin
+      });
     
     if (errorTemporales) throw errorTemporales;
 
