@@ -5,7 +5,7 @@
 
 const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Variables globales
 let datosCompletos = [];
@@ -43,7 +43,7 @@ async function cargarDenuncias() {
     loadingEl.style.display = 'block';
     document.getElementById('tablaDenuncias').style.display = 'none';
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('denuncias')
       .select('*')
       .order('created_at', { ascending: false });
@@ -210,7 +210,7 @@ async function guardarEdicion() {
   mostrarOverlay('Guardando cambios...');
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('denuncias')
       .update({
         estado: estado,
