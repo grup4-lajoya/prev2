@@ -299,50 +299,16 @@ function abrirImagen(url) {
   loading.style.display = "block";
   modalImg.style.display = "none";
   
-  const id = extraerIdDrive(url);
-  
-  if(!id) {
+  if(!url) {
     loading.innerHTML = "❌ URL de imagen no válida";
     setTimeout(() => cerrarModalImagen(), 2000);
     return;
   }
   
-  // Lista de URLs alternativas para intentar
-  const urlsAlternativas = [
-    `https://lh3.googleusercontent.com/d/${id}`,
-    `https://drive.google.com/uc?export=view&id=${id}`,
-    `https://drive.google.com/thumbnail?id=${id}&sz=w1000`,
-    url // URL original como último recurso
-  ];
-  
-  let intentoActual = 0;
-  
-  function intentarCargarImagen() {
-    if(intentoActual >= urlsAlternativas.length) {
-      loading.innerHTML = "❌ No se pudo cargar la imagen<br><small>Verifica que el archivo sea público en Google Drive</small>";
-      setTimeout(() => cerrarModalImagen(), 3000);
-      return;
-    }
-    
-    const urlActual = urlsAlternativas[intentoActual];
-    const img = new Image();
-    
-    img.onload = function() {
-      modalImg.src = urlActual;
-      modalImg.style.display = "block";
-      loading.style.display = "none";
-    };
-    
-    img.onerror = function() {
-      intentoActual++;
-      intentarCargarImagen();
-    };
-    
-    img.src = urlActual;
+    modalImg.src = url;
+    modalImg.style.display = "block";
+    loading.style.display = "none";
   }
-  
-  intentarCargarImagen();
-}
 
 function cerrarModalImagen() {
   document.getElementById("imageModal").style.display = "none";
