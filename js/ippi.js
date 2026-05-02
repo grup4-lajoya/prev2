@@ -51,8 +51,23 @@ async function cargarDatos(forzar = false) {
   try {
     loadingEl.innerHTML = 'Cargando datos... ⏳';
 
+    // OBTENER ID DE LA SUCURSAL DEL USUARIO
+    const resSuc = await fetch(
+      `${SUPABASE_URL}/rest/v1/sucursales?codigo=eq.${unidad}&select=id,nombre`,
+      { headers: HEADERS }
+    );
+    const sucData = await resSuc.json();
+
+    if (!sucData || sucData.length === 0) {
+      loadingEl.innerHTML = '❌ Sucursal no encontrada para este usuario.';
+      return;
+    }
+
+    const sucursalId = sucData[0].id;
+
+    // TRAER SOLO LOS IPPIS DE ESA SUCURSAL
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/ippis?select=*,sucursales(nombre,codigo)&order=creado_en.desc`,
+      `${SUPABASE_URL}/rest/v1/ippis?select=*,sucursales(nombre,codigo)&sucursal_id=eq.${sucursalId}&order=creado_en.desc`,
       { headers: HEADERS }
     );
 
