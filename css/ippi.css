@@ -43,25 +43,6 @@ thead {
   color: white;
 }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-td:nth-child(5) {
-  white-space: normal;
-  max-width: 200px;
-  word-wrap: break-word;
-}
-td:nth-child(4) {
-  max-width: 80px;
-  white-space: normal;
-  word-wrap: break-word;
-  text-align: center;
-}
-
 th {
   font-weight: 600;
   position: sticky;
@@ -69,24 +50,40 @@ th {
   font-size: 0.85rem;
   text-transform: uppercase;
 }
-
-/* Anchos específicos de columnas */
-th:nth-child(1) { width: 4%; }   /* N° */
-th:nth-child(2) { width: 10%; }  /* FECHA Y HORA */
-th:nth-child(3) { width: 12%; }  /* ASUNTO */
-th:nth-child(4) { width: 10%; }  /* LUGAR */
-th:nth-child(5) { width: 30%; }  /* DESCRIPCIÓN - MÁS ANCHA */
-th:nth-child(6) { width: 12%; }  /* REPORTA */
-th:nth-child(7) { width: 8%; }   /* ESTADO */
-th:nth-child(8) { width: 14%; }  /* ACCIONES */
-
-/* Estilo especial para la celda de descripción */
-td:nth-child(5) {
-  max-width: 400px;
-  white-space: normal;
-  word-wrap: break-word;
-  line-height: 1.4;
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+  white-space: nowrap;
 }
+
+/* N° */
+th:nth-child(1), td:nth-child(1) { width: 3%; }
+
+/* Fecha y hora */
+th:nth-child(2), td:nth-child(2) { width: 9%; white-space: normal; }
+
+/* Asunto */
+th:nth-child(3), td:nth-child(3) { width: 14%; white-space: normal; word-wrap: break-word; }
+
+/* Lugar */
+th:nth-child(4), td:nth-child(4) { width: 10%; white-space: normal; word-wrap: break-word; }
+
+/* Sucursal */
+th:nth-child(5), td:nth-child(5) { width: 7%; white-space: normal; word-wrap: break-word; text-align: center; }
+
+/* Descripción */
+th:nth-child(6), td:nth-child(6) { width: 25%; white-space: normal; word-wrap: break-word; line-height: 1.4; }
+
+/* Reporta */
+th:nth-child(7), td:nth-child(7) { width: 12%; white-space: normal; word-wrap: break-word; }
+
+/* Estado */
+th:nth-child(8), td:nth-child(8) { width: 7%; }
+
+/* Acciones */
+th:nth-child(9), td:nth-child(9) { width: 10%; }
 
 tbody tr:hover {
   background-color: #f0f4ff;
