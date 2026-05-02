@@ -29,11 +29,11 @@ window.onload = function() {
 function formatearFecha(fecha) {
   if(!fecha) return "";
   const d = new Date(fecha);
-  const dia = d.getDate().toString().padStart(2,"0");
-  const mes = (d.getMonth()+1).toString().padStart(2,"0");
-  const anio = d.getFullYear();
-  const hora = d.getHours().toString().padStart(2,"0");
-  const min = d.getMinutes().toString().padStart(2,"0");
+  const dia = d.toLocaleString('es-PE', { timeZone: 'America/Lima', day: '2-digit' });
+  const mes = d.toLocaleString('es-PE', { timeZone: 'America/Lima', month: '2-digit' });
+  const anio = d.toLocaleString('es-PE', { timeZone: 'America/Lima', year: 'numeric' });
+  const hora = d.toLocaleString('es-PE', { timeZone: 'America/Lima', hour: '2-digit', hour12: false });
+  const min = d.toLocaleString('es-PE', { timeZone: 'America/Lima', minute: '2-digit' }).padStart(2,'0');
   return `${dia}/${mes}/${anio} ${hora}:${min}`;
 }
 
