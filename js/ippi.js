@@ -137,6 +137,7 @@ function actualizarTabla() {
       <td>${formatearFecha(registro["marca temporal"])}</td>
       <td>${registro["informe"] || "-"}</td>
       <td>${registro["lugar"] || "-"}</td>
+      <td>${registro["sucursal"] || "-"}</td>
       <td style="white-space: normal; word-wrap: break-word;">${(registro["descripcion"] || "-").substring(0, 200)}${registro["descripcion"] && registro["descripcion"].length > 200 ? '...' : ''}</td>
       <td>${registro["nombre"] || "-"}</td>
       <td><span style="padding:4px 8px; border-radius:4px; background:${registro["estado"] === 'Cerrado' ? '#28a745' : registro["estado"] === 'En proceso' ? '#ffc107' : '#dc3545'}; color:white; font-size:0.85em;">${registro["estado"] || "Abierto"}</span></td>
@@ -227,17 +228,11 @@ function extraerIdDrive(url) {
 }
 
 function crearURLVisualizacion(url) {
-  const id = extraerIdDrive(url);
-  if(!id) return url;
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w200`;
+  return url;
 }
 
 function crearURLCompleta(url) {
-  const id = extraerIdDrive(url);
-  if(!id) return url;
-  
-  // Intentar múltiples formatos de URL
-  return `https://lh3.googleusercontent.com/d/${id}`;
+  return url;
 }
 
 async function verDetalle(indiceOriginal) {
@@ -361,7 +356,7 @@ function editarRegistro(indiceOriginal) {
     return;
   }
   
-  document.getElementById('editFila').value = registro._filaExcel;
+  document.getElementById('editFila').value = registro["_id"];
   document.getElementById('editEstado').value = registro["estado"] || "Abierto";
   document.getElementById('editAccionesTomadas').value = registro["accion tomada"] || "";
   
@@ -373,39 +368,32 @@ function cerrarModalEditar() {
 }
 
 async function guardarEdicion() {
-  const fila = document.getElementById('editFila').value;
+  const id = document.getElementById('editFila').value;
   const estado = document.getElementById('editEstado').value;
   const accionTomada = document.getElementById('editAccionesTomadas').value;
-  
+
   const btnGuardar = document.getElementById('btnGuardarEdicion');
   btnGuardar.disabled = true;
   btnGuardar.textContent = 'Guardando...';
-  
   mostrarOverlay('Guardando cambios...');
-  
+
   try {
-    const formData = new FormData();
-    formData.append('action', 'update');
-    formData.append('row', fila);
-    formData.append('estado', estado);
-    formData.append('accionTomada', accionTomada);
-    
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ippis?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        estado: estado,
+        accion_tomada: accionTomada
+      })
     });
-    
-    const result = await response.json();
-    
-    if(result.status === "ok") {
-      ocultarOverlay();
-      mostrarNotificacion("✓ Registro actualizado correctamente", "success");
-      cerrarModalEditar();
-      await cargarDatos(true);
-    } else {
-      throw new Error(result.error || "Error desconocido");
-    }
-    
+
+    if (!res.ok) throw new Error(await res.text());
+
+    ocultarOverlay();
+    mostrarNotificacion("✓ Registro actualizado correctamente", "success");
+    cerrarModalEditar();
+    await cargarDatos(true);
+
   } catch(err) {
     ocultarOverlay();
     mostrarNotificacion("Error al guardar: " + err.message, "error");
@@ -417,40 +405,29 @@ async function guardarEdicion() {
 
 async function eliminarRegistro(indiceOriginal) {
   const registro = datosCompletos[indiceOriginal];
-  
-  if(!registro) {
-    mostrarNotificacion("Registro no encontrado", "error");
-    return;
-  }
-  
-  const mensaje = `¿Está seguro de que desea eliminar este registro?\n\nAsunto: ${registro["informe"]}\nLugar: ${registro["lugar"]}\n\nEsta acción no se puede deshacer.`;
-  
-  const confirmar = await mostrarConfirmacion(mensaje, '🗑️ Confirmar Eliminación');
-  
-  if(!confirmar) return;
-  
+  if (!registro) { mostrarNotificacion("Registro no encontrado", "error"); return; }
+
+  const confirmar = await mostrarConfirmacion(
+    `¿Está seguro de eliminar este registro?\n\nAsunto: ${registro["informe"]}\nLugar: ${registro["lugar"]}\n\nEsta acción no se puede deshacer.`,
+    '🗑️ Confirmar Eliminación'
+  );
+
+  if (!confirmar) return;
+
   mostrarOverlay('Eliminando registro...');
-  
+
   try {
-    const formData = new FormData();
-    formData.append('action', 'delete');
-    formData.append('row', registro._filaExcel);
-    
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ippis?id=eq.${registro["_id"]}`, {
+      method: 'DELETE',
+      headers: HEADERS
     });
-    
-    const result = await response.json();
-    
-    if(result.status === "ok") {
-      ocultarOverlay();
-      mostrarNotificacion("✓ Registro eliminado correctamente", "success");
-      await cargarDatos(true);
-    } else {
-      throw new Error(result.error || "Error desconocido");
-    }
-    
+
+    if (!res.ok) throw new Error(await res.text());
+
+    ocultarOverlay();
+    mostrarNotificacion("✓ Registro eliminado correctamente", "success");
+    await cargarDatos(true);
+
   } catch(err) {
     ocultarOverlay();
     mostrarNotificacion("Error al eliminar: " + err.message, "error");
