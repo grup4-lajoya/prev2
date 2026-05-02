@@ -85,7 +85,7 @@ async function cargarDatos(forzar = false) {
       "accion tomada":  r.accion_tomada,
       "estado":         r.estado || 'Abierto',
       "nombre":         r.nombre_reporta,
-      "archivos":       r.archivos ? r.archivos.join('\n') : null,
+      "archivos": r.archivos ? (Array.isArray(r.archivos) ? r.archivos.join('\n') : r.archivos) : null,
       "sucursal":       r.sucursales ? r.sucursales.nombre : '-',
       "_id":            r.id
     }));
