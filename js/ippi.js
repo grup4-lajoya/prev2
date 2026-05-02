@@ -2,7 +2,14 @@
 // IPPI.JS - Informes de Peligros Potenciales e Incidentes
 // ============================================
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxIeRDr8R2JAQ39AlFW4f8hOrhMmvaJvuAOGwfOurjmUKn57xdXQ8t-70WweSkAorwy/exec";
+const SUPABASE_URL  = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+
+const HEADERS = {
+  'apikey': SUPABASE_ANON,
+  'Authorization': `Bearer ${SUPABASE_ANON}`,
+  'Content-Type': 'application/json'
+};
 
 let datosCompletos = [];
 let datosFiltrados = [];
@@ -43,31 +50,39 @@ async function cargarDatos(forzar = false) {
   const loadingEl = document.getElementById('loading');
   try {
     loadingEl.innerHTML = 'Cargando datos... ⏳';
-    
-    const url = forzar ? `${SCRIPT_URL}?t=${Date.now()}` : SCRIPT_URL;
-    const response = await fetch(url, {
-      method: 'GET',
-      cache: forzar ? 'no-cache' : 'default'
-    });
-    
-    if(!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
-    
-    datosCompletos = await response.json();
-    
-    if(datosCompletos.error) {
-      throw new Error(datosCompletos.error);
-    }
-    
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/ippis?select=*,sucursales(nombre,codigo)&order=creado_en.desc`,
+      { headers: HEADERS }
+    );
+
+    if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+
+    const data = await res.json();
+
+    datosCompletos = data.map(r => ({
+      ...r,
+      "marca temporal": r.creado_en,
+      "informe":        r.informe,
+      "lugar":          r.lugar,
+      "descripcion":    r.descripcion,
+      "recomendaciones": r.recomendaciones,
+      "accion tomada":  r.accion_tomada,
+      "estado":         r.estado || 'Abierto',
+      "nombre":         r.nombre_reporta,
+      "archivos":       r.archivos ? r.archivos.join('\n') : null,
+      "sucursal":       r.sucursales ? r.sucursales.nombre : '-',
+      "_id":            r.id
+    }));
+
     datosFiltrados = [...datosCompletos];
-    
+
     loadingEl.style.display = 'none';
     document.getElementById('tablaIPPI').style.display = 'table';
     document.getElementById('paginacion').style.display = 'flex';
-    
+
     actualizarTabla();
-    
+
   } catch (error) {
     console.error("Error cargando los datos:", error);
     loadingEl.innerHTML = `❌ Error: ${error.message}<br><button onclick="cargarDatos(true)" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
