@@ -77,7 +77,7 @@ async function cargarDatos(forzar = false) {
 
     datosCompletos = data.map(r => ({
       ...r,
-      "marca temporal": r.creado_en,
+     "marca temporal": r.fecha && r.hora ? `${r.fecha} ${r.hora}` : r.creado_en,
       "informe":        r.informe,
       "lugar":          r.lugar,
       "descripcion":    r.descripcion,
