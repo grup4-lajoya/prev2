@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Resultados — Olimpiadas ALAR3</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<link rel="stylesheet" href="css/admin-resultados.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>🏅 Resultados — Olimpiadas ALAR3</h1>
+      <p>Viernes 22 de Mayo 2026 · Complejo GRUP4</p>
+    </div>
+    <div class="header-usuario">
+      <strong id="headerUsuario">—</strong>
+      <a href="login.html?logout=true"
+         style="color:rgba(255,255,255,0.5);font-size:12px;text-decoration:none;margin-top:4px;display:block;">
+        Cerrar sesión
+      </a>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- TABLA DE POSICIONES -->
+    <div class="posiciones-card">
+      <div class="posiciones-card-header">
+        <span>🏆 Tabla de posiciones</span>
+        <span id="posiciones-actualizado"
+              style="font-size:11px;color:rgba(255,255,255,0.5);"></span>
+      </div>
+      <table class="tabla-posiciones">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Unidad</th>
+            <th>Puntos</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-posiciones">
+          <tr><td colspan="3" style="text-align:center;padding:20px;color:#aaa;">
+            Cargando...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-bar">
+      <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
+      <button class="filtro-btn" onclick="filtrar('fulbito', this)">⚽ Fulbito</button>
+      <button class="filtro-btn" onclick="filtrar('basquet', this)">🏀 Básquet</button>
+      <button class="filtro-btn" onclick="filtrar('voley', this)">🏐 Vóley</button>
+      <button class="filtro-btn" onclick="filtrar('fronton', this)">🎾 Frontón</button>
+      <button class="filtro-btn" onclick="filtrar('ciclismo', this)">🚴 Ciclismo</button>
+      <span class="info-registros" id="info-registros"></span>
+    </div>
+
+    <!-- TABLA DE PARTIDOS -->
+    <div class="tabla-container">
+      <div id="loading-partidos"
+           style="text-align:center;padding:40px;color:#888;font-size:14px;">
+        Cargando partidos... ⏳
+      </div>
+      <table class="tabla-partidos" id="tabla-partidos" style="display:none;">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Disciplina</th>
+            <th>Encuentro</th>
+            <th>Marcador</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpo-partidos"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: REGISTRAR RESULTADO SIMPLE
+     (Fulbito, Básquet, Vóley)
+     ============================================ -->
+<div id="modal-simple" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-simple-titulo">Registrar Resultado</h2>
+      <span class="close" onclick="cerrarModalSimple()">&times;</span>
+    </div>
+    <div class="modal-body">
+
+      <!-- Resumen del partido -->
+      <div class="partido-resumen">
+        <div class="partido-equipo" id="simple-equipo-a">—</div>
+        <div class="partido-vs">VS</div>
+        <div class="partido-equipo" id="simple-equipo-b">—</div>
+      </div>
+
+      <input type="hidden" id="simple-partido-id">
+      <input type="hidden" id="simple-tipo">
+
+      <!-- MARCADOR (Fulbito / Básquet) -->
+      <div id="seccion-marcador">
+        <div class="form-row" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label id="label-puntos-a">Goles — <span id="simple-label-a">Equipo A</span></label>
+            <input type="number" id="simple-puntos-a"
+                   min="0" max="99" inputmode="numeric"
+                   placeholder="0" style="text-align:center;font-size:24px;font-weight:700;">
+          </div>
+          <div class="form-group">
+            <label id="label-puntos-b">Goles — <span id="simple-label-b">Equipo B</span></label>
+            <input type="number" id="simple-puntos-b"
+                   min="0" max="99" inputmode="numeric"
+                   placeholder="0" style="text-align:center;font-size:24px;font-weight:700;">
+          </div>
+        </div>
+      </div>
+
+      <!-- SETS (Vóley) -->
+      <div id="seccion-sets-voley" style="display:none;">
+        <div class="mensaje-info">
+          Ingresa el puntaje de cada set. El sistema calculará automáticamente quién ganó cada set.
+        </div>
+        <div class="sets-container">
+          <h4>Sets</h4>
+          <!-- Set 1 -->
+          <div class="set-row" style="margin-bottom:10px;">
+            <span class="set-label">Set 1</span>
+            <input type="number" class="set-input" id="set1-a"
+                   min="0" max="30" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="set1-b"
+                   min="0" max="30" inputmode="numeric" placeholder="0">
+          </div>
+          <!-- Set 2 -->
+          <div class="set-row" style="margin-bottom:10px;">
+            <span class="set-label">Set 2</span>
+            <input type="number" class="set-input" id="set2-a"
+                   min="0" max="30" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="set2-b"
+                   min="0" max="30" inputmode="numeric" placeholder="0">
+          </div>
+          <!-- Set 3 (solo si hay empate 1-1) -->
+          <div class="set-row" id="fila-set3" style="display:none;">
+            <span class="set-label">Set 3</span>
+            <input type="number" class="set-input" id="set3-a"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="set3-b"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- SETS (Frontón) -->
+      <div id="seccion-sets-fronton" style="display:none;">
+        <div class="mensaje-info">
+          Ingresa el puntaje de cada set. Máximo 3 sets de 15 puntos.
+        </div>
+        <div class="sets-container">
+          <h4>Sets</h4>
+          <div class="set-row" style="margin-bottom:10px;">
+            <span class="set-label">Set 1</span>
+            <input type="number" class="set-input" id="fset1-a"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="fset1-b"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="set-row" style="margin-bottom:10px;">
+            <span class="set-label">Set 2</span>
+            <input type="number" class="set-input" id="fset2-a"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="fset2-b"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="set-row" id="fila-fset3" style="display:none;">
+            <span class="set-label">Set 3</span>
+            <input type="number" class="set-input" id="fset3-a"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+            <span class="set-label" style="text-align:center;">—</span>
+            <input type="number" class="set-input" id="fset3-b"
+                   min="0" max="20" inputmode="numeric" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="form-group">
+        <label>Estado del partido <span class="required">*</span></label>
+        <select id="simple-estado">
+          <option value="en_curso">🟢 En curso</option>
+          <option value="finalizado">✅ Finalizado</option>
+        </select>
+      </div>
+
+      <button class="btn-guardar-final" onclick="guardarResultadoSimple()">
+        💾 Guardar resultado
+      </button>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cerrar" onclick="cerrarModalSimple()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: REGISTRAR RANKING
+     (Ciclismo)
+     ============================================ -->
+<div id="modal-ranking" class="modal">
+  <div class="modal-content modal-lg">
+    <div class="modal-header">
+      <h2>🚴 Ranking — Ciclismo</h2>
+      <span class="close" onclick="cerrarModalRanking()">&times;</span>
+    </div>
+    <div class="modal-body">
+
+      <div class="mensaje-info">
+        Ingresa el nombre y unidad de cada participante en orden de llegada.
+        Los puntos se calcularán automáticamente según las bases.
+      </div>
+
+      <input type="hidden" id="ranking-partido-id">
+
+      <div class="ranking-container">
+        <div class="ranking-header">
+          <span>Pos.</span>
+          <span>Participante</span>
+          <span>Unidad</span>
+        </div>
+        <!-- Posiciones 1 al 20 generadas por JS -->
+        <div id="ranking-rows"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Estado <span class="required">*</span></label>
+        <select id="ranking-estado">
+          <option value="en_curso">🟢 En curso</option>
+          <option value="finalizado">✅ Finalizado</option>
+        </select>
+      </div>
+
+      <button class="btn-guardar-final" onclick="guardarRanking()">
+        💾 Guardar ranking
+      </button>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cerrar" onclick="cerrarModalRanking()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY DE CARGA -->
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">
+        Cancelar
+      </button>
+      <button class="btn-confirmar-si" onclick="cerrarConfirmacion(true)">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/admin-resultados.js"></script>
+</body>
+</html>
