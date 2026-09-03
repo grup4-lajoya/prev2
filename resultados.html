@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resultados</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; padding:20px; }
+  h2 { color:#002147; margin-top:0; }
+  h3 { color:#002147; margin-top:0; }
+  .card { background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px 20px; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; }
+  th { color:#002147; }
+  .badge { font-size:0.75rem; padding:3px 8px; border-radius:10px; font-weight:600; }
+  .badge.aprobado { background:#e6f7e6; color:#256029; }
+  .badge.desaprobado { background:#f8d7da; color:#721c24; }
+  .badge.pendiente { background:#fff3cd; color:#856404; }
+  .badge.norendido { background:#eee; color:#666; }
+  .vacio { color:#777; font-style:italic; padding:10px 0; }
+  .mensaje.error { background:#f8d7da; color:#721c24; padding:10px; border-radius:6px; }
+  .comentario { font-size:0.82rem; color:#666; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<h2>Resultados</h2>
+
+<div id="contenido">Cargando...</div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const usuario = localStorage.getItem('usuario');
+  const rol = localStorage.getItem('rol');
+  const NOTA_APROBATORIA = 11; // ajusta si tu escala de aprobación es distinta
+
+  async function iniciar() {
+    const cont = document.getElementById('contenido');
+    if (!usuario || !rol) { cont.innerHTML = '<div class="mensaje error">No se detectó sesión activa.</div>'; return; }
+
+    if (rol === 'ALUMNO') {
+      await mostrarResultadosAlumno();
+    } else if (rol === 'DOCENTE' || rol === 'ADMIN') {
+      await mostrarResultadosDocente();
+    } else {
+      cont.innerHTML = '<div class="mensaje error">Tu rol no tiene acceso a esta pantalla.</div>';
+    }
+  }
+
+  // ---------- VISTA ALUMNO ----------
+  async function mostrarResultadosAlumno() {
+    const cont = document.getElementById('contenido');
+
+    const { data: matricula } = await supabase.from('matriculas').select('curso_id')
+      .eq('alumno_usuario', usuario).limit(1).maybeSingle();
+
+    if (!matricula) { cont.innerHTML = '<div class="mensaje error">No estás matriculado en ningún curso.</div>'; return; }
+
+    const { data: examenes, error: errExamenes } = await supabase.from('evaluaciones')
+      .select('id, titulo').eq('curso_id', matricula.curso_id).eq('tipo', 'examen')
+      .order('created_at', { ascending: false });
+
+    if (errExamenes) { cont.innerHTML = '<div class="mensaje error">Error al cargar exámenes.</div>'; return; }
+    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="card"><div class="vacio">Aún no hay exámenes en tu curso.</div></div>'; return; }
+
+    const { data: notas } = await supabase.from('notas').select('evaluacion_id, nota_final, comentario_profesor')
+      .eq('alumno_usuario', usuario);
+    const notasPorEval = Object.fromEntries((notas || []).map(n => [n.evaluacion_id, n]));
+
+    const { data: respuestas } = await supabase.from('respuestas_alumno').select('evaluacion_id')
+      .eq('alumno_usuario', usuario);
+    const rendidos = new Set((respuestas || []).map(r => r.evaluacion_id));
+
+    let filas = examenes.map(ev => {
+      const nota = notasPorEval[ev.id];
+      let estadoHtml;
+      if (nota) {
+        const cls = nota.nota_final >= NOTA_APROBATORIA ? 'aprobado' : 'desaprobado';
+        estadoHtml = `<span class="badge ${cls}">${nota.nota_final}</span>` +
+          (nota.comentario_profesor ? `<div class="comentario">"${nota.comentario_profesor}"</div>` : '');
+      } else if (rendidos.has(ev.id)) {
+        estadoHtml = '<span class="badge pendiente">Pendiente de corrección</span>';
+      } else {
+        estadoHtml = '<span class="badge norendido">No rendido</span>';
+      }
+      return `<tr><td>${ev.titulo}</td><td>${estadoHtml}</td></tr>`;
+    }).join('');
+
+    cont.innerHTML = `<div class="card"><h3>Mis notas</h3>
+      <table><thead><tr><th>Examen</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table>
+    </div>`;
+  }
+
+  // ---------- VISTA DOCENTE / ADMIN ----------
+  async function mostrarResultadosDocente() {
+    const cont = document.getElementById('contenido');
+
+    const { data: curso } = await supabase.from('cursos').select('id, nombre')
+      .eq('profesor_usuario', usuario).eq('activo', true).limit(1).maybeSingle();
+
+    if (!curso) { cont.innerHTML = '<div class="mensaje error">No tienes curso asignado.</div>'; return; }
+
+    const { data: examenes } = await supabase.from('evaluaciones')
+      .select('id, titulo').eq('curso_id', curso.id).eq('tipo', 'examen')
+      .order('created_at', { ascending: false });
+
+    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="card"><div class="vacio">Aún no has creado exámenes.</div></div>'; return; }
+
+    const { data: matriculados } = await supabase.from('matriculas')
+      .select('alumno_usuario, users ( datos )').eq('curso_id', curso.id);
+
+    const { data: notas } = await supabase.from('notas')
+      .select('evaluacion_id, alumno_usuario, nota_final')
+      .in('evaluacion_id', examenes.map(e => e.id));
+
+    const { data: respuestas } = await supabase.from('respuestas_alumno')
+      .select('evaluacion_id, alumno_usuario')
+      .in('evaluacion_id', examenes.map(e => e.id));
+
+    const notaKey = (evalId, alumno) => `${evalId}__${alumno}`;
+    const notasMap = Object.fromEntries((notas || []).map(n => [notaKey(n.evaluacion_id, n.alumno_usuario), n.nota_final]));
+    const rendidosSet = new Set((respuestas || []).map(r => notaKey(r.evaluacion_id, r.alumno_usuario)));
+
+    let bloques = examenes.map(ev => {
+      const filas = (matriculados || []).map(m => {
+        const key = notaKey(ev.id, m.alumno_usuario);
+        let estadoHtml;
+        if (notasMap[key] !== undefined) {
+          const cls = notasMap[key] >= NOTA_APROBATORIA ? 'aprobado' : 'desaprobado';
+          estadoHtml = `<span class="badge ${cls}">${notasMap[key]}</span>`;
+        } else if (rendidosSet.has(key)) {
+          estadoHtml = '<span class="badge pendiente">Por corregir</span>';
+        } else {
+          estadoHtml = '<span class="badge norendido">No rendido</span>';
+        }
+        return `<tr><td>${m.users?.datos || m.alumno_usuario} (${m.alumno_usuario})</td><td>${estadoHtml}</td></tr>`;
+      }).join('');
+
+      return `<div class="card"><h3>${ev.titulo}</h3>
+        <table><thead><tr><th>Alumno</th><th>Estado</th></tr></thead><tbody>${filas || '<tr><td colspan="2" class="vacio">Sin alumnos matriculados.</td></tr>'}</tbody></table>
+      </div>`;
+    }).join('');
+
+    cont.innerHTML = bloques;
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>
