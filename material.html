@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Material de clase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<style>
+  body {
+    margin:0;
+    font-family:Arial,sans-serif;
+    background-color:#f4f6fa;
+    color:#222;
+    padding: 20px;
+  }
+  h2 { color:#002147; margin-top:0; }
+  .card {
+    background:#fff;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    padding:16px 20px;
+    margin-bottom:20px;
+  }
+  label { display:block; font-weight:600; margin-top:10px; font-size:0.9rem; color:#333; }
+  input, select {
+    width:100%;
+    padding:8px;
+    margin-top:4px;
+    box-sizing:border-box;
+    border:1px solid #ccc;
+    border-radius:6px;
+    font-size:0.9rem;
+  }
+  button {
+    margin-top:16px;
+    padding:10px 18px;
+    background:#0056A6;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button:hover { background:#003366; }
+  button:disabled { background:#999; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; }
+  th { color:#002147; }
+  a.abrir { color:#0056A6; text-decoration:none; font-weight:600; }
+  a.abrir:hover { text-decoration:underline; }
+  .mensaje { padding:10px; border-radius:6px; margin-top:10px; font-size:0.9rem; }
+  .mensaje.ok { background:#e6f7e6; color:#256029; }
+  .mensaje.error { background:#f8d7da; color:#721c24; }
+  .vacio { color:#777; font-style:italic; padding:10px 0; }
+</style>
+</head>
+<body>
+
+<h2>Material de clase</h2>
+
+<div class="card" id="cardSubir" style="display:none;">
+  <h3 style="margin-top:0;">Subir nuevo material</h3>
+  <label>Título</label>
+  <input id="titulo" placeholder="ej. Clase 1 - Introducción">
+  <label>Archivo (solo PDF)</label>
+  <input id="archivo" type="file" accept="application/pdf">
+  <button id="btnSubir" onclick="subirMaterial()">Subir material</button>
+  <div id="mensajeSubida"></div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;" id="tituloLista">Materiales del curso</h3>
+  <div id="listaMateriales">Cargando...</div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const usuario = localStorage.getItem('usuario');
+  const rol = localStorage.getItem('rol');
+
+  let cursoId = null;
+
+  async function iniciar() {
+    if (!usuario || !rol) {
+      document.getElementById('listaMateriales').innerHTML =
+        '<div class="mensaje error">No se detectó sesión activa.</div>';
+      return;
+    }
+
+    // Docente/Admin: buscar el curso que dicta
+    if (rol === 'DOCENTE' || rol === 'ADMIN') {
+      const { data, error } = await supabase
+        .from('cursos')
+        .select('id, nombre')
+        .eq('profesor_usuario', usuario)
+        .eq('activo', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) {
+        document.getElementById('listaMateriales').innerHTML =
+          '<div class="mensaje error">No tienes ningún curso asignado todavía.</div>';
+        return;
+      }
+
+      cursoId = data.id;
+      document.getElementById('tituloLista').textContent = `Materiales · ${data.nombre}`;
+      document.getElementById('cardSubir').style.display = 'block';
+
+    // Alumno: buscar el curso en el que está matriculado
+    } else if (rol === 'ALUMNO') {
+      const { data, error } = await supabase
+        .from('matriculas')
+        .select('curso_id, cursos ( nombre )')
+        .eq('alumno_usuario', usuario)
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) {
+        document.getElementById('listaMateriales').innerHTML =
+          '<div class="mensaje error">No estás matriculado en ningún curso todavía.</div>';
+        return;
+      }
+
+      cursoId = data.curso_id;
+      document.getElementById('tituloLista').textContent = `Materiales · ${data.cursos.nombre}`;
+    }
+
+    cargarMateriales();
+  }
+
+  async function cargarMateriales() {
+    const { data, error } = await supabase
+      .from('materiales')
+      .select('id, titulo, archivo_url, peso_kb, created_at')
+      .eq('curso_id', cursoId)
+      .order('orden');
+
+    const contenedor = document.getElementById('listaMateriales');
+
+    if (error) {
+      contenedor.innerHTML = '<div class="mensaje error">Error al cargar el material.</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      contenedor.innerHTML = '<div class="vacio">Todavía no hay material subido.</div>';
+      return;
+    }
+
+    let filas = data.map(m => `
+      <tr>
+        <td>${m.titulo}</td>
+        <td>${(m.peso_kb / 1024).toFixed(1)} MB</td>
+        <td><a class="abrir" href="${m.archivo_url}" target="_blank" rel="noopener">Abrir PDF</a></td>
+      </tr>
+    `).join('');
+
+    contenedor.innerHTML = `
+      <table>
+        <thead><tr><th>Título</th><th>Peso</th><th></th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+    `;
+  }
+
+  async function subirMaterial() {
+    const titulo = document.getElementById('titulo').value.trim();
+    const archivo = document.getElementById('archivo').files[0];
+    const mensajeDiv = document.getElementById('mensajeSubida');
+    const boton = document.getElementById('btnSubir');
+
+    if (!titulo || !archivo) {
+      mensajeDiv.innerHTML = '<div class="mensaje error">Completa el título y elige un archivo PDF.</div>';
+      return;
+    }
+
+    boton.disabled = true;
+    mensajeDiv.innerHTML = '<div class="mensaje">Subiendo...</div>';
+
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('usuario', usuario);
+    formData.append('curso_id', cursoId);
+    formData.append('titulo', titulo);
+    formData.append('orden', '0');
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/subir-material`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        mensajeDiv.innerHTML = '<div class="mensaje ok">Material subido correctamente.</div>';
+        document.getElementById('titulo').value = '';
+        document.getElementById('archivo').value = '';
+        cargarMateriales();
+      } else {
+        mensajeDiv.innerHTML = `<div class="mensaje error">${data.error}</div>`;
+      }
+    } catch (err) {
+      mensajeDiv.innerHTML = `<div class="mensaje error">Error de red: ${err.message}</div>`;
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>
