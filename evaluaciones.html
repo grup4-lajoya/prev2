@@ -59,10 +59,13 @@
     <input id="titulo">
 
     <label>Tipo</label>
-    <select id="tipo">
+    <select id="tipo" onchange="ajustarIntentosPorDefecto()">
       <option value="cuestionario">Cuestionario (práctica, no cuenta nota)</option>
       <option value="examen">Examen (cuenta nota)</option>
     </select>
+
+    <label>Intentos permitidos (deja vacío para ilimitado)</label>
+    <input id="intentos" type="number" min="1" value="1" placeholder="ej. 1">
 
     <div id="preguntasContainer"></div>
 
@@ -95,6 +98,7 @@
   <div class="card oculto" id="cardResultado">
     <h3 style="margin-top:0;">Resultado</h3>
     <div id="resultadoTexto"></div>
+    <button style="margin-top:14px;" onclick="volverALista()">Volver a evaluaciones</button>
   </div>
 
 </div>
@@ -153,6 +157,11 @@
     document.getElementById('cardFormulario').classList.add('oculto');
     document.getElementById('preguntasContainer').innerHTML = '';
     document.getElementById('titulo').value = '';
+  }
+
+  function ajustarIntentosPorDefecto() {
+    const tipo = document.getElementById('tipo').value;
+    document.getElementById('intentos').value = tipo === 'examen' ? '1' : '';
   }
 
   function agregarPregunta() {
@@ -220,6 +229,8 @@
   async function crearEvaluacion() {
     const titulo = document.getElementById('titulo').value.trim();
     const tipo = document.getElementById('tipo').value;
+    const intentosRaw = document.getElementById('intentos').value.trim();
+    const intentos_permitidos = intentosRaw ? Number(intentosRaw) : null;
     const mensajeDiv = document.getElementById('mensajeCrear');
     const boton = document.getElementById('btnCrear');
 
@@ -263,7 +274,7 @@
       const res = await fetch(`${SUPABASE_URL}/functions/v1/crear-evaluacion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
-        body: JSON.stringify({ usuario, curso_id: cursoId, titulo, tipo, preguntas })
+        body: JSON.stringify({ usuario, curso_id: cursoId, titulo, tipo, intentos_permitidos, preguntas })
       });
       const data = await res.json();
 
@@ -281,21 +292,45 @@
     }
   }
 
-  // ---------- ALUMNO: listar ----------
+  // ---------- ALUMNO: listar (con control de intentos ya usados) ----------
   async function cargarEvaluacionesAlumno() {
-    const { data, error } = await supabase.from('evaluaciones')
-      .select('id, titulo, tipo').eq('curso_id', cursoId).order('created_at', { ascending: false });
+    const { data: evaluaciones, error } = await supabase.from('evaluaciones')
+      .select('id, titulo, tipo, intentos_permitidos').eq('curso_id', cursoId).order('created_at', { ascending: false });
 
     const cont = document.getElementById('listaEvaluacionesAlumno');
     if (error) { cont.innerHTML = '<div class="mensaje error">Error al cargar.</div>'; return; }
-    if (!data || data.length === 0) { cont.innerHTML = '<div class="vacio">No hay evaluaciones disponibles.</div>'; return; }
+    if (!evaluaciones || evaluaciones.length === 0) { cont.innerHTML = '<div class="vacio">No hay evaluaciones disponibles.</div>'; return; }
 
-    cont.innerHTML = data.map(e => `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
-        <span>${e.titulo} <span class="badge ${e.tipo}">${e.tipo}</span></span>
-        <button onclick="empezarEvaluacion('${e.id}', '${e.titulo.replace(/'/g, "\\'")}')">Rendir</button>
-      </div>
-    `).join('');
+    // Cuántos intentos ya usó el alumno en cada evaluación
+    const { data: respuestas } = await supabase.from('respuestas_alumno')
+      .select('evaluacion_id, intento_numero')
+      .eq('alumno_usuario', usuario)
+      .in('evaluacion_id', evaluaciones.map(e => e.id));
+
+    const intentosUsados = {};
+    (respuestas || []).forEach(r => {
+      intentosUsados[r.evaluacion_id] = Math.max(intentosUsados[r.evaluacion_id] || 0, r.intento_numero);
+    });
+
+    cont.innerHTML = evaluaciones.map(e => {
+      const usados = intentosUsados[e.id] || 0;
+      const sinIntentos = e.intentos_permitidos && usados >= e.intentos_permitidos;
+
+      let accionHtml;
+      if (sinIntentos) {
+        accionHtml = `<span class="badge norendido">Ya rendido (${usados}/${e.intentos_permitidos})</span>`;
+      } else {
+        const textoBoton = usados > 0 ? `Reintentar (${usados}/${e.intentos_permitidos ?? '∞'})` : 'Rendir';
+        accionHtml = `<button onclick="empezarEvaluacion('${e.id}')">${textoBoton}</button>`;
+      }
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+          <span>${e.titulo} <span class="badge ${e.tipo}">${e.tipo}</span></span>
+          ${accionHtml}
+        </div>
+      `;
+    }).join('');
   }
 
   // ---------- ALUMNO: rendir, una pregunta a la vez ----------
@@ -304,7 +339,7 @@
   let indicePregunta = 0;
   let respuestasAlumno = {};
 
-  async function empezarEvaluacion(evaluacionId, titulo) {
+  async function empezarEvaluacion(evaluacionId) {
     evalActualId = evaluacionId;
     indicePregunta = 0;
     respuestasAlumno = {};
@@ -389,7 +424,9 @@
 
       if (data.success) {
         let texto = `Puntaje autocalificado: ${data.data.puntaje_autocalificado} / ${data.data.puntaje_total_autocalificable}`;
-        if (data.data.pendiente_correccion_manual) {
+        if (data.data.nota_final !== null && data.data.nota_final !== undefined) {
+          texto += `<br><strong>Nota final: ${data.data.nota_final}</strong>`;
+        } else if (data.data.pendiente_correccion_manual) {
           texto += '<br>Tienes preguntas abiertas pendientes de corrección por el docente.';
         }
         document.getElementById('resultadoTexto').innerHTML = `<div class="mensaje ok">${texto}</div>`;
@@ -403,6 +440,12 @@
     } finally {
       boton.disabled = false;
     }
+  }
+
+  function volverALista() {
+    document.getElementById('cardResultado').classList.add('oculto');
+    document.getElementById('cardListaAlumno').classList.remove('oculto');
+    cargarEvaluacionesAlumno();
   }
 
   iniciar();
