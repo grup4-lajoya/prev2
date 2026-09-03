@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Evaluaciones</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; padding:20px; }
+  h2 { color:#002147; margin-top:0; }
+  h3 { color:#002147; }
+  .card { background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px 20px; margin-bottom:20px; }
+  label { display:block; font-weight:600; margin-top:10px; font-size:0.9rem; color:#333; }
+  input, select, textarea { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; font-family:inherit; }
+  textarea { resize:vertical; min-height:70px; }
+  button { padding:9px 16px; background:#0056A6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.88rem; }
+  button:hover { background:#003366; }
+  button.secundario { background:#eee; color:#333; }
+  button.secundario:hover { background:#ddd; }
+  button.peligro { background:#c0392b; padding:4px 8px; font-size:0.8rem; }
+  button.peligro:hover { background:#96281e; }
+  button:disabled { background:#999; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; }
+  th { color:#002147; }
+  .badge { font-size:0.75rem; padding:3px 8px; border-radius:10px; font-weight:600; }
+  .badge.examen { background:#e6f0ff; color:#0056A6; }
+  .badge.cuestionario { background:#eee; color:#555; }
+  .mensaje { padding:10px; border-radius:6px; margin-top:10px; font-size:0.9rem; }
+  .mensaje.ok { background:#e6f7e6; color:#256029; }
+  .mensaje.error { background:#f8d7da; color:#721c24; }
+  .vacio { color:#777; font-style:italic; padding:10px 0; }
+  .pregunta-block { border:1px solid #ddd; border-radius:8px; padding:14px; margin-top:14px; position:relative; background:#fafbfd; }
+  .pregunta-block .cabecera-pregunta { display:flex; justify-content:space-between; align-items:center; }
+  .opcion-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .opcion-row input[type="text"] { flex:1; margin-top:0; }
+  .opcion-row input[type="checkbox"] { width:auto; margin-top:0; }
+  .progreso { font-size:0.85rem; color:#555; margin-bottom:8px; }
+  .oculto { display:none; }
+</style>
+</head>
+<body>
+
+<h2>Evaluaciones</h2>
+
+<!-- ============ VISTA DOCENTE / ADMIN ============ -->
+<div id="vistaDocente" class="oculto">
+
+  <div class="card">
+    <h3 style="margin-top:0;">Evaluaciones del curso</h3>
+    <div id="listaEvaluaciones">Cargando...</div>
+    <button style="margin-top:14px;" onclick="mostrarFormulario()">+ Crear nueva evaluación</button>
+  </div>
+
+  <div class="card oculto" id="cardFormulario">
+    <h3 style="margin-top:0;">Nueva evaluación</h3>
+
+    <label>Título</label>
+    <input id="titulo">
+
+    <label>Tipo</label>
+    <select id="tipo">
+      <option value="cuestionario">Cuestionario (práctica, no cuenta nota)</option>
+      <option value="examen">Examen (cuenta nota)</option>
+    </select>
+
+    <div id="preguntasContainer"></div>
+
+    <button class="secundario" style="margin-top:16px;" onclick="agregarPregunta()">+ Agregar pregunta</button>
+    <br>
+    <button style="margin-top:16px;" id="btnCrear" onclick="crearEvaluacion()">Guardar evaluación</button>
+    <button class="secundario" style="margin-top:16px;" onclick="ocultarFormulario()">Cancelar</button>
+
+    <div id="mensajeCrear"></div>
+  </div>
+
+</div>
+
+<!-- ============ VISTA ALUMNO ============ -->
+<div id="vistaAlumno" class="oculto">
+
+  <div class="card" id="cardListaAlumno">
+    <h3 style="margin-top:0;">Evaluaciones disponibles</h3>
+    <div id="listaEvaluacionesAlumno">Cargando...</div>
+  </div>
+
+  <div class="card oculto" id="cardRendir">
+    <div class="progreso" id="progresoTexto"></div>
+    <h3 id="enunciadoActual" style="margin-top:0;"></h3>
+    <div id="opcionesActual"></div>
+    <button id="btnSiguiente" onclick="siguientePregunta()">Siguiente</button>
+    <div id="mensajeRendir"></div>
+  </div>
+
+  <div class="card oculto" id="cardResultado">
+    <h3 style="margin-top:0;">Resultado</h3>
+    <div id="resultadoTexto"></div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const usuario = localStorage.getItem('usuario');
+  const rol = localStorage.getItem('rol');
+  let cursoId = null;
+  let contadorPreguntas = 0;
+
+  async function iniciar() {
+    if (!usuario || !rol) return;
+
+    if (rol === 'DOCENTE' || rol === 'ADMIN') {
+      const { data } = await supabase.from('cursos').select('id, nombre')
+        .eq('profesor_usuario', usuario).eq('activo', true).limit(1).maybeSingle();
+      if (!data) { document.getElementById('listaEvaluaciones').innerHTML = '<div class="mensaje error">No tienes curso asignado.</div>'; return; }
+      cursoId = data.id;
+      document.getElementById('vistaDocente').classList.remove('oculto');
+      cargarEvaluacionesDocente();
+
+    } else if (rol === 'ALUMNO') {
+      const { data } = await supabase.from('matriculas').select('curso_id')
+        .eq('alumno_usuario', usuario).limit(1).maybeSingle();
+      if (!data) { document.getElementById('listaEvaluacionesAlumno').innerHTML = '<div class="mensaje error">No estás matriculado en ningún curso.</div>'; return; }
+      cursoId = data.curso_id;
+      document.getElementById('vistaAlumno').classList.remove('oculto');
+      cargarEvaluacionesAlumno();
+    }
+  }
+
+  // ---------- DOCENTE: listar ----------
+  async function cargarEvaluacionesDocente() {
+    const { data, error } = await supabase.from('evaluaciones')
+      .select('id, titulo, tipo').eq('curso_id', cursoId).order('created_at', { ascending: false });
+
+    const cont = document.getElementById('listaEvaluaciones');
+    if (error) { cont.innerHTML = '<div class="mensaje error">Error al cargar.</div>'; return; }
+    if (!data || data.length === 0) { cont.innerHTML = '<div class="vacio">Aún no has creado ninguna evaluación.</div>'; return; }
+
+    cont.innerHTML = `<table><thead><tr><th>Título</th><th>Tipo</th></tr></thead><tbody>
+      ${data.map(e => `<tr><td>${e.titulo}</td><td><span class="badge ${e.tipo}">${e.tipo}</span></td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // ---------- DOCENTE: formulario dinámico ----------
+  function mostrarFormulario() {
+    document.getElementById('cardFormulario').classList.remove('oculto');
+    if (document.getElementById('preguntasContainer').children.length === 0) agregarPregunta();
+  }
+  function ocultarFormulario() {
+    document.getElementById('cardFormulario').classList.add('oculto');
+    document.getElementById('preguntasContainer').innerHTML = '';
+    document.getElementById('titulo').value = '';
+  }
+
+  function agregarPregunta() {
+    contadorPreguntas++;
+    const id = contadorPreguntas;
+    const div = document.createElement('div');
+    div.className = 'pregunta-block';
+    div.dataset.id = id;
+    div.innerHTML = `
+      <div class="cabecera-pregunta">
+        <strong>Pregunta</strong>
+        <button class="peligro" onclick="quitarPregunta(${id})">Quitar</button>
+      </div>
+      <label>Enunciado</label>
+      <input class="input-enunciado" placeholder="Escribe la pregunta">
+      <label>Tipo de pregunta</label>
+      <select class="select-tipo" onchange="cambiarTipoPregunta(${id})">
+        <option value="opcion_multiple">Opción múltiple</option>
+        <option value="verdadero_falso">Verdadero / Falso</option>
+        <option value="abierta">Abierta (corrección manual)</option>
+      </select>
+      <div class="opciones-container"></div>
+      <button class="secundario btn-agregar-opcion" style="margin-top:8px;" onclick="agregarOpcion(${id})">+ Agregar opción</button>
+    `;
+    document.getElementById('preguntasContainer').appendChild(div);
+  }
+
+  function quitarPregunta(id) {
+    document.querySelector(`.pregunta-block[data-id="${id}"]`).remove();
+  }
+
+  function cambiarTipoPregunta(id) {
+    const bloque = document.querySelector(`.pregunta-block[data-id="${id}"]`);
+    const tipo = bloque.querySelector('.select-tipo').value;
+    const contOpciones = bloque.querySelector('.opciones-container');
+    const btnAgregar = bloque.querySelector('.btn-agregar-opcion');
+    contOpciones.innerHTML = '';
+
+    if (tipo === 'abierta') {
+      btnAgregar.classList.add('oculto');
+    } else if (tipo === 'verdadero_falso') {
+      btnAgregar.classList.add('oculto');
+      agregarOpcionConTexto(id, 'Verdadero');
+      agregarOpcionConTexto(id, 'Falso');
+    } else {
+      btnAgregar.classList.remove('oculto');
+    }
+  }
+
+  function agregarOpcion(id) { agregarOpcionConTexto(id, ''); }
+
+  function agregarOpcionConTexto(id, texto) {
+    const bloque = document.querySelector(`.pregunta-block[data-id="${id}"]`);
+    const cont = bloque.querySelector('.opciones-container');
+    const row = document.createElement('div');
+    row.className = 'opcion-row';
+    row.innerHTML = `
+      <input type="checkbox" class="opcion-correcta" title="Marcar como correcta">
+      <input type="text" class="opcion-texto" value="${texto}" placeholder="Texto de la opción">
+      <button class="peligro" onclick="this.parentElement.remove()">✕</button>
+    `;
+    cont.appendChild(row);
+  }
+
+  async function crearEvaluacion() {
+    const titulo = document.getElementById('titulo').value.trim();
+    const tipo = document.getElementById('tipo').value;
+    const mensajeDiv = document.getElementById('mensajeCrear');
+    const boton = document.getElementById('btnCrear');
+
+    if (!titulo) { mensajeDiv.innerHTML = '<div class="mensaje error">Ponle un título a la evaluación.</div>'; return; }
+
+    const bloques = document.querySelectorAll('.pregunta-block');
+    if (bloques.length === 0) { mensajeDiv.innerHTML = '<div class="mensaje error">Agrega al menos una pregunta.</div>'; return; }
+
+    const preguntas = [];
+    for (const bloque of bloques) {
+      const enunciado = bloque.querySelector('.input-enunciado').value.trim();
+      const tipo_pregunta = bloque.querySelector('.select-tipo').value;
+      if (!enunciado) { mensajeDiv.innerHTML = '<div class="mensaje error">Hay una pregunta sin enunciado.</div>'; return; }
+
+      const pregunta = { enunciado, tipo_pregunta };
+
+      if (tipo_pregunta !== 'abierta') {
+        const filas = bloque.querySelectorAll('.opcion-row');
+        const opciones = Array.from(filas).map(f => ({
+          texto: f.querySelector('.opcion-texto').value.trim(),
+          es_correcta: f.querySelector('.opcion-correcta').checked
+        }));
+        if (opciones.length < 2 || opciones.some(o => !o.texto)) {
+          mensajeDiv.innerHTML = `<div class="mensaje error">La pregunta "${enunciado}" necesita al menos 2 opciones con texto.</div>`;
+          return;
+        }
+        if (!opciones.some(o => o.es_correcta)) {
+          mensajeDiv.innerHTML = `<div class="mensaje error">La pregunta "${enunciado}" necesita una opción marcada como correcta.</div>`;
+          return;
+        }
+        pregunta.opciones = opciones;
+      }
+
+      preguntas.push(pregunta);
+    }
+
+    boton.disabled = true;
+    mensajeDiv.innerHTML = '<div class="mensaje">Guardando...</div>';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/crear-evaluacion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ usuario, curso_id: cursoId, titulo, tipo, preguntas })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        mensajeDiv.innerHTML = '<div class="mensaje ok">Evaluación creada correctamente.</div>';
+        ocultarFormulario();
+        cargarEvaluacionesDocente();
+      } else {
+        mensajeDiv.innerHTML = `<div class="mensaje error">${data.error}</div>`;
+      }
+    } catch (err) {
+      mensajeDiv.innerHTML = `<div class="mensaje error">Error de red: ${err.message}</div>`;
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  // ---------- ALUMNO: listar ----------
+  async function cargarEvaluacionesAlumno() {
+    const { data, error } = await supabase.from('evaluaciones')
+      .select('id, titulo, tipo').eq('curso_id', cursoId).order('created_at', { ascending: false });
+
+    const cont = document.getElementById('listaEvaluacionesAlumno');
+    if (error) { cont.innerHTML = '<div class="mensaje error">Error al cargar.</div>'; return; }
+    if (!data || data.length === 0) { cont.innerHTML = '<div class="vacio">No hay evaluaciones disponibles.</div>'; return; }
+
+    cont.innerHTML = data.map(e => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+        <span>${e.titulo} <span class="badge ${e.tipo}">${e.tipo}</span></span>
+        <button onclick="empezarEvaluacion('${e.id}', '${e.titulo.replace(/'/g, "\\'")}')">Rendir</button>
+      </div>
+    `).join('');
+  }
+
+  // ---------- ALUMNO: rendir, una pregunta a la vez ----------
+  let evalActualId = null;
+  let preguntasEval = [];
+  let indicePregunta = 0;
+  let respuestasAlumno = {};
+
+  async function empezarEvaluacion(evaluacionId, titulo) {
+    evalActualId = evaluacionId;
+    indicePregunta = 0;
+    respuestasAlumno = {};
+
+    const { data, error } = await supabase.from('preguntas')
+      .select('id, enunciado, tipo_pregunta, orden, opciones ( id, texto )')
+      .eq('evaluacion_id', evaluacionId).order('orden');
+
+    if (error || !data || data.length === 0) {
+      alert('No se pudieron cargar las preguntas.');
+      return;
+    }
+
+    preguntasEval = data;
+    document.getElementById('cardListaAlumno').classList.add('oculto');
+    document.getElementById('cardResultado').classList.add('oculto');
+    document.getElementById('cardRendir').classList.remove('oculto');
+    mostrarPregunta();
+  }
+
+  function mostrarPregunta() {
+    const p = preguntasEval[indicePregunta];
+    document.getElementById('progresoTexto').textContent = `Pregunta ${indicePregunta + 1} de ${preguntasEval.length}`;
+    document.getElementById('enunciadoActual').textContent = p.enunciado;
+    document.getElementById('mensajeRendir').innerHTML = '';
+
+    const cont = document.getElementById('opcionesActual');
+    if (p.tipo_pregunta === 'abierta') {
+      cont.innerHTML = `<textarea id="respuestaAbierta" placeholder="Escribe tu respuesta"></textarea>`;
+    } else {
+      cont.innerHTML = p.opciones.map(o => `
+        <label style="display:flex; align-items:center; gap:8px; font-weight:400; margin-top:8px;">
+          <input type="radio" name="opcion" value="${o.id}" style="width:auto;">
+          ${o.texto}
+        </label>
+      `).join('');
+    }
+
+    document.getElementById('btnSiguiente').textContent =
+      (indicePregunta === preguntasEval.length - 1) ? 'Enviar' : 'Siguiente';
+  }
+
+  function guardarRespuestaActual() {
+    const p = preguntasEval[indicePregunta];
+    if (p.tipo_pregunta === 'abierta') {
+      const texto = document.getElementById('respuestaAbierta').value.trim();
+      if (!texto) { document.getElementById('mensajeRendir').innerHTML = '<div class="mensaje error">Escribe una respuesta.</div>'; return false; }
+      respuestasAlumno[p.id] = { pregunta_id: p.id, respuesta_texto: texto };
+    } else {
+      const marcada = document.querySelector('input[name="opcion"]:checked');
+      if (!marcada) { document.getElementById('mensajeRendir').innerHTML = '<div class="mensaje error">Elige una opción.</div>'; return false; }
+      respuestasAlumno[p.id] = { pregunta_id: p.id, opcion_elegida_id: marcada.value };
+    }
+    return true;
+  }
+
+  async function siguientePregunta() {
+    if (!guardarRespuestaActual()) return;
+
+    if (indicePregunta < preguntasEval.length - 1) {
+      indicePregunta++;
+      mostrarPregunta();
+    } else {
+      await enviarTodasLasRespuestas();
+    }
+  }
+
+  async function enviarTodasLasRespuestas() {
+    const boton = document.getElementById('btnSiguiente');
+    boton.disabled = true;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/enviar-respuesta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ usuario, evaluacion_id: evalActualId, respuestas: Object.values(respuestasAlumno) })
+      });
+      const data = await res.json();
+
+      document.getElementById('cardRendir').classList.add('oculto');
+      document.getElementById('cardResultado').classList.remove('oculto');
+
+      if (data.success) {
+        let texto = `Puntaje autocalificado: ${data.data.puntaje_autocalificado} / ${data.data.puntaje_total_autocalificable}`;
+        if (data.data.pendiente_correccion_manual) {
+          texto += '<br>Tienes preguntas abiertas pendientes de corrección por el docente.';
+        }
+        document.getElementById('resultadoTexto').innerHTML = `<div class="mensaje ok">${texto}</div>`;
+      } else {
+        document.getElementById('resultadoTexto').innerHTML = `<div class="mensaje error">${data.error}</div>`;
+      }
+    } catch (err) {
+      document.getElementById('cardRendir').classList.add('oculto');
+      document.getElementById('cardResultado').classList.remove('oculto');
+      document.getElementById('resultadoTexto').innerHTML = `<div class="mensaje error">Error de red: ${err.message}</div>`;
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>
