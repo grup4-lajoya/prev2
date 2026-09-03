@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corrección de exámenes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; padding:20px; }
+  h2 { color:#002147; margin-top:0; }
+  h3 { color:#002147; margin-top:0; }
+  .card { background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px 20px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin-top:10px; font-size:0.9rem; color:#333; }
+  input, textarea { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; border:1px solid #ccc; border-radius:6px; font-size:0.9rem; font-family:inherit; }
+  textarea { resize:vertical; }
+  button { padding:8px 16px; background:#0056A6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.85rem; }
+  button:hover { background:#003366; }
+  button:disabled { background:#999; cursor:not-allowed; }
+  .mensaje { padding:10px; border-radius:6px; margin-top:10px; font-size:0.9rem; }
+  .mensaje.ok { background:#e6f7e6; color:#256029; }
+  .mensaje.error { background:#f8d7da; color:#721c24; }
+  .vacio { color:#777; font-style:italic; padding:10px 0; }
+  .respuesta-alumno { background:#f4f6fa; padding:10px 14px; border-radius:6px; margin-top:8px; font-size:0.9rem; border-left:3px solid #0056A6; }
+  .meta { font-size:0.8rem; color:#777; margin-top:4px; }
+</style>
+</head>
+<body>
+
+<h2>Bandeja de corrección</h2>
+
+<div id="lista">Cargando...</div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const usuario = localStorage.getItem('usuario');
+  const rol = localStorage.getItem('rol');
+
+  async function iniciar() {
+    const cont = document.getElementById('lista');
+
+    if (!usuario || !rol || (rol !== 'DOCENTE' && rol !== 'ADMIN')) {
+      cont.innerHTML = '<div class="mensaje error">Solo un docente o administrador puede acceder a esta pantalla.</div>';
+      return;
+    }
+
+    cargarPendientes();
+  }
+
+  async function cargarPendientes() {
+    const cont = document.getElementById('lista');
+
+    // Usa la vista vw_bandeja_correccion que ya filtra: solo abiertas, solo exámenes, sin calificar
+    const { data, error } = await supabase
+      .from('vw_bandeja_correccion')
+      .select('*')
+      .eq('profesor_usuario', usuario)
+      .order('fecha_envio');
+
+    if (error) {
+      cont.innerHTML = `<div class="mensaje error">Error al cargar: ${error.message}</div>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      cont.innerHTML = '<div class="card"><div class="vacio">No hay respuestas pendientes de corregir. Todo al día.</div></div>';
+      return;
+    }
+
+    cont.innerHTML = data.map(r => `
+      <div class="card" id="tarjeta-${r.respuesta_id}">
+        <h3>${r.evaluacion_titulo}</h3>
+        <div class="meta">Alumno: ${r.alumno_nombre || r.alumno_usuario} (${r.alumno_usuario})</div>
+        <p><strong>${r.enunciado}</strong></p>
+        <div class="respuesta-alumno">${r.respuesta_texto}</div>
+
+        <label>Puntaje otorgado</label>
+        <input type="number" id="puntaje-${r.respuesta_id}" step="0.1" min="0" value="1">
+
+        <label>Comentario (opcional)</label>
+        <textarea id="comentario-${r.respuesta_id}" rows="2"></textarea>
+
+        <button style="margin-top:12px;" onclick="calificar('${r.respuesta_id}')">Calificar</button>
+        <div id="mensaje-${r.respuesta_id}"></div>
+      </div>
+    `).join('');
+  }
+
+  async function calificar(respuestaId) {
+    const puntajeInput = document.getElementById(`puntaje-${respuestaId}`);
+    const comentarioInput = document.getElementById(`comentario-${respuestaId}`);
+    const mensajeDiv = document.getElementById(`mensaje-${respuestaId}`);
+    const boton = document.querySelector(`#tarjeta-${respuestaId} button`);
+
+    const puntaje_obtenido = Number(puntajeInput.value);
+    const comentario = comentarioInput.value.trim();
+
+    if (isNaN(puntaje_obtenido) || puntaje_obtenido < 0) {
+      mensajeDiv.innerHTML = '<div class="mensaje error">Ingresa un puntaje válido.</div>';
+      return;
+    }
+
+    boton.disabled = true;
+    mensajeDiv.innerHTML = '<div class="mensaje">Guardando...</div>';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/corregir-respuesta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ usuario, respuesta_id: respuestaId, puntaje_obtenido, comentario })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        let texto = 'Calificación guardada.';
+        if (data.data.evaluacion_completa) {
+          texto += ` El alumno completó su evaluación — nota final: ${data.data.nota_final}.`;
+        } else {
+          texto += ` Aún tiene ${data.data.pendientes} pregunta(s) pendiente(s) de otro alumno o intento.`;
+        }
+        mensajeDiv.innerHTML = `<div class="mensaje ok">${texto}</div>`;
+
+        // quitar la tarjeta de la lista después de un momento
+        setTimeout(() => {
+          const tarjeta = document.getElementById(`tarjeta-${respuestaId}`);
+          if (tarjeta) tarjeta.remove();
+          const cont = document.getElementById('lista');
+          if (!cont.querySelector('.card')) {
+            cont.innerHTML = '<div class="card"><div class="vacio">No hay respuestas pendientes de corregir. Todo al día.</div></div>';
+          }
+        }, 1500);
+      } else {
+        mensajeDiv.innerHTML = `<div class="mensaje error">${data.error}</div>`;
+        boton.disabled = false;
+      }
+    } catch (err) {
+      mensajeDiv.innerHTML = `<div class="mensaje error">Error de red: ${err.message}</div>`;
+      boton.disabled = false;
+    }
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>
