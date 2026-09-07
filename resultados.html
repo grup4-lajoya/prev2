@@ -5,23 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Resultados</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
-<style>
-  body { margin:0; font-family:Arial,sans-serif; background-color:#f4f6fa; color:#222; padding:20px; }
-  h2 { color:#002147; margin-top:0; }
-  h3 { color:#002147; margin-top:0; }
-  .card { background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px 20px; margin-bottom:16px; }
-  table { width:100%; border-collapse:collapse; margin-top:10px; }
-  th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; }
-  th { color:#002147; }
-  .badge { font-size:0.75rem; padding:3px 8px; border-radius:10px; font-weight:600; }
-  .badge.aprobado { background:#e6f7e6; color:#256029; }
-  .badge.desaprobado { background:#f8d7da; color:#721c24; }
-  .badge.pendiente { background:#fff3cd; color:#856404; }
-  .badge.norendido { background:#eee; color:#666; }
-  .vacio { color:#777; font-style:italic; padding:10px 0; }
-  .mensaje.error { background:#f8d7da; color:#721c24; padding:10px; border-radius:6px; }
-  .comentario { font-size:0.82rem; color:#666; margin-top:2px; }
-</style>
+<link rel="stylesheet" href="clases-asincronicas.css">
 </head>
 <body>
 
@@ -40,14 +24,14 @@
 
   async function iniciar() {
     const cont = document.getElementById('contenido');
-    if (!usuario || !rol) { cont.innerHTML = '<div class="mensaje error">No se detectó sesión activa.</div>'; return; }
+    if (!usuario || !rol) { cont.innerHTML = '<div class="aviso error">No se detectó sesión activa.</div>'; return; }
 
     if (rol === 'ALUMNO') {
       await mostrarResultadosAlumno();
     } else if (rol === 'DOCENTE' || rol === 'ADMIN') {
       await mostrarResultadosDocente();
     } else {
-      cont.innerHTML = '<div class="mensaje error">Tu rol no tiene acceso a esta pantalla.</div>';
+      cont.innerHTML = '<div class="aviso error">Tu rol no tiene acceso a esta pantalla.</div>';
     }
   }
 
@@ -58,14 +42,14 @@
     const { data: matricula } = await supabase.from('matriculas').select('curso_id')
       .eq('alumno_usuario', usuario).limit(1).maybeSingle();
 
-    if (!matricula) { cont.innerHTML = '<div class="mensaje error">No estás matriculado en ningún curso.</div>'; return; }
+    if (!matricula) { cont.innerHTML = '<div class="aviso error">No estás matriculado en ningún curso.</div>'; return; }
 
     const { data: examenes, error: errExamenes } = await supabase.from('evaluaciones')
       .select('id, titulo').eq('curso_id', matricula.curso_id).eq('tipo', 'examen')
       .order('created_at', { ascending: false });
 
-    if (errExamenes) { cont.innerHTML = '<div class="mensaje error">Error al cargar exámenes.</div>'; return; }
-    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="card"><div class="vacio">Aún no hay exámenes en tu curso.</div></div>'; return; }
+    if (errExamenes) { cont.innerHTML = '<div class="aviso error">Error al cargar exámenes.</div>'; return; }
+    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="panel"><div class="vacio">Aún no hay exámenes en tu curso.</div></div>'; return; }
 
     const { data: notas } = await supabase.from('notas').select('evaluacion_id, nota_final, comentario_profesor')
       .eq('alumno_usuario', usuario);
@@ -80,17 +64,17 @@
       let estadoHtml;
       if (nota) {
         const cls = nota.nota_final >= NOTA_APROBATORIA ? 'aprobado' : 'desaprobado';
-        estadoHtml = `<span class="badge ${cls}">${nota.nota_final}</span>` +
+        estadoHtml = `<span class="tag ${cls}">${nota.nota_final}</span>` +
           (nota.comentario_profesor ? `<div class="comentario">"${nota.comentario_profesor}"</div>` : '');
       } else if (rendidos.has(ev.id)) {
-        estadoHtml = '<span class="badge pendiente">Pendiente de corrección</span>';
+        estadoHtml = '<span class="tag pendiente">Pendiente de corrección</span>';
       } else {
-        estadoHtml = '<span class="badge norendido">No rendido</span>';
+        estadoHtml = '<span class="tag norendido">No rendido</span>';
       }
       return `<tr><td>${ev.titulo}</td><td>${estadoHtml}</td></tr>`;
     }).join('');
 
-    cont.innerHTML = `<div class="card"><h3>Mis notas</h3>
+    cont.innerHTML = `<div class="panel"><h3>Mis notas</h3>
       <table><thead><tr><th>Examen</th><th>Estado</th></tr></thead><tbody>${filas}</tbody></table>
     </div>`;
   }
@@ -102,13 +86,13 @@
     const { data: curso } = await supabase.from('cursos').select('id, nombre')
       .eq('profesor_usuario', usuario).eq('activo', true).limit(1).maybeSingle();
 
-    if (!curso) { cont.innerHTML = '<div class="mensaje error">No tienes curso asignado.</div>'; return; }
+    if (!curso) { cont.innerHTML = '<div class="aviso error">No tienes curso asignado.</div>'; return; }
 
     const { data: examenes } = await supabase.from('evaluaciones')
       .select('id, titulo').eq('curso_id', curso.id).eq('tipo', 'examen')
       .order('created_at', { ascending: false });
 
-    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="card"><div class="vacio">Aún no has creado exámenes.</div></div>'; return; }
+    if (!examenes || examenes.length === 0) { cont.innerHTML = '<div class="panel"><div class="vacio">Aún no has creado exámenes.</div></div>'; return; }
 
     const { data: matriculados } = await supabase.from('matriculas')
       .select('alumno_usuario, users ( datos )').eq('curso_id', curso.id);
@@ -131,16 +115,16 @@
         let estadoHtml;
         if (notasMap[key] !== undefined) {
           const cls = notasMap[key] >= NOTA_APROBATORIA ? 'aprobado' : 'desaprobado';
-          estadoHtml = `<span class="badge ${cls}">${notasMap[key]}</span>`;
+          estadoHtml = `<span class="tag ${cls}">${notasMap[key]}</span>`;
         } else if (rendidosSet.has(key)) {
-          estadoHtml = '<span class="badge pendiente">Por corregir</span>';
+          estadoHtml = '<span class="tag pendiente">Por corregir</span>';
         } else {
-          estadoHtml = '<span class="badge norendido">No rendido</span>';
+          estadoHtml = '<span class="tag norendido">No rendido</span>';
         }
         return `<tr><td>${m.users?.datos || m.alumno_usuario} (${m.alumno_usuario})</td><td>${estadoHtml}</td></tr>`;
       }).join('');
 
-      return `<div class="card"><h3>${ev.titulo}</h3>
+      return `<div class="panel"><h3>${ev.titulo}</h3>
         <table><thead><tr><th>Alumno</th><th>Estado</th></tr></thead><tbody>${filas || '<tr><td colspan="2" class="vacio">Sin alumnos matriculados.</td></tr>'}</tbody></table>
       </div>`;
     }).join('');
