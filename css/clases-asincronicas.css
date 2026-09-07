@@ -1,0 +1,241 @@
+/* ============================================================
+   Clases Asincrónicas — sistema visual compartido
+   Coherente con la identidad existente (navy #002147, azul #0056A6),
+   tratado como libro de registro institucional, no como SaaS genérico.
+   ============================================================ */
+
+:root {
+  --navy-900: #002147;
+  --navy-700: #0b3a63;
+  --blue-600: #0056a6;
+  --blue-100: #e8f1fb;
+  --ink: #1c2530;
+  --ink-muted: #5b6572;
+  --paper: #f4f6fa;
+  --paper-raised: #ffffff;
+  --line: #dde3ea;
+  --success-ink: #1e7145;
+  --success-bg: #e9f6ee;
+  --danger-ink: #a3281f;
+  --danger-bg: #fbeceb;
+  --warning-ink: #8a5a00;
+  --warning-bg: #fdf3e2;
+  --neutral-ink: #5b6572;
+  --neutral-bg: #eef0f3;
+
+  --radius: 6px;
+  --font-body: Arial, Helvetica, sans-serif;
+  --font-heading: Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--paper);
+  color: var(--ink);
+  padding: 28px 32px;
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  color: var(--navy-900);
+  font-weight: normal;
+  letter-spacing: 0.2px;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--navy-900);
+}
+
+h3 {
+  font-size: 1.15rem;
+  margin: 0 0 4px;
+}
+
+/* ---------- Contenedores: "panel de registro", no tarjeta SaaS ---------- */
+.panel {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--navy-900);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}
+
+.panel + .panel { margin-top: 0; }
+
+.panel-subtitulo {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  margin: 2px 0 14px;
+}
+
+/* ---------- Formularios ---------- */
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--blue-600);
+  outline-offset: 1px;
+  border-color: var(--blue-600);
+}
+
+textarea { resize: vertical; min-height: 72px; }
+
+/* ---------- Botones: un solo acento por pantalla ---------- */
+button {
+  padding: 9px 18px;
+  background: var(--navy-900);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.87rem;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+button:hover { background: var(--navy-700); }
+button:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+button:disabled { background: #a7adb5; cursor: not-allowed; }
+
+button.secundario {
+  background: transparent;
+  color: var(--navy-900);
+  border: 1px solid var(--line);
+}
+button.secundario:hover { background: var(--blue-100); border-color: var(--blue-600); }
+
+button.peligro {
+  background: transparent;
+  color: var(--danger-ink);
+  border: 1px solid var(--danger-bg);
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+button.peligro:hover { background: var(--danger-bg); }
+
+/* ---------- Tablas: libro de registro, líneas finas ---------- */
+table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+
+th {
+  text-align: left;
+  font-size: 0.78rem;
+  text-transform: none;
+  color: var(--ink-muted);
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--navy-900);
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* ---------- Estados: etiquetas rectangulares tipo sello, no píldoras ---------- */
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-left: 3px solid currentColor;
+  background: var(--neutral-bg);
+  color: var(--neutral-ink);
+}
+.tag.examen        { background: var(--blue-100); color: var(--blue-600); }
+.tag.cuestionario  { background: var(--neutral-bg); color: var(--neutral-ink); }
+.tag.aprobado      { background: var(--success-bg); color: var(--success-ink); }
+.tag.desaprobado   { background: var(--danger-bg); color: var(--danger-ink); }
+.tag.pendiente     { background: var(--warning-bg); color: var(--warning-ink); }
+.tag.norendido     { background: var(--neutral-bg); color: var(--neutral-ink); }
+
+/* ---------- Mensajes de estado (éxito / error) ---------- */
+.aviso {
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  border-left: 3px solid currentColor;
+}
+.aviso.ok    { background: var(--success-bg); color: var(--success-ink); }
+.aviso.error { background: var(--danger-bg);  color: var(--danger-ink); }
+.aviso.info  { background: var(--blue-100);   color: var(--blue-600); }
+
+/* ---------- Vacío: invitación a actuar, no solo "nada aquí" ---------- */
+.vacio {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  padding: 14px 0;
+  font-style: normal;
+}
+
+/* ---------- Bloques de pregunta (formulario docente) ---------- */
+.pregunta-block {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 14px;
+  background: var(--paper);
+}
+.pregunta-block .cabecera-pregunta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.opcion-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.opcion-row input[type="text"] { flex: 1; margin-top: 0; }
+.opcion-row input[type="checkbox"] { width: auto; margin-top: 0; accent-color: var(--navy-900); }
+
+/* ---------- Progreso al rendir examen ---------- */
+.progreso {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.comentario {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.oculto { display: none; }
+
+@media (max-width: 640px) {
+  body { padding: 18px; }
+  .panel { padding: 14px 16px; }
+}
