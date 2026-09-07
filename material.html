@@ -93,6 +93,7 @@
       .order('orden');
 
     const contenedor = document.getElementById('listaMateriales');
+    const esDocenteOAdmin = (rol === 'DOCENTE' || rol === 'ADMIN');
 
     if (error) {
       contenedor.innerHTML = '<div class="aviso error">Error al cargar el material.</div>';
@@ -112,15 +113,37 @@
         <td>${m.titulo}</td>
         <td>${(m.peso_kb / 1024).toFixed(1)} MB</td>
         <td><a class="abrir" href="${m.archivo_url}" target="_blank" rel="noopener">Abrir PDF</a></td>
+        ${esDocenteOAdmin ? `<td><button class="peligro" onclick="eliminarMaterial('${m.id}', '${m.titulo.replace(/'/g, "\\'")}')">Eliminar</button></td>` : ''}
       </tr>
     `).join('');
 
     contenedor.innerHTML = `
       <table>
-        <thead><tr><th>Título</th><th>Peso</th><th></th></tr></thead>
+        <thead><tr><th>Título</th><th>Peso</th><th></th>${esDocenteOAdmin ? '<th></th>' : ''}</tr></thead>
         <tbody>${filas}</tbody>
       </table>
     `;
+  }
+
+  async function eliminarMaterial(materialId, titulo) {
+    if (!confirm(`¿Eliminar "${titulo}"? Esta acción no se puede deshacer.`)) return;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/eliminar-material`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ usuario, material_id: materialId })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        cargarMateriales();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de red: ' + err.message);
+    }
   }
 
   async function subirMaterial() {
