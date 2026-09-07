@@ -5,60 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Material de clase</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
-<style>
-  body {
-    margin:0;
-    font-family:Arial,sans-serif;
-    background-color:#f4f6fa;
-    color:#222;
-    padding: 20px;
-  }
-  h2 { color:#002147; margin-top:0; }
-  .card {
-    background:#fff;
-    border-radius:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    padding:16px 20px;
-    margin-bottom:20px;
-  }
-  label { display:block; font-weight:600; margin-top:10px; font-size:0.9rem; color:#333; }
-  input, select {
-    width:100%;
-    padding:8px;
-    margin-top:4px;
-    box-sizing:border-box;
-    border:1px solid #ccc;
-    border-radius:6px;
-    font-size:0.9rem;
-  }
-  button {
-    margin-top:16px;
-    padding:10px 18px;
-    background:#0056A6;
-    color:#fff;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:600;
-  }
-  button:hover { background:#003366; }
-  button:disabled { background:#999; cursor:not-allowed; }
-  table { width:100%; border-collapse:collapse; margin-top:10px; }
-  th, td { text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; }
-  th { color:#002147; }
-  a.abrir { color:#0056A6; text-decoration:none; font-weight:600; }
-  a.abrir:hover { text-decoration:underline; }
-  .mensaje { padding:10px; border-radius:6px; margin-top:10px; font-size:0.9rem; }
-  .mensaje.ok { background:#e6f7e6; color:#256029; }
-  .mensaje.error { background:#f8d7da; color:#721c24; }
-  .vacio { color:#777; font-style:italic; padding:10px 0; }
-</style>
+<link rel="stylesheet" href="clases-asincronicas.css">
 </head>
 <body>
 
 <h2>Material de clase</h2>
 
-<div class="card" id="cardSubir" style="display:none;">
+<div class="panel" id="cardSubir" style="display:none;">
   <h3 style="margin-top:0;">Subir nuevo material</h3>
   <label>Título</label>
   <input id="titulo" placeholder="ej. Clase 1 - Introducción">
@@ -68,7 +21,7 @@
   <div id="mensajeSubida"></div>
 </div>
 
-<div class="card">
+<div class="panel">
   <h3 style="margin-top:0;" id="tituloLista">Materiales del curso</h3>
   <div id="listaMateriales">Cargando...</div>
 </div>
@@ -86,7 +39,7 @@
   async function iniciar() {
     if (!usuario || !rol) {
       document.getElementById('listaMateriales').innerHTML =
-        '<div class="mensaje error">No se detectó sesión activa.</div>';
+        '<div class="aviso error">No se detectó sesión activa.</div>';
       return;
     }
 
@@ -102,7 +55,7 @@
 
       if (error || !data) {
         document.getElementById('listaMateriales').innerHTML =
-          '<div class="mensaje error">No tienes ningún curso asignado todavía.</div>';
+          '<div class="aviso error">No tienes ningún curso asignado todavía.</div>';
         return;
       }
 
@@ -121,7 +74,7 @@
 
       if (error || !data) {
         document.getElementById('listaMateriales').innerHTML =
-          '<div class="mensaje error">No estás matriculado en ningún curso todavía.</div>';
+          '<div class="aviso error">No estás matriculado en ningún curso todavía.</div>';
         return;
       }
 
@@ -142,12 +95,15 @@
     const contenedor = document.getElementById('listaMateriales');
 
     if (error) {
-      contenedor.innerHTML = '<div class="mensaje error">Error al cargar el material.</div>';
+      contenedor.innerHTML = '<div class="aviso error">Error al cargar el material.</div>';
       return;
     }
 
     if (!data || data.length === 0) {
-      contenedor.innerHTML = '<div class="vacio">Todavía no hay material subido.</div>';
+      const texto = (rol === 'DOCENTE' || rol === 'ADMIN')
+        ? 'Todavía no has subido material. Usa el formulario de arriba para subir el primer PDF.'
+        : 'El docente todavía no ha subido material para este curso.';
+      contenedor.innerHTML = `<div class="vacio">${texto}</div>`;
       return;
     }
 
@@ -174,12 +130,12 @@
     const boton = document.getElementById('btnSubir');
 
     if (!titulo || !archivo) {
-      mensajeDiv.innerHTML = '<div class="mensaje error">Completa el título y elige un archivo PDF.</div>';
+      mensajeDiv.innerHTML = '<div class="aviso error">Completa el título y elige un archivo PDF.</div>';
       return;
     }
 
     boton.disabled = true;
-    mensajeDiv.innerHTML = '<div class="mensaje">Subiendo...</div>';
+    mensajeDiv.innerHTML = '<div class="aviso">Subiendo...</div>';
 
     const formData = new FormData();
     formData.append('archivo', archivo);
@@ -201,15 +157,15 @@
       const data = await res.json();
 
       if (data.success) {
-        mensajeDiv.innerHTML = '<div class="mensaje ok">Material subido correctamente.</div>';
+        mensajeDiv.innerHTML = '<div class="aviso ok">Material subido correctamente.</div>';
         document.getElementById('titulo').value = '';
         document.getElementById('archivo').value = '';
         cargarMateriales();
       } else {
-        mensajeDiv.innerHTML = `<div class="mensaje error">${data.error}</div>`;
+        mensajeDiv.innerHTML = `<div class="aviso error">${data.error}</div>`;
       }
     } catch (err) {
-      mensajeDiv.innerHTML = `<div class="mensaje error">Error de red: ${err.message}</div>`;
+      mensajeDiv.innerHTML = `<div class="aviso error">Error de red: ${err.message}</div>`;
     } finally {
       boton.disabled = false;
     }
