@@ -414,7 +414,7 @@
         const id = generarId(item.submenu || menu);
         iframe.id = id;
         iframe.setAttribute("allowfullscreen", "");
-        iframe.setAttribute("sandbox", "allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox");
+        iframe.setAttribute("sandbox", "allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals");
         contenido.appendChild(iframe);
       });
     }
