@@ -111,9 +111,30 @@
     if (error) { cont.innerHTML = '<div class="aviso error">Error al cargar.</div>'; return; }
     if (!data || data.length === 0) { cont.innerHTML = '<div class="vacio">Aún no has creado ninguna evaluación. Usa "Crear nueva evaluación" para armar tu primer examen o cuestionario.</div>'; return; }
 
-    cont.innerHTML = `<table><thead><tr><th>Título</th><th>Tipo</th></tr></thead><tbody>
-      ${data.map(e => `<tr><td>${e.titulo}</td><td><span class="tag ${e.tipo}">${e.tipo}</span></td></tr>`).join('')}
+    cont.innerHTML = `<table><thead><tr><th>Título</th><th>Tipo</th><th></th></tr></thead><tbody>
+      ${data.map(e => `<tr><td>${e.titulo}</td><td><span class="tag ${e.tipo}">${e.tipo}</span></td><td><button class="peligro" onclick="eliminarEvaluacion('${e.id}', '${e.titulo.replace(/'/g, "\\'")}')">Eliminar</button></td></tr>`).join('')}
     </tbody></table>`;
+  }
+
+  async function eliminarEvaluacion(evaluacionId, titulo) {
+    if (!confirm(`¿Eliminar "${titulo}"? Se borrarán también las preguntas, respuestas y notas asociadas. Esta acción no se puede deshacer.`)) return;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/eliminar-evaluacion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ usuario, evaluacion_id: evaluacionId })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        cargarEvaluacionesDocente();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de red: ' + err.message);
+    }
   }
 
   // ---------- DOCENTE: formulario dinámico ----------
