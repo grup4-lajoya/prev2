@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consignas de Guardia</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<link rel="stylesheet" href="css/consignas.css">
+</head>
+<body class="publica">
+
+<div class="encabezado-publico">
+  <h2>Consignas de Guardia</h2>
+  <p class="subtitulo" id="ultimaActualizacion">Cargando...</p>
+</div>
+
+<div id="listaPublica">Cargando...</div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function cargarConsignas() {
+    const { data, error } = await supabase
+      .from('consignas')
+      .select('id, texto, creado_en')
+      .eq('activa', true)
+      .order('orden')
+      .order('creado_en', { ascending: false });
+
+    const contenedor = document.getElementById('listaPublica');
+    document.getElementById('ultimaActualizacion').textContent =
+      'Actualizado: ' + new Date().toLocaleString('es-AR');
+
+    if (error) {
+      contenedor.innerHTML = '<div class="aviso error">No se pudo cargar la informacion.</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      contenedor.innerHTML = '<div class="vacio">No hay consignas activas en este momento.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = `
+      <ul class="lista-publica">
+        ${data.map((c, i) => `
+          <li>
+            <span class="numero">${i + 1}</span>
+            <span class="texto">${escapeHtml(c.texto)}</span>
+          </li>
+        `).join('')}
+      </ul>
+    `;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Recarga al volver a la pestaña/app (util para el link fijado en WhatsApp)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') cargarConsignas();
+  });
+
+  cargarConsignas();
+</script>
+
+</body>
+</html>
