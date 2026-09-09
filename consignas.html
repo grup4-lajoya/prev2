@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consignas de Guardia</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<link rel="stylesheet" href="css/consignas.css">
+</head>
+<body>
+
+<h2>Consignas de Guardia</h2>
+
+<div class="panel" id="cardCargar" style="display:none;">
+  <h3 style="margin-top:0;">Nueva consigna</h3>
+  <label>Texto de la consigna</label>
+  <textarea id="texto" rows="3" placeholder="ej. Revisar cierre del porton norte cada 2 horas"></textarea>
+  <button id="btnCargar" onclick="cargarConsigna()">Agregar consigna</button>
+  <div id="mensajeCarga"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h3 style="margin:0;" id="tituloLista">Consignas</h3>
+    <button class="secundario" onclick="imprimirActivas()">🖨️ Imprimir para el cuaderno</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab activo" id="tabActivas" onclick="cambiarTab('activas')">Activas</button>
+    <button class="tab" id="tabTodas" onclick="cambiarTab('todas')">Todas</button>
+  </div>
+
+  <div id="listaConsignas">Cargando...</div>
+</div>
+
+<!-- Vista de impresion: oculta en pantalla, visible solo al imprimir -->
+<div id="hojaImprimir" class="hoja-imprimir"></div>
+
+<script>
+  const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const usuario = localStorage.getItem('usuario');
+  const rol = localStorage.getItem('rol');
+
+  let vista = 'activas';
+  let consignasCache = [];
+
+  async function iniciar() {
+    if (!usuario || !rol) {
+      document.getElementById('listaConsignas').innerHTML =
+        '<div class="aviso error">No se detecto sesion activa.</div>';
+      return;
+    }
+
+    if (rol === 'ADMIN') {
+      document.getElementById('cardCargar').style.display = 'block';
+    }
+
+    cargarConsignas();
+  }
+
+  async function cargarConsignas() {
+    let query = supabase
+      .from('consignas')
+      .select('id, texto, activa, creado_por, creado_en, desactivado_en, orden')
+      .order('orden')
+      .order('creado_en', { ascending: false });
+
+    if (vista === 'activas') {
+      query = query.eq('activa', true);
+    }
+
+    const { data, error } = await query;
+    const contenedor = document.getElementById('listaConsignas');
+
+    if (error) {
+      contenedor.innerHTML = '<div class="aviso error">Error al cargar las consignas.</div>';
+      return;
+    }
+
+    consignasCache = data || [];
+
+    if (consignasCache.length === 0) {
+      contenedor.innerHTML = '<div class="vacio">No hay consignas para mostrar.</div>';
+      return;
+    }
+
+    const puedeEditar = (rol === 'ADMIN');
+
+    let filas = consignasCache.map(c => `
+      <tr class="${c.activa ? '' : 'fila-inactiva'}">
+        <td>${escapeHtml(c.texto)}</td>
+        <td><span class="badge ${c.activa ? 'badge-activa' : 'badge-inactiva'}">${c.activa ? 'Activa' : 'Desactivada'}</span></td>
+        <td>${formatearFecha(c.creado_en)}</td>
+        ${puedeEditar ? `<td><button class="${c.activa ? 'peligro' : 'secundario'}" onclick="toggleActiva(${c.id}, ${c.activa})">${c.activa ? 'Desactivar' : 'Reactivar'}</button></td>` : ''}
+      </tr>
+    `).join('');
+
+    contenedor.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Consigna</th>
+            <th>Estado</th>
+            <th>Cargada</th>
+            ${puedeEditar ? '<th></th>' : ''}
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    `;
+  }
+
+  function cambiarTab(nueva) {
+    vista = nueva;
+    document.getElementById('tabActivas').classList.toggle('activo', nueva === 'activas');
+    document.getElementById('tabTodas').classList.toggle('activo', nueva === 'todas');
+    document.getElementById('listaConsignas').innerHTML = 'Cargando...';
+    cargarConsignas();
+  }
+
+  // NOTA: esta version todavia escribe directo a la tabla.
+  // En el Paso 3 la vamos a reemplazar por un fetch a la Edge Function.
+  async function cargarConsigna() {
+    const texto = document.getElementById('texto').value.trim();
+    const mensajeDiv = document.getElementById('mensajeCarga');
+    const boton = document.getElementById('btnCargar');
+
+    if (!texto) {
+      mensajeDiv.innerHTML = '<div class="aviso error">Escribi el texto de la consigna.</div>';
+      return;
+    }
+
+    boton.disabled = true;
+    mensajeDiv.innerHTML = '<div class="aviso">Guardando...</div>';
+
+    const { error } = await supabase
+      .from('consignas')
+      .insert({ texto, creado_por: usuario });
+
+    if (error) {
+      mensajeDiv.innerHTML = `<div class="aviso error">Error al guardar: ${error.message}</div>`;
+    } else {
+      mensajeDiv.innerHTML = '<div class="aviso ok">Consigna agregada correctamente.</div>';
+      document.getElementById('texto').value = '';
+      cargarConsignas();
+    }
+    boton.disabled = false;
+  }
+
+  // NOTA: idem, en el Paso 3 pasa a ser un fetch a la Edge Function.
+  async function toggleActiva(id, estabaActiva) {
+    const accion = estabaActiva ? 'desactivar' : 'reactivar';
+    if (!confirm(`¿Seguro que queres ${accion} esta consigna?`)) return;
+
+    const cambios = estabaActiva
+      ? { activa: false, desactivado_en: new Date().toISOString() }
+      : { activa: true, desactivado_en: null };
+
+    const { error } = await supabase
+      .from('consignas')
+      .update(cambios)
+      .eq('id', id);
+
+    if (error) {
+      alert('Error: ' + error.message);
+    } else {
+      cargarConsignas();
+    }
+  }
+
+  function imprimirActivas() {
+    const activas = consignasCache.filter(c => c.activa);
+    const fuente = vista === 'activas' ? consignasCache : activas;
+
+    const hoja = document.getElementById('hojaImprimir');
+    hoja.innerHTML = `
+      <h2>Consignas de Guardia vigentes</h2>
+      <p class="fecha-impresion">Impreso: ${new Date().toLocaleString('es-AR')}</p>
+      <ol>
+        ${fuente.map(c => `<li>${escapeHtml(c.texto)}</li>`).join('')}
+      </ol>
+    `;
+    window.print();
+  }
+
+  function formatearFecha(iso) {
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  iniciar();
+</script>
+
+</body>
+</html>
