@@ -121,8 +121,8 @@
     cargarConsignas();
   }
 
-  // NOTA: esta version todavia escribe directo a la tabla.
-  // En el Paso 3 la vamos a reemplazar por un fetch a la Edge Function.
+  // Ahora blindado: pasa por la Edge Function agregar-consigna,
+  // que valida usuario activo + rol ADMIN antes de insertar.
   async function cargarConsigna() {
     const texto = document.getElementById('texto').value.trim();
     const mensajeDiv = document.getElementById('mensajeCarga');
@@ -136,38 +136,55 @@
     boton.disabled = true;
     mensajeDiv.innerHTML = '<div class="aviso">Guardando...</div>';
 
-    const { error } = await supabase
-      .from('consignas')
-      .insert({ texto, creado_por: usuario });
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/agregar-consigna`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ usuario, texto })
+      });
+      const data = await res.json();
 
-    if (error) {
-      mensajeDiv.innerHTML = `<div class="aviso error">Error al guardar: ${error.message}</div>`;
-    } else {
-      mensajeDiv.innerHTML = '<div class="aviso ok">Consigna agregada correctamente.</div>';
-      document.getElementById('texto').value = '';
-      cargarConsignas();
+      if (data.success) {
+        mensajeDiv.innerHTML = '<div class="aviso ok">Consigna agregada correctamente.</div>';
+        document.getElementById('texto').value = '';
+        cargarConsignas();
+      } else {
+        mensajeDiv.innerHTML = `<div class="aviso error">${data.error}</div>`;
+      }
+    } catch (err) {
+      mensajeDiv.innerHTML = `<div class="aviso error">Error de red: ${err.message}</div>`;
     }
     boton.disabled = false;
   }
 
-  // NOTA: idem, en el Paso 3 pasa a ser un fetch a la Edge Function.
+  // Ahora blindado: pasa por la Edge Function toggle-consigna.
   async function toggleActiva(id, estabaActiva) {
     const accion = estabaActiva ? 'desactivar' : 'reactivar';
     if (!confirm(`¿Seguro que queres ${accion} esta consigna?`)) return;
 
-    const cambios = estabaActiva
-      ? { activa: false, desactivado_en: new Date().toISOString() }
-      : { activa: true, desactivado_en: null };
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/toggle-consigna`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ usuario, consigna_id: id, activa: !estabaActiva })
+      });
+      const data = await res.json();
 
-    const { error } = await supabase
-      .from('consignas')
-      .update(cambios)
-      .eq('id', id);
-
-    if (error) {
-      alert('Error: ' + error.message);
-    } else {
-      cargarConsignas();
+      if (data.success) {
+        cargarConsignas();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de red: ' + err.message);
     }
   }
 
