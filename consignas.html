@@ -91,10 +91,15 @@
 
     let filas = consignasCache.map(c => `
       <tr class="${c.activa ? '' : 'fila-inactiva'}">
-        <td>${escapeHtml(c.texto)}</td>
+        <td id="celda-texto-${c.id}">${escapeHtml(c.texto)}</td>
         <td><span class="badge ${c.activa ? 'badge-activa' : 'badge-inactiva'}">${c.activa ? 'Activa' : 'Desactivada'}</span></td>
         <td>${formatearFecha(c.creado_en)}</td>
-        ${puedeEditar ? `<td><button class="${c.activa ? 'peligro' : 'secundario'}" onclick="toggleActiva(${c.id}, ${c.activa})">${c.activa ? 'Desactivar' : 'Reactivar'}</button></td>` : ''}
+        ${puedeEditar ? `
+          <td id="celda-acciones-${c.id}">
+            <button class="secundario" onclick="activarEdicion(${c.id})">Editar</button>
+            <button class="${c.activa ? 'peligro' : 'secundario'}" onclick="toggleActiva(${c.id}, ${c.activa})">${c.activa ? 'Desactivar' : 'Reactivar'}</button>
+          </td>
+        ` : ''}
       </tr>
     `).join('');
 
@@ -175,6 +180,53 @@
           'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify({ usuario, consigna_id: id, activa: !estabaActiva })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        cargarConsignas();
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert('Error de red: ' + err.message);
+    }
+  }
+
+  // Modo edicion: reemplaza la celda de texto por un textarea,
+  // y la de acciones por Guardar/Cancelar.
+  function activarEdicion(id) {
+    const consigna = consignasCache.find(c => c.id === id);
+    if (!consigna) return;
+
+    document.getElementById(`celda-texto-${id}`).innerHTML = `
+      <textarea id="edit-texto-${id}" rows="2">${escapeHtml(consigna.texto)}</textarea>
+    `;
+
+    document.getElementById(`celda-acciones-${id}`).innerHTML = `
+      <button class="secundario" onclick="guardarEdicion(${id})">Guardar</button>
+      <button class="secundario" onclick="cargarConsignas()">Cancelar</button>
+    `;
+  }
+
+  async function guardarEdicion(id) {
+    const textarea = document.getElementById(`edit-texto-${id}`);
+    const texto = textarea.value.trim();
+
+    if (!texto) {
+      alert('La consigna no puede quedar vacia.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/editar-consigna`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ usuario, consigna_id: id, texto })
       });
       const data = await res.json();
 
