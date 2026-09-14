@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Consignas Jefe de Servicio</title>
+<title>Consignas de Guardia</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
 <link rel="stylesheet" href="css/consignas.css">
 </head>
 <body class="publica">
 
 <div class="encabezado-publico">
-  <h2>Consignas Jefe de Servicio</h2>
+  <h2>Consignas de Guardia</h2>
   <p class="subtitulo" id="ultimaActualizacion">Cargando...</p>
 </div>
 
@@ -24,7 +24,7 @@
   async function cargarConsignas() {
     const { data, error } = await supabase
       .from('consignas')
-      .select('id, texto, creado_en')
+      .select('id, texto, imagen_url, creado_en')
       .eq('activa', true)
       .order('orden')
       .order('creado_en', { ascending: false });
@@ -48,7 +48,10 @@
         ${data.map((c, i) => `
           <li>
             <span class="numero">${i + 1}</span>
-            <span class="texto">${escapeHtml(c.texto)}</span>
+            <div>
+              <span class="texto">${escapeHtml(c.texto)}</span>
+              ${c.imagen_url ? `<br><a href="${c.imagen_url}" target="_blank" rel="noopener"><img src="${c.imagen_url}" class="miniatura" alt="Documento adjunto"></a>` : ''}
+            </div>
           </li>
         `).join('')}
       </ul>
