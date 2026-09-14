@@ -19,6 +19,16 @@
   <div id="mensajeCarga"></div>
 </div>
 
+<div class="panel" id="cardImagen" style="display:none;">
+  <h3 style="margin-top:0;">Adjuntar documento/imagen</h3>
+  <label>Descripcion (opcional)</label>
+  <input type="text" id="descImagen" placeholder="ej. Horario de Verificacion del Lote 1">
+  <label>Imagen (JPG, PNG o WEBP, maximo 10MB)</label>
+  <input type="file" id="archivoImagen" accept="image/jpeg,image/png,image/webp">
+  <button id="btnSubirImagen" onclick="subirImagenConsigna()">Adjuntar</button>
+  <div id="mensajeImagen"></div>
+</div>
+
 <div class="panel">
   <div class="panel-header">
     <h3 style="margin:0;" id="tituloLista">Consignas</h3>
@@ -56,6 +66,7 @@
 
     if (rol === 'ADMIN') {
       document.getElementById('cardCargar').style.display = 'block';
+      document.getElementById('cardImagen').style.display = 'block';
     }
 
     cargarConsignas();
@@ -64,7 +75,7 @@
   async function cargarConsignas() {
     let query = supabase
       .from('consignas')
-      .select('id, texto, activa, creado_por, creado_en, desactivado_en, orden')
+      .select('id, texto, activa, imagen_url, creado_por, creado_en, desactivado_en, orden')
       .order('orden')
       .order('creado_en', { ascending: false });
 
@@ -91,7 +102,10 @@
 
     let filas = consignasCache.map(c => `
       <tr class="${c.activa ? '' : 'fila-inactiva'}">
-        <td id="celda-texto-${c.id}">${escapeHtml(c.texto)}</td>
+        <td id="celda-texto-${c.id}">
+          ${escapeHtml(c.texto)}
+          ${c.imagen_url ? `<br><a href="${c.imagen_url}" target="_blank" rel="noopener"><img src="${c.imagen_url}" class="miniatura" alt="Documento adjunto"></a>` : ''}
+        </td>
         <td><span class="badge ${c.activa ? 'badge-activa' : 'badge-inactiva'}">${c.activa ? 'Activa' : 'Desactivada'}</span></td>
         <td>${formatearFecha(c.creado_en)}</td>
         ${puedeEditar ? `
@@ -238,6 +252,52 @@
     } catch (err) {
       alert('Error de red: ' + err.message);
     }
+  }
+
+  // Sube una imagen/documento adjunto a una nueva consigna,
+  // usando la Edge Function subir-consigna-imagen (bucket "consignas").
+  async function subirImagenConsigna() {
+    const desc = document.getElementById('descImagen').value.trim();
+    const archivo = document.getElementById('archivoImagen').files[0];
+    const mensajeDiv = document.getElementById('mensajeImagen');
+    const boton = document.getElementById('btnSubirImagen');
+
+    if (!archivo) {
+      mensajeDiv.innerHTML = '<div class="aviso error">Elegi una imagen para adjuntar.</div>';
+      return;
+    }
+
+    boton.disabled = true;
+    mensajeDiv.innerHTML = '<div class="aviso">Subiendo...</div>';
+
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('usuario', usuario);
+    formData.append('texto', desc);
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/subir-consigna-imagen`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        mensajeDiv.innerHTML = '<div class="aviso ok">Documento adjuntado correctamente.</div>';
+        document.getElementById('descImagen').value = '';
+        document.getElementById('archivoImagen').value = '';
+        cargarConsignas();
+      } else {
+        mensajeDiv.innerHTML = `<div class="aviso error">${data.error}</div>`;
+      }
+    } catch (err) {
+      mensajeDiv.innerHTML = `<div class="aviso error">Error de red: ${err.message}</div>`;
+    }
+    boton.disabled = false;
   }
 
   function imprimirActivas() {
