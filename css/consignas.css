@@ -1,3 +1,8 @@
+/* ============================================================
+   Consignas de Guardia — estilo bitacora
+   Paleta: papel gris-azulado, tinta navy, ambar para "activa"
+   ============================================================ */
+
 :root {
   --papel: #eef1ee;
   --papel-panel: #ffffff;
@@ -153,8 +158,13 @@ td {
   vertical-align: top;
 }
 
-tr.fila-inactiva td { color: var(--tinta-suave); }
-tr.fila-inactiva td:first-child { text-decoration: line-through; }
+tr.fila-inactiva td {
+  color: var(--tinta-suave);
+}
+
+tr.fila-inactiva td:first-child {
+  text-decoration: line-through;
+}
 
 .badge {
   font-family: "IBM Plex Mono", monospace;
@@ -183,6 +193,8 @@ tr.fila-inactiva td:first-child { text-decoration: line-through; }
   font-style: italic;
   padding: 12px 0;
 }
+
+/* ---------- Pagina publica (link de WhatsApp) ---------- */
 
 body.publica {
   max-width: 480px;
@@ -224,13 +236,66 @@ body.publica {
   flex-shrink: 0;
 }
 
+/* ---------- Vista de impresion ---------- */
+
 .hoja-imprimir { display: none; }
+
+.miniatura {
+  display: inline-block;
+  max-width: 220px;
+  max-height: 160px;
+  margin-top: 8px;
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  cursor: zoom-in;
+}
 
 @media print {
   body > *:not(.hoja-imprimir) { display: none !important; }
-  .hoja-imprimir { display: block; font-family: Georgia, serif; color: #000; }
-  .hoja-imprimir h2 { font-family: Georgia, serif; font-size: 1.2rem; border-bottom: 1px solid #000; padding-bottom: 6px; }
-  .fecha-impresion { font-size: 0.8rem; color: #444; margin-bottom: 16px; }
-  .hoja-imprimir ol { padding-left: 20px; }
-  .hoja-imprimir li { margin-bottom: 10px; font-size: 1rem; }
+
+  .hoja-imprimir {
+    display: block;
+    font-family: Georgia, serif;
+    color: #000;
+  }
+
+  .hoja-imprimir h2 {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #000;
+    padding-bottom: 6px;
+  }
+
+  .fecha-impresion {
+    font-size: 0.8rem;
+    color: #444;
+    margin-bottom: 16px;
+  }
+
+  .hoja-imprimir ol {
+    padding-left: 20px;
+  }
+
+  .hoja-imprimir li {
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-header { flex-direction: column; align-items: stretch; }
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; }
+  td {
+    border-bottom: none;
+    padding: 3px 0;
+  }
+  tr { border-bottom: 1px solid var(--linea); padding: 10px 0; }
+  td:before {
+    content: attr(data-label);
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    color: var(--tinta-suave);
+  }
 }
