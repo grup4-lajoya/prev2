@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscripciones - Desafío La Joya</title>
+<link rel="stylesheet" href="css/panel-inscripciones.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Desafío La Joya - Inscripciones</h1>
+
+  <div class="buscador">
+    <input type="text" id="buscar" placeholder="Buscar por nombre, DNI o institución...">
+    <select id="filtroEstado" onchange="aplicarFiltros()">
+      <option value="">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="validado">Validado</option>
+      <option value="rechazado">Rechazado</option>
+    </select>
+    <span class="info-registros" id="infoRegistros"></span>
+  </div>
+
+  <div class="tabla-container">
+    <div class="loading" id="loading">Cargando datos...</div>
+    <table id="tablaInscripciones" style="display:none;">
+      <thead>
+      <tr>
+        <th>N°</th>
+        <th>FECHA</th>
+        <th>NOMBRE</th>
+        <th>DNI</th>
+        <th>CATEGORÍA</th>
+        <th>INSTITUCIÓN / UNIDAD</th>
+        <th>LOCALIDAD</th>
+        <th>ESTADO</th>
+        <th>ACCIONES</th>
+      </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </div>
+
+  <div class="paginacion" id="paginacion" style="display:none;"></div>
+</div>
+
+<div id="overlayGlobal" class="overlay-carga">
+  <div class="overlay-content">
+    <div class="spinner"></div>
+    <p id="mensajeCarga">Procesando...</p>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE -->
+<div id="modalVerDetalle" class="modal">
+  <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-header">
+      <h2>👁 Detalle de la inscripción</h2>
+      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+    </div>
+    <div class="modal-body">
+
+      <div class="seccion">
+        <div class="seccion-titulo">📋 Datos del corredor</div>
+        <div class="info-grid">
+          <div class="info-item"><strong>Nombre completo</strong><span id="verNombre">-</span></div>
+          <div class="info-item"><strong>DNI</strong><span id="verDni">-</span></div>
+          <div class="info-item"><strong>Teléfono</strong><span id="verTelefono">-</span></div>
+          <div class="info-item"><strong>Correo</strong><span id="verCorreo">-</span></div>
+          <div class="info-item"><strong>Categoría</strong><span id="verCategoria">-</span></div>
+          <div class="info-item"><strong>Talla de polo</strong><span id="verTalla">-</span></div>
+          <div class="info-item"><strong>Institución</strong><span id="verInstitucion">-</span></div>
+          <div class="info-item"><strong>Unidad</strong><span id="verUnidad">-</span></div>
+          <div class="info-item"><strong>Localidad</strong><span id="verLocalidad">-</span></div>
+          <div class="info-item"><strong>Estado</strong><span id="verEstado">-</span></div>
+          <div class="info-item"><strong>Fecha de inscripción</strong><span id="verFecha">-</span></div>
+        </div>
+
+        <div class="imagenes-grid">
+          <figure>
+            <img id="verCarnetImg" src="" alt="Carnet" onclick="abrirImagen(this.src)">
+            <figcaption>Carnet / fotocheck</figcaption>
+          </figure>
+          <figure>
+            <img id="verComprobanteImg" src="" alt="Comprobante de pago" onclick="abrirImagen(this.src)">
+            <figcaption>Comprobante de pago</figcaption>
+          </figure>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN -->
+<div id="modalConfirmacion" class="modal-confirmacion">
+  <div class="modal-confirmacion-content">
+    <div class="modal-confirmacion-header">
+      <span id="tituloConfirmacion">Confirmar acción</span>
+    </div>
+    <div class="modal-confirmacion-body">
+      <p id="mensajeConfirmacion">¿Está seguro de realizar esta acción?</p>
+    </div>
+    <div class="modal-confirmacion-footer">
+      <button class="btn-confirmar-no" onclick="cerrarConfirmacion(false)">No, cancelar</button>
+      <button class="btn-confirmar-si" id="btnConfirmarSi" onclick="cerrarConfirmacion(true)">Sí, continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMAGEN -->
+<div id="imageModal" class="modal">
+  <span class="close" onclick="cerrarModalImagen()">&times;</span>
+  <div id="modalLoading">
+    <div style="margin-bottom: 15px;">Cargando imagen...</div>
+    <div class="spinner" style="border-color: #f3f3f3; border-top-color: white; margin: 0 auto;"></div>
+  </div>
+  <img id="modalImage" style="display:none;">
+</div>
+
+<script src="js/panel-inscripciones.js"></script>
+</body>
+</html>
