@@ -3,38 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inscripciones - Desafío La Joya</title>
+<title>Corredores - Desafío La Joya</title>
 <link rel="stylesheet" href="css/panel-inscripciones.css">
 </head>
 <body>
 
 <div class="container">
-  <h1>Desafío La Joya - Inscripciones</h1>
+  <h1>Desafío La Joya - Corredores</h1>
+
+  <div class="resumen" id="resumen"></div>
+
+  <div class="barra-acciones">
+    <button type="button" class="btn-nuevo" onclick="abrirModalNuevo()">➕ Nuevo corredor</button>
+    <button type="button" class="btn-publicar-todos" onclick="publicarTodos(true)">🌐 Publicar todos</button>
+    <button type="button" class="btn-ocultar-todos" onclick="publicarTodos(false)">🚫 Ocultar todos</button>
+  </div>
 
   <div class="buscador">
-    <input type="text" id="buscar" placeholder="Buscar por nombre, DNI o institución...">
-    <select id="filtroEstado" onchange="aplicarFiltros()">
-      <option value="">Todos los estados</option>
-      <option value="pendiente">Pendiente</option>
-      <option value="validado">Validado</option>
-      <option value="rechazado">Rechazado</option>
+    <input type="text" id="buscar" placeholder="Buscar por apellidos, nombres, grado, unidad, DNI o dorsal...">
+    <select id="fDistancia" onchange="aplicarFiltros()">
+      <option value="">Todas las distancias</option>
+      <option value="5K">5K</option>
+      <option value="10K">10K</option>
     </select>
+    <select id="fSexo" onchange="aplicarFiltros()">
+      <option value="">Varones y Mujeres</option>
+      <option value="Varones">Varones</option>
+      <option value="Mujeres">Mujeres</option>
+    </select>
+    <select id="fCategoria" onchange="aplicarFiltros()">
+      <option value="">Libre y Mayores</option>
+      <option value="Libre">Libre</option>
+      <option value="Mayores">Mayores</option>
+    </select>
+    <select id="fPublicado" onchange="aplicarFiltros()">
+      <option value="">Publicados y sin publicar</option>
+      <option value="si">Solo publicados</option>
+      <option value="no">Solo sin publicar</option>
+    </select>
+    <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Limpiar filtros</button>
     <span class="info-registros" id="infoRegistros"></span>
   </div>
 
   <div class="tabla-container">
     <div class="loading" id="loading">Cargando datos...</div>
-    <table id="tablaInscripciones" style="display:none;">
+    <table id="tablaCorredores" style="display:none;">
       <thead>
       <tr>
         <th>N°</th>
-        <th>FECHA</th>
-        <th>NOMBRE</th>
-        <th>DNI</th>
+        <th>APELLIDOS Y NOMBRES</th>
+        <th>GRADO</th>
+        <th>DISTANCIA</th>
+        <th>SEXO</th>
         <th>CATEGORÍA</th>
-        <th>INSTITUCIÓN / UNIDAD</th>
-        <th>LOCALIDAD</th>
-        <th>ESTADO</th>
+        <th>UNIDAD</th>
+        <th>DORSAL</th>
+        <th>PUBLICADO</th>
         <th>ACCIONES</th>
       </tr>
       </thead>
@@ -52,46 +76,100 @@
   </div>
 </div>
 
-<!-- MODAL VER DETALLE -->
-<div id="modalVerDetalle" class="modal">
-  <div class="modal-content" style="max-width: 900px;">
+<!-- MODAL NUEVO / EDITAR CORREDOR -->
+<div id="modalCorredor" class="modal">
+  <div class="modal-content" style="max-width: 780px;">
     <div class="modal-header">
-      <h2>👁 Detalle de la inscripción</h2>
-      <span class="close" onclick="cerrarModalVerDetalle()">&times;</span>
+      <h2 id="tituloModalCorredor">➕ Nuevo corredor</h2>
+      <span class="close" onclick="cerrarModalCorredor()">&times;</span>
     </div>
     <div class="modal-body">
 
-      <div class="seccion">
-        <div class="seccion-titulo">📋 Datos del corredor</div>
-        <div class="info-grid">
-          <div class="info-item"><strong>Nombre completo</strong><span id="verNombre">-</span></div>
-          <div class="info-item"><strong>DNI</strong><span id="verDni">-</span></div>
-          <div class="info-item"><strong>Teléfono</strong><span id="verTelefono">-</span></div>
-          <div class="info-item"><strong>Correo</strong><span id="verCorreo">-</span></div>
-          <div class="info-item"><strong>Categoría</strong><span id="verCategoria">-</span></div>
-          <div class="info-item"><strong>Talla de polo</strong><span id="verTalla">-</span></div>
-          <div class="info-item"><strong>Institución</strong><span id="verInstitucion">-</span></div>
-          <div class="info-item"><strong>Unidad</strong><span id="verUnidad">-</span></div>
-          <div class="info-item"><strong>Localidad</strong><span id="verLocalidad">-</span></div>
-          <div class="info-item"><strong>Estado</strong><span id="verEstado">-</span></div>
-          <div class="info-item"><strong>Fecha de inscripción</strong><span id="verFecha">-</span></div>
-        </div>
+      <input type="hidden" id="cId">
 
-        <div class="imagenes-grid">
-          <figure>
-            <img id="verCarnetImg" src="" alt="Carnet" onclick="abrirImagen(this.src)">
-            <figcaption>Carnet / fotocheck</figcaption>
-          </figure>
-          <figure>
-            <img id="verComprobanteImg" src="" alt="Comprobante de pago" onclick="abrirImagen(this.src)">
-            <figcaption>Comprobante de pago</figcaption>
-          </figure>
+      <div class="seccion">
+        <div class="seccion-titulo">🌐 Datos que se muestran en la web</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cApellidos">Apellidos <span class="required">*</span></label>
+            <input type="text" id="cApellidos" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cNombres">Nombres <span class="required">*</span></label>
+            <input type="text" id="cNombres" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cDistancia">Distancia <span class="required">*</span></label>
+            <select id="cDistancia">
+              <option value="">Seleccione</option>
+              <option value="5K">5K</option>
+              <option value="10K">10K</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cSexo">Sexo <span class="required">*</span></label>
+            <select id="cSexo">
+              <option value="">Seleccione</option>
+              <option value="Varones">Varones</option>
+              <option value="Mujeres">Mujeres</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cCategoria">Categoría <span class="required">*</span></label>
+            <select id="cCategoria">
+              <option value="">Seleccione</option>
+              <option value="Libre">Libre</option>
+              <option value="Mayores">Mayores</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion seccion-privada">
+        <div class="seccion-titulo">🔒 Datos privados (no se publican)</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cGrado">Grado</label>
+            <input type="text" id="cGrado" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cUnidad">Unidad</label>
+            <input type="text" id="cUnidad" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cEdad">Edad</label>
+            <input type="number" id="cEdad" min="10" max="99">
+          </div>
+          <div class="form-group">
+            <label for="cDni">DNI</label>
+            <input type="text" id="cDni" maxlength="8" inputmode="numeric" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cTelefono">Teléfono</label>
+            <input type="tel" id="cTelefono" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cTalla">Talla de polo</label>
+            <select id="cTalla">
+              <option value="">-</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cDorsal">Dorsal</label>
+            <input type="text" id="cDorsal" autocomplete="off">
+          </div>
         </div>
       </div>
 
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn-cerrar" onclick="cerrarModalVerDetalle()">Cerrar</button>
+      <button type="button" class="btn-cerrar" onclick="cerrarModalCorredor()">Cancelar</button>
+      <button type="button" class="btn-guardar-otro" id="btnGuardarOtro" onclick="guardarCorredor(true)">💾 Guardar y agregar otro</button>
+      <button type="button" class="btn-guardar-cabecera" id="btnGuardar" onclick="guardarCorredor(false)">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -110,16 +188,6 @@
       <button class="btn-confirmar-si" id="btnConfirmarSi" onclick="cerrarConfirmacion(true)">Sí, continuar</button>
     </div>
   </div>
-</div>
-
-<!-- MODAL IMAGEN -->
-<div id="imageModal" class="modal">
-  <span class="close" onclick="cerrarModalImagen()">&times;</span>
-  <div id="modalLoading">
-    <div style="margin-bottom: 15px;">Cargando imagen...</div>
-    <div class="spinner" style="border-color: #f3f3f3; border-top-color: white; margin: 0 auto;"></div>
-  </div>
-  <img id="modalImage" style="display:none;">
 </div>
 
 <script src="js/panel-inscripciones.js"></script>
