@@ -22,17 +22,19 @@ window.onload = function () {
   cargarDatos();
 };
 
-// Orden igual al del Excel: 5K antes que 10K, Varones antes que Mujeres, Libre antes que Mayores
+// Orden igual al del Excel: 5K antes que 10K, Varones antes que Mujeres, Libre, Mayores y Única al final (mixta)
 const ORDEN_DIST = { '5K': 0, '10K': 1 };
 const ORDEN_SEXO = { 'Varones': 0, 'Mujeres': 1 };
-const ORDEN_CAT  = { 'Libre': 0, 'Mayores': 1 };
+const ORDEN_CAT  = { 'Libre': 0, 'Mayores': 1, 'Única': 2 };
 
 const GRUPOS = [];
-['5K', '10K'].forEach(d =>
+['5K', '10K'].forEach(d => {
   ['Varones', 'Mujeres'].forEach(s =>
     ['Libre', 'Mayores'].forEach(c => GRUPOS.push({ d, s, c }))
-  )
-);
+  );
+  // "Única" junta hombres y mujeres: no se separa por sexo
+  GRUPOS.push({ d, s: '', c: 'Única' });
+});
 
 // ---------- Utilidades ----------
 
@@ -58,7 +60,8 @@ function ocultarOverlay() {
 function ordenar(lista) {
   return lista.sort((a, b) =>
     (ORDEN_DIST[a.distancia] - ORDEN_DIST[b.distancia]) ||
-    (ORDEN_SEXO[a.sexo] - ORDEN_SEXO[b.sexo]) ||
+    ((a.categoria === 'Única') - (b.categoria === 'Única')) ||
+    (a.categoria === 'Única' ? 0 : (ORDEN_SEXO[a.sexo] - ORDEN_SEXO[b.sexo])) ||
     (ORDEN_CAT[a.categoria] - ORDEN_CAT[b.categoria]) ||
     a.apellidos.localeCompare(b.apellidos, 'es') ||
     a.nombres.localeCompare(b.nombres, 'es')
@@ -177,11 +180,11 @@ function actualizarResumen() {
   const publicados = corredores.filter(r => r.publicado).length;
 
   const tarjetas = GRUPOS.map(g => {
-    const delGrupo = corredores.filter(r => r.distancia === g.d && r.sexo === g.s && r.categoria === g.c);
+    const delGrupo = corredores.filter(r => r.distancia === g.d && (g.s === '' || r.sexo === g.s) && r.categoria === g.c);
     const pubs = delGrupo.filter(r => r.publicado).length;
     return `
       <button type="button" class="grupo-card" onclick="filtrarGrupo('${g.d}','${g.s}','${g.c}')">
-        <small>${g.d} · ${g.s} · ${g.c}</small>
+        <small>${g.s ? `${g.d} · ${g.s} · ${g.c}` : `${g.d} · ${g.c} (mixta)`}</small>
         <strong>${delGrupo.length}</strong>
         <small>${pubs} publicados</small>
       </button>`;
