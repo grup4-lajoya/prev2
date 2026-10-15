@@ -1,17 +1,18 @@
 // ============================================
-// PANEL-INSCRIPCIONES.JS - Desafío La Joya
-// A diferencia de ippi.js, NO habla directo con la tabla (está bloqueada por RLS).
-// Todo pasa por las Edge Functions, que verifican el usuario/rol contra tu tabla "usuarios".
+// PANEL-INSCRIPCIONES.JS - Desafío La Joya · Corredores
+// La encargada carga, edita, elimina y publica corredores.
+// Todo pasa por la Edge Function "gestionar-corredores", que verifica el usuario
+// y su rol (MARATON o ADMIN) contra la tabla "users". La tabla está cerrada a la anon key.
 // ============================================
 
-const SUPABASE_URL = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
-const FN_LISTAR = `${SUPABASE_URL}/functions/v1/listar-inscripciones`;
-const FN_VALIDAR = `${SUPABASE_URL}/functions/v1/validar-inscripcion`;
+const SUPABASE_URL  = 'https://qgbixgvidxeaoxxpyiyw.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnYml4Z3ZpZHhlYW94eHB5aXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxOTU3NzMsImV4cCI6MjA3NTc3MTc3M30.NQ5n_vFnHDp8eNjV3I9vRujfWDWWGAywgyICpqX0OKQ';
+const FN_GESTIONAR  = `${SUPABASE_URL}/functions/v1/gestionar-corredores`;
 
-let datosCompletos = [];
-let datosFiltrados = [];
+let corredores = [];
+let filtrados = [];
 let paginaActual = 1;
-const registrosPorPagina = 15;
+const registrosPorPagina = 25;
 
 const usuario = localStorage.getItem("usuario") || "";
 
@@ -21,15 +22,28 @@ window.onload = function () {
   cargarDatos();
 };
 
-function formatearFecha(fecha) {
-  if (!fecha) return "";
-  const d = new Date(fecha);
-  const dia = d.toLocaleString('es-PE', { timeZone: 'America/Lima', day: '2-digit' });
-  const mes = d.toLocaleString('es-PE', { timeZone: 'America/Lima', month: '2-digit' });
-  const anio = d.toLocaleString('es-PE', { timeZone: 'America/Lima', year: 'numeric' });
-  const hora = d.toLocaleString('es-PE', { timeZone: 'America/Lima', hour: '2-digit', hour12: false });
-  const min = d.toLocaleString('es-PE', { timeZone: 'America/Lima', minute: '2-digit' }).padStart(2, '0');
-  return `${dia}/${mes}/${anio} ${hora}:${min}`;
+// Orden igual al del Excel: 5K antes que 10K, Varones antes que Mujeres, Libre antes que Mayores
+const ORDEN_DIST = { '5K': 0, '10K': 1 };
+const ORDEN_SEXO = { 'Varones': 0, 'Mujeres': 1 };
+const ORDEN_CAT  = { 'Libre': 0, 'Mayores': 1 };
+
+const GRUPOS = [];
+['5K', '10K'].forEach(d =>
+  ['Varones', 'Mujeres'].forEach(s =>
+    ['Libre', 'Mayores'].forEach(c => GRUPOS.push({ d, s, c }))
+  )
+);
+
+// ---------- Utilidades ----------
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+function normalizar(str) {
+  return (str || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
 function mostrarOverlay(mensaje) {
@@ -41,105 +55,188 @@ function ocultarOverlay() {
   document.getElementById('overlayGlobal').style.display = 'none';
 }
 
+function ordenar(lista) {
+  return lista.sort((a, b) =>
+    (ORDEN_DIST[a.distancia] - ORDEN_DIST[b.distancia]) ||
+    (ORDEN_SEXO[a.sexo] - ORDEN_SEXO[b.sexo]) ||
+    (ORDEN_CAT[a.categoria] - ORDEN_CAT[b.categoria]) ||
+    a.apellidos.localeCompare(b.apellidos, 'es') ||
+    a.nombres.localeCompare(b.nombres, 'es')
+  );
+}
+
+// ---------- Llamada a la Edge Function ----------
+
+async function llamar(accion, datos = {}) {
+  const res = await fetch(FN_GESTIONAR, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${SUPABASE_ANON}`
+    },
+    body: JSON.stringify({ usuario, accion, ...datos })
+  });
+
+  let json = {};
+  try { json = await res.json(); } catch (e) { /* respuesta sin cuerpo */ }
+
+  if (res.status === 403) {
+    const err = new Error('No tienes permiso para esta acción.');
+    err.sinPermiso = true;
+    throw err;
+  }
+  if (!res.ok) throw new Error(json.error || `Error HTTP: ${res.status}`);
+  return json;
+}
+
+// ---------- Carga y filtros ----------
+
 async function cargarDatos() {
   const loadingEl = document.getElementById('loading');
   try {
     loadingEl.style.display = 'block';
     loadingEl.innerHTML = 'Cargando datos... ⏳';
-    document.getElementById('tablaInscripciones').style.display = 'none';
+    document.getElementById('tablaCorredores').style.display = 'none';
     document.getElementById('paginacion').style.display = 'none';
 
-    const res = await fetch(FN_LISTAR, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario })
-    });
-
-    const json = await res.json();
-
-    if (res.status === 403) {
-      loadingEl.innerHTML = '❌ No tienes permiso para ver esta página.';
-      return;
-    }
-    if (!res.ok) throw new Error(json.error || `Error HTTP: ${res.status}`);
-
-    datosCompletos = json.data || [];
-    datosFiltrados = [...datosCompletos];
+    const json = await llamar('listar');
+    corredores = ordenar(json.data || []);
 
     loadingEl.style.display = 'none';
-    document.getElementById('tablaInscripciones').style.display = 'table';
+    document.getElementById('tablaCorredores').style.display = 'table';
     document.getElementById('paginacion').style.display = 'flex';
 
-    actualizarTabla();
+    aplicarFiltros();
 
   } catch (error) {
     console.error("Error cargando los datos:", error);
-    loadingEl.innerHTML = `❌ Error: ${error.message}<br><button onclick="cargarDatos()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
+    if (error.sinPermiso) {
+      loadingEl.innerHTML = '❌ No tienes permiso para ver esta página.';
+      return;
+    }
+    loadingEl.innerHTML = `❌ Error: ${escapeHtml(error.message)}<br><button onclick="cargarDatos()" style="margin-top:10px;padding:10px 20px;cursor:pointer;">Reintentar</button>`;
   }
 }
 
-function aplicarFiltros() {
-  const termino = document.getElementById('buscar').value.toLowerCase();
-  const estado = document.getElementById('filtroEstado').value;
+function filtrar() {
+  const termino = normalizar(document.getElementById('buscar').value);
+  const distancia = document.getElementById('fDistancia').value;
+  const sexo = document.getElementById('fSexo').value;
+  const categoria = document.getElementById('fCategoria').value;
+  const publicado = document.getElementById('fPublicado').value;
 
-  datosFiltrados = datosCompletos.filter(r => {
-    const cumpleTexto = !termino ||
-      (r.nombre_completo || "").toLowerCase().includes(termino) ||
-      (r.dni || "").toLowerCase().includes(termino) ||
-      (r.institucion || "").toLowerCase().includes(termino) ||
-      (r.unidad || "").toLowerCase().includes(termino);
-
-    const cumpleEstado = !estado || r.estado === estado;
-
-    return cumpleTexto && cumpleEstado;
+  filtrados = corredores.filter(r => {
+    const textoFila = normalizar([r.apellidos, r.nombres, r.grado, r.unidad, r.dni, r.dorsal].join(' '));
+    const cumpleTexto = !termino || textoFila.includes(termino);
+    const cumpleDist = !distancia || r.distancia === distancia;
+    const cumpleSexo = !sexo || r.sexo === sexo;
+    const cumpleCat = !categoria || r.categoria === categoria;
+    const cumplePub = !publicado || (publicado === 'si' ? r.publicado : !r.publicado);
+    return cumpleTexto && cumpleDist && cumpleSexo && cumpleCat && cumplePub;
   });
+}
 
-  paginaActual = 1;
+// Vuelve a aplicar los filtros conservando la página actual
+function refrescar() {
+  filtrar();
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / registrosPorPagina));
+  if (paginaActual > totalPaginas) paginaActual = totalPaginas;
   actualizarTabla();
+  actualizarResumen();
+}
+
+// Cuando cambia un filtro, vuelve a la primera página
+function aplicarFiltros() {
+  paginaActual = 1;
+  refrescar();
+}
+
+function limpiarFiltros() {
+  document.getElementById('buscar').value = '';
+  document.getElementById('fDistancia').value = '';
+  document.getElementById('fSexo').value = '';
+  document.getElementById('fCategoria').value = '';
+  document.getElementById('fPublicado').value = '';
+  aplicarFiltros();
+}
+
+function filtrarGrupo(distancia, sexo, categoria) {
+  document.getElementById('fDistancia').value = distancia;
+  document.getElementById('fSexo').value = sexo;
+  document.getElementById('fCategoria').value = categoria;
+  aplicarFiltros();
 }
 
 document.getElementById('buscar').addEventListener('input', aplicarFiltros);
 
-function badgeEstado(estado) {
-  const colores = { pendiente: '#ffc107', validado: '#28a745', rechazado: '#dc3545' };
-  const color = colores[estado] || '#6c757d';
-  return `<span class="badge-estado" style="background:${color};">${estado}</span>`;
+// ---------- Resumen por categoría ----------
+
+function actualizarResumen() {
+  const total = corredores.length;
+  const publicados = corredores.filter(r => r.publicado).length;
+
+  const tarjetas = GRUPOS.map(g => {
+    const delGrupo = corredores.filter(r => r.distancia === g.d && r.sexo === g.s && r.categoria === g.c);
+    const pubs = delGrupo.filter(r => r.publicado).length;
+    return `
+      <button type="button" class="grupo-card" onclick="filtrarGrupo('${g.d}','${g.s}','${g.c}')">
+        <small>${g.d} · ${g.s} · ${g.c}</small>
+        <strong>${delGrupo.length}</strong>
+        <small>${pubs} publicados</small>
+      </button>`;
+  }).join('');
+
+  document.getElementById('resumen').innerHTML = `
+    <div class="resumen-totales">
+      <div class="chip-total">Total: <strong>${total}</strong></div>
+      <div class="chip-total">Publicados: <strong>${publicados}</strong></div>
+      <div class="chip-total">Sin publicar: <strong>${total - publicados}</strong></div>
+    </div>
+    <div class="resumen-grupos">${tarjetas}</div>`;
 }
+
+// ---------- Tabla ----------
 
 function actualizarTabla() {
   const inicio = (paginaActual - 1) * registrosPorPagina;
   const fin = inicio + registrosPorPagina;
-  const datosPagina = datosFiltrados.slice(inicio, fin);
+  const datosPagina = filtrados.slice(inicio, fin);
 
   const tbody = document.getElementById('cuerpoTabla');
   tbody.innerHTML = '';
 
+  document.getElementById('infoRegistros').textContent = `${filtrados.length} de ${corredores.length} corredores`;
+
   if (datosPagina.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="9" style="text-align:center; padding:20px; color:#666;">No se encontraron registros</td>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="10" style="text-align:center; padding:20px; color:#666;">No se encontraron corredores</td>`;
     tbody.appendChild(tr);
-    document.getElementById("paginacion").innerHTML = "";
-    actualizarInfoRegistros();
+    document.getElementById('paginacion').innerHTML = '';
     return;
   }
 
   datosPagina.forEach((r, index) => {
-    const numeroGlobal = inicio + index + 1;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${numeroGlobal}</td>
-      <td>${formatearFecha(r.created_at)}</td>
-      <td>${r.nombre_completo || "-"}</td>
-      <td>${r.dni || "-"}</td>
-      <td>${r.categoria || "-"}</td>
-      <td>${r.institucion || "-"}${r.unidad ? " / " + r.unidad : ""}</td>
-      <td>${r.localidad || "-"}</td>
-      <td>${badgeEstado(r.estado)}</td>
+      <td>${inicio + index + 1}</td>
+      <td>${escapeHtml(r.apellidos)}, ${escapeHtml(r.nombres)}</td>
+      <td>${escapeHtml(r.grado || '-')}</td>
+      <td><span class="badge-dist ${r.distancia === '5K' ? 'badge-5k' : 'badge-10k'}">${escapeHtml(r.distancia)}</span></td>
+      <td>${escapeHtml(r.sexo)}</td>
+      <td>${escapeHtml(r.categoria)}</td>
+      <td>${escapeHtml(r.unidad || '-')}</td>
+      <td>${escapeHtml(r.dorsal || '-')}</td>
+      <td>
+        <label class="switch" title="${r.publicado ? 'Publicado en la web' : 'No se muestra en la web'}">
+          <input type="checkbox" ${r.publicado ? 'checked' : ''} onchange="alternarPublicado('${r.id}', this)" aria-label="Publicado">
+          <span class="slider"></span>
+        </label>
+      </td>
       <td>
         <div class="acciones">
-          <button class="btn-icono btn-ver" onclick="verDetalle('${r.id}')" title="Ver">👁</button>
-          <button class="btn-icono btn-validar" onclick="pedirCambioEstado('${r.id}', 'validado')" title="Validar" ${r.estado === 'validado' ? 'disabled' : ''}>✔</button>
-          <button class="btn-icono btn-rechazar" onclick="pedirCambioEstado('${r.id}', 'rechazado')" title="Rechazar" ${r.estado === 'rechazado' ? 'disabled' : ''}>✖</button>
+          <button class="btn-icono btn-editar" onclick="editarCorredor('${r.id}')" title="Editar">✏️</button>
+          <button class="btn-icono btn-eliminar" onclick="eliminarCorredor('${r.id}')" title="Eliminar">🗑️</button>
         </div>
       </td>
     `;
@@ -147,11 +244,10 @@ function actualizarTabla() {
   });
 
   actualizarPaginacion();
-  actualizarInfoRegistros();
 }
 
 function actualizarPaginacion() {
-  const totalPaginas = Math.ceil(datosFiltrados.length / registrosPorPagina);
+  const totalPaginas = Math.ceil(filtrados.length / registrosPorPagina);
   const paginacion = document.getElementById('paginacion');
   paginacion.innerHTML = '';
 
@@ -184,8 +280,8 @@ function actualizarPaginacion() {
   info.style.marginLeft = '15px';
   info.style.color = '#666';
   const desde = (paginaActual - 1) * registrosPorPagina + 1;
-  const hasta = Math.min(paginaActual * registrosPorPagina, datosFiltrados.length);
-  info.textContent = `Mostrando ${desde}-${hasta} de ${datosFiltrados.length}`;
+  const hasta = Math.min(paginaActual * registrosPorPagina, filtrados.length);
+  info.textContent = `Mostrando ${desde}-${hasta} de ${filtrados.length}`;
   paginacion.appendChild(info);
 }
 
@@ -194,96 +290,212 @@ function cambiarPagina(nuevaPagina) {
   actualizarTabla();
 }
 
-function actualizarInfoRegistros() {
-  document.getElementById('infoRegistros').textContent = `${datosFiltrados.length} registros`;
+// ---------- Formulario de corredor ----------
+
+function valor(id) {
+  return document.getElementById(id).value.trim();
 }
 
-function verDetalle(id) {
-  const r = datosCompletos.find(x => x.id === id);
-  if (!r) { mostrarNotificacion("Registro no encontrado", "error"); return; }
-
-  document.getElementById('verNombre').textContent = r.nombre_completo || "-";
-  document.getElementById('verDni').textContent = r.dni || "-";
-  document.getElementById('verTelefono').textContent = r.telefono || "-";
-  document.getElementById('verCorreo').textContent = r.correo || "-";
-  document.getElementById('verCategoria').textContent = r.categoria || "-";
-  document.getElementById('verTalla').textContent = r.talla_polo || "-";
-  document.getElementById('verInstitucion').textContent = r.institucion || "-";
-  document.getElementById('verUnidad').textContent = r.unidad || "-";
-  document.getElementById('verLocalidad').textContent = r.localidad || "-";
-  document.getElementById('verEstado').textContent = r.estado || "-";
-  document.getElementById('verFecha').textContent = formatearFecha(r.created_at);
-
-  document.getElementById('verCarnetImg').src = r.carnet_url || "";
-  document.getElementById('verComprobanteImg').src = r.comprobante_url || "";
-
-  document.getElementById('modalVerDetalle').style.display = 'block';
+function leerFormulario() {
+  return {
+    id: document.getElementById('cId').value || undefined,
+    apellidos: valor('cApellidos'),
+    nombres: valor('cNombres'),
+    distancia: valor('cDistancia'),
+    sexo: valor('cSexo'),
+    categoria: valor('cCategoria'),
+    grado: valor('cGrado'),
+    unidad: valor('cUnidad'),
+    edad: valor('cEdad'),
+    dni: valor('cDni'),
+    telefono: valor('cTelefono'),
+    talla_polo: valor('cTalla'),
+    dorsal: valor('cDorsal')
+  };
 }
 
-function cerrarModalVerDetalle() {
-  document.getElementById('modalVerDetalle').style.display = 'none';
+function limpiarFormulario() {
+  ['cId', 'cApellidos', 'cNombres', 'cDistancia', 'cSexo', 'cCategoria',
+   'cGrado', 'cUnidad', 'cEdad', 'cDni', 'cTelefono', 'cTalla', 'cDorsal']
+    .forEach(id => { document.getElementById(id).value = ''; });
 }
 
-function abrirImagen(url) {
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImage");
-  const loading = document.getElementById("modalLoading");
+function abrirModalNuevo() {
+  limpiarFormulario();
+  document.getElementById('tituloModalCorredor').textContent = '➕ Nuevo corredor';
+  document.getElementById('btnGuardarOtro').style.display = 'inline-block';
+  document.getElementById('modalCorredor').style.display = 'block';
+  document.getElementById('cApellidos').focus();
+}
 
-  modal.style.display = "block";
-  loading.style.display = "block";
-  modalImg.style.display = "none";
+function editarCorredor(id) {
+  const r = corredores.find(x => x.id === id);
+  if (!r) { mostrarNotificacion('Corredor no encontrado', 'error'); return; }
 
-  if (!url) {
-    loading.innerHTML = "❌ Imagen no disponible";
-    setTimeout(() => cerrarModalImagen(), 2000);
+  limpiarFormulario();
+  document.getElementById('cId').value = r.id;
+  document.getElementById('cApellidos').value = r.apellidos || '';
+  document.getElementById('cNombres').value = r.nombres || '';
+  document.getElementById('cDistancia').value = r.distancia || '';
+  document.getElementById('cSexo').value = r.sexo || '';
+  document.getElementById('cCategoria').value = r.categoria || '';
+  document.getElementById('cGrado').value = r.grado || '';
+  document.getElementById('cUnidad').value = r.unidad || '';
+  document.getElementById('cEdad').value = r.edad == null ? '' : r.edad;
+  document.getElementById('cDni').value = r.dni || '';
+  document.getElementById('cTelefono').value = r.telefono || '';
+  document.getElementById('cTalla').value = r.talla_polo || '';
+  document.getElementById('cDorsal').value = r.dorsal || '';
+
+  document.getElementById('tituloModalCorredor').textContent = '✏️ Editar corredor';
+  document.getElementById('btnGuardarOtro').style.display = 'none';
+  document.getElementById('modalCorredor').style.display = 'block';
+}
+
+function cerrarModalCorredor() {
+  document.getElementById('modalCorredor').style.display = 'none';
+}
+
+// Deja listo el formulario para el siguiente corredor, conservando distancia, sexo y categoría
+function prepararSiguiente() {
+  ['cId', 'cApellidos', 'cNombres', 'cGrado', 'cUnidad', 'cEdad', 'cDni', 'cTelefono', 'cTalla', 'cDorsal']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('cApellidos').focus();
+}
+
+async function guardarCorredor(agregarOtro = false) {
+  const corredor = leerFormulario();
+
+  if (!corredor.apellidos || !corredor.nombres) {
+    mostrarNotificacion('Apellidos y nombres son obligatorios.', 'warning');
+    return;
+  }
+  if (!corredor.distancia || !corredor.sexo || !corredor.categoria) {
+    mostrarNotificacion('Selecciona distancia, sexo y categoría.', 'warning');
+    return;
+  }
+  if (corredor.dni && !/^\d{8}$/.test(corredor.dni)) {
+    mostrarNotificacion('El DNI debe tener 8 dígitos.', 'warning');
     return;
   }
 
-  modalImg.src = url;
-  modalImg.style.display = "block";
-  loading.style.display = "none";
-}
+  // Aviso de posible duplicado al crear (mismos apellidos y nombres)
+  if (!corredor.id) {
+    const clave = normalizar(corredor.apellidos) + '|' + normalizar(corredor.nombres);
+    const repetido = corredores.find(r => normalizar(r.apellidos) + '|' + normalizar(r.nombres) === clave);
+    if (repetido) {
+      const seguir = await mostrarConfirmacion(
+        `Ya existe un corredor con ese nombre:\n\n${repetido.apellidos}, ${repetido.nombres}\n(${repetido.distancia} · ${repetido.sexo} · ${repetido.categoria})\n\n¿Agregarlo de todos modos?`,
+        '⚠️ Posible duplicado'
+      );
+      if (!seguir) return;
+    }
+  }
 
-function cerrarModalImagen() {
-  document.getElementById("imageModal").style.display = "none";
-}
-
-async function pedirCambioEstado(id, nuevoEstado) {
-  const r = datosCompletos.find(x => x.id === id);
-  if (!r) { mostrarNotificacion("Registro no encontrado", "error"); return; }
-
-  const esValidar = nuevoEstado === 'validado';
-  const btnSi = document.getElementById('btnConfirmarSi');
-  btnSi.className = esValidar ? 'btn-confirmar-si' : 'btn-confirmar-si rechazo';
-
-  const confirmar = await mostrarConfirmacion(
-    `¿Confirmas ${esValidar ? 'validar' : 'rechazar'} la inscripción de:\n\n${r.nombre_completo} (DNI ${r.dni})?`,
-    esValidar ? '✔ Confirmar validación' : '✖ Confirmar rechazo'
-  );
-
-  if (!confirmar) return;
-
-  mostrarOverlay(esValidar ? 'Validando inscripción...' : 'Rechazando inscripción...');
+  const btnGuardar = document.getElementById('btnGuardar');
+  const btnGuardarOtro = document.getElementById('btnGuardarOtro');
+  btnGuardar.disabled = true;
+  btnGuardarOtro.disabled = true;
+  mostrarOverlay('Guardando corredor...');
 
   try {
-    const res = await fetch(FN_VALIDAR, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, id, estado: nuevoEstado })
-    });
+    const json = await llamar('guardar', { corredor });
+    const fila = json.data;
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Error al actualizar');
+    const idx = corredores.findIndex(x => x.id === fila.id);
+    if (idx >= 0) corredores[idx] = fila; else corredores.push(fila);
+    ordenar(corredores);
+    refrescar();
 
     ocultarOverlay();
-    mostrarNotificacion(esValidar ? "✓ Inscripción validada" : "✓ Inscripción rechazada", "success");
-    await cargarDatos();
+    mostrarNotificacion(`✓ ${fila.apellidos}, ${fila.nombres} guardado`, 'success');
+
+    if (agregarOtro && !corredor.id) {
+      prepararSiguiente();
+    } else {
+      cerrarModalCorredor();
+    }
 
   } catch (err) {
     ocultarOverlay();
-    mostrarNotificacion("Error: " + err.message, "error");
+    mostrarNotificacion('Error al guardar: ' + err.message, 'error');
+  } finally {
+    btnGuardar.disabled = false;
+    btnGuardarOtro.disabled = false;
   }
 }
+
+// ---------- Eliminar ----------
+
+async function eliminarCorredor(id) {
+  const r = corredores.find(x => x.id === id);
+  if (!r) { mostrarNotificacion('Corredor no encontrado', 'error'); return; }
+
+  const confirmar = await mostrarConfirmacion(
+    `¿Eliminar a este corredor?\n\n${r.apellidos}, ${r.nombres}\n(${r.distancia} · ${r.sexo} · ${r.categoria})\n\nEsta acción no se puede deshacer.`,
+    '🗑️ Confirmar eliminación',
+    true
+  );
+  if (!confirmar) return;
+
+  mostrarOverlay('Eliminando corredor...');
+  try {
+    await llamar('eliminar', { id });
+    corredores = corredores.filter(x => x.id !== id);
+    refrescar();
+    ocultarOverlay();
+    mostrarNotificacion('✓ Corredor eliminado', 'success');
+  } catch (err) {
+    ocultarOverlay();
+    mostrarNotificacion('Error al eliminar: ' + err.message, 'error');
+  }
+}
+
+// ---------- Publicación ----------
+
+async function alternarPublicado(id, checkbox) {
+  const nuevo = checkbox.checked;
+  checkbox.disabled = true;
+  try {
+    await llamar('publicar', { id, publicado: nuevo });
+    const r = corredores.find(x => x.id === id);
+    if (r) r.publicado = nuevo;
+    refrescar();
+  } catch (err) {
+    checkbox.checked = !nuevo;
+    checkbox.disabled = false;
+    mostrarNotificacion('Error: ' + err.message, 'error');
+  }
+}
+
+async function publicarTodos(publicar) {
+  if (corredores.length === 0) {
+    mostrarNotificacion('Todavía no hay corredores cargados.', 'warning');
+    return;
+  }
+
+  const confirmar = await mostrarConfirmacion(
+    publicar
+      ? `Se publicarán en la web los ${corredores.length} corredores (solo apellidos, nombres y categoría).\n\n¿Continuar?`
+      : `Se ocultarán de la web los ${corredores.length} corredores.\n\n¿Continuar?`,
+    publicar ? '🌐 Publicar todos' : '🚫 Ocultar todos'
+  );
+  if (!confirmar) return;
+
+  mostrarOverlay(publicar ? 'Publicando...' : 'Ocultando...');
+  try {
+    await llamar('publicar_todos', { publicado: publicar });
+    corredores.forEach(r => { r.publicado = publicar; });
+    refrescar();
+    ocultarOverlay();
+    mostrarNotificacion(publicar ? '✓ Lista publicada en la web' : '✓ Lista oculta de la web', 'success');
+  } catch (err) {
+    ocultarOverlay();
+    mostrarNotificacion('Error: ' + err.message, 'error');
+  }
+}
+
+// ---------- Notificaciones y confirmación ----------
 
 function mostrarNotificacion(mensaje, tipo = 'info') {
   const notifAnterior = document.querySelector('.notificacion-custom');
@@ -308,7 +520,7 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
     font-size: 14px; line-height: 1.5; animation: slideIn 0.3s ease-out;
   `;
 
-  notificacion.innerHTML = mensaje.replace(/\n/g, '<br>');
+  notificacion.innerHTML = escapeHtml(mensaje).replace(/\n/g, '<br>');
   document.body.appendChild(notificacion);
 
   setTimeout(() => {
@@ -319,11 +531,12 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 
 let resolverConfirmacion = null;
 
-function mostrarConfirmacion(mensaje, titulo = '⚠️ Confirmar') {
+function mostrarConfirmacion(mensaje, titulo = '⚠️ Confirmar', peligro = false) {
   return new Promise((resolve) => {
     resolverConfirmacion = resolve;
     document.getElementById('tituloConfirmacion').textContent = titulo;
-    document.getElementById('mensajeConfirmacion').innerHTML = mensaje.replace(/\n/g, '<br>');
+    document.getElementById('mensajeConfirmacion').innerHTML = escapeHtml(mensaje).replace(/\n/g, '<br>');
+    document.getElementById('btnConfirmarSi').className = peligro ? 'btn-confirmar-si peligro' : 'btn-confirmar-si';
     document.getElementById('modalConfirmacion').style.display = 'flex';
   });
 }
@@ -342,11 +555,3 @@ style.textContent = `
   @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } }
 `;
 document.head.appendChild(style);
-
-window.onclick = function (event) {
-  const modalVerDetalle = document.getElementById('modalVerDetalle');
-  const modalImagen = document.getElementById('imageModal');
-
-  if (event.target === modalVerDetalle) cerrarModalVerDetalle();
-  if (event.target === modalImagen) cerrarModalImagen();
-};
