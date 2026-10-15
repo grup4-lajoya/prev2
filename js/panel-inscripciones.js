@@ -323,7 +323,6 @@ function limpiarFormulario() {
 function abrirModalNuevo() {
   limpiarFormulario();
   document.getElementById('tituloModalCorredor').textContent = '➕ Nuevo corredor';
-  document.getElementById('btnGuardarOtro').style.display = 'inline-block';
   document.getElementById('modalCorredor').style.display = 'block';
   document.getElementById('cApellidos').focus();
 }
@@ -348,7 +347,6 @@ function editarCorredor(id) {
   document.getElementById('cDorsal').value = r.dorsal || '';
 
   document.getElementById('tituloModalCorredor').textContent = '✏️ Editar corredor';
-  document.getElementById('btnGuardarOtro').style.display = 'none';
   document.getElementById('modalCorredor').style.display = 'block';
 }
 
@@ -393,9 +391,7 @@ async function guardarCorredor(agregarOtro = false) {
   }
 
   const btnGuardar = document.getElementById('btnGuardar');
-  const btnGuardarOtro = document.getElementById('btnGuardarOtro');
   btnGuardar.disabled = true;
-  btnGuardarOtro.disabled = true;
   mostrarOverlay('Guardando corredor...');
 
   try {
@@ -421,7 +417,6 @@ async function guardarCorredor(agregarOtro = false) {
     mostrarNotificacion('Error al guardar: ' + err.message, 'error');
   } finally {
     btnGuardar.disabled = false;
-    btnGuardarOtro.disabled = false;
   }
 }
 
